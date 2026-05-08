@@ -1,0 +1,92 @@
+# Jupyter / notebooks
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.history/
+*.code-workspace
+
+# Node (if any future widget tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json.bak
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local data drops (keep small example data committed; ignore bulk)
+data/raw/
+data/external/
+*.csv.gz
+*.parquet
+*.zip
+*.tar.gz
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Model artifacts
+*.pt
+*.pth
+*.onnx
+*.bin
+*.safetensors
+checkpoints/
+runs/
+wandb/
+mlruns/
+
+# Build / cache
+dist/
+build/
+.cache/
+.tmp/
+.parcel-cache/
+.next/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.coverage
+htmlcov/
+
+# Local server / debug
+*.pid
+.serve.log
+/tmp/srv*.log
