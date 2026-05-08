@@ -90,3 +90,6 @@ htmlcov/
 *.pid
 .serve.log
 /tmp/srv*.log
+
+# Teaching plan — author's private working doc
+noai_stage2_teaching_plan.md
