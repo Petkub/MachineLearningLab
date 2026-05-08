@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Classification — sklearn hands-on</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* mini DataFrame table */
+  .pd-mini {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: #fff;
+  }
+  .pd-mini th, .pd-mini td {
+    border: 1.5px solid var(--ink);
+    padding: 4px 10px;
+  }
+  .pd-mini th { background: var(--cream); font-weight: 800; }
+  .pd-mini .idx { background: var(--cream-soft); font-weight: 700; color: var(--ink-soft); text-align: right; }
+  .pd-mini td.fixed { background: #d6f5dd; font-weight: 700; }
+  .pd-mini td.broken { background: #ffd6cc; color: var(--accent-red); font-weight: 700; }
+  .pd-mini td.added { background: #c8e6ff; font-weight: 700; }
+
+  /* before/after row */
+  .ba-row {
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;
+    margin-top: 12px;
+  }
+  .ba-row > div { flex: 1 1 280px; }
+  .ba-row h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--ink-soft); margin: 0 0 6px;
+  }
+
+  /* model zoo cards */
+  .zoo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .zoo-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 10px 14px;
+  }
+  .zoo-card h4 {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    background: var(--cream);
+    padding: 2px 8px;
+    display: inline-block;
+  }
+  .zoo-card .pros { font-size: 12px; color: var(--accent-green); margin: 4px 0 0; }
+  .zoo-card .cons { font-size: 12px; color: var(--accent-red); margin: 2px 0 4px; }
+  .zoo-card .when { font-size: 12px; color: var(--ink-soft); }
+  .zoo-card pre.code { font-size: 11px; line-height: 1.45; margin: 4px 0; padding: 4px 6px; }
+
+  /* pipeline diagram */
+  .pipe-stage {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin: 12px 0;
+  }
+  .pipe-block {
+    border: 2px solid var(--ink);
+    padding: 10px 14px;
+    background: #fff;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .pipe-block.scaler { background: #c8e6ff; }
+  .pipe-block.model  { background: var(--cream); }
+  .pipe-arrow { font-size: 22px; color: var(--accent-blue); font-weight: 800; }
+
+  /* feature importance bar mock */
+  .fi-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 50px;
+    gap: 8px;
+    align-items: center;
+    margin: 4px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .fi-bar {
+    height: 18px;
+    background: var(--accent-blue);
+    border: 1.5px solid var(--ink);
+  }
+  .fi-bar.b1 { background: var(--accent-red); }
+  .fi-bar.b2 { background: var(--accent-green); }
+  .fi-bar.b3 { background: var(--accent-purple); }
+  .fi-bar.b4 { background: var(--cream); }
+  .fi-name { font-weight: 700; }
+
+  /* cross-val k-fold mock */
+  .cv-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin: 8px 0;
+  }
+  .cv-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border: 2px solid var(--ink);
+    height: 30px;
+  }
+  .cv-bar div {
+    background: var(--accent-blue);
+    border-right: 1px solid #fff;
+  }
+  .cv-bar div.test {
+    background: var(--accent-red);
+    border-right: 1px solid #fff;
+  }
+  .cv-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* widget shell */
+  .cw-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .cw-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .cw-controls label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 8px 0 4px;
+  }
+  .cw-controls select {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px 8px;
+    width: 100%;
+  }
+  .cw-features {
+    display: flex; flex-direction: column; gap: 4px;
+    margin: 4px 0 8px;
+  }
+  .cw-features label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    cursor: pointer;
+  }
+  .cw-code {
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .cw-result {
+    border: 2px dashed var(--ink-mute);
+    background: #fff;
+    padding: 14px 18px;
+    min-height: 220px;
+  }
+  .cw-acc-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px;
+    gap: 10px;
+    align-items: center;
+    margin: 6px 0;
+  }
+  .cw-acc-bar {
+    height: 22px;
+    background: var(--accent-blue);
+    border: 1.5px solid var(--ink);
+    transition: width 320ms var(--ease);
+  }
+  .cw-acc-bar.dummy { background: var(--ink-mute); }
+  .cw-name { font-family: var(--font-mono); font-weight: 700; font-size: 13px; }
+  .cw-val { font-family: var(--font-mono); font-weight: 800; font-size: 13px; text-align: right; }
+
+  /* parameter / pitfall table */
+  .param-tbl {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .param-tbl th, .param-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .param-tbl th { background: var(--cream); font-weight: 800; }
+  .param-tbl code { font-weight: 700; }
+
+  /* cheat strip */
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    font-size: 12px;
+  }
+  .cheat-strip code { font-weight: 700; display: block; margin-bottom: 4px; }
+  .cheat-strip span { color: var(--ink-soft); font-size: 11px; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Classification<br/>Hands-on</h1>
+      <p class="subtitle">sklearn workflow that wins camp Day 2.<br/>Encode, scale, swap, score.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>Day 2 camp shape</h2>
+      <ul>
+        <li class="fragment">Tabular CSV with strings + numbers + NaN.</li>
+        <li class="fragment"><b class="tk-blue">Encode</b> strings $\to$ numbers. Fill NaN.</li>
+        <li class="fragment"><b class="tk-purple">Engineer</b> derived features (more signal per row).</li>
+        <li class="fragment"><b class="tk-green">Scale</b> if model needs distance.</li>
+        <li class="fragment"><b class="tk-red">Train + score</b> 4 models. Pick winner.</li>
+      </ul>
+      <p class="callout fragment">Same shape every camp tabular task. Memorize the order.</p>
+    </section>
+
+    <!-- 3. Encode categoricals -->
+    <section class="slide dense">
+      <h2>1. Encode — strings → numbers</h2>
+      <p>Models eat numbers only. Strings cause <code>ValueError: could not convert string to float</code>.</p>
+
+      <div class="tight-split">
+        <div>
+          <pre class="code"><span class="cmt"># 2 known values — explicit map</span>
+df[<span class="str">'Sex'</span>] = df[<span class="str">'Sex'</span>].map({<span class="str">'male'</span>: <span class="num">0</span>, <span class="str">'female'</span>: <span class="num">1</span>})
+
+<span class="cmt"># many values — factorize</span>
+df[<span class="str">'Embarked'</span>] = pd.factorize(df[<span class="str">'Embarked'</span>])[<span class="num">0</span>]
+<span class="cmt"># 'S' → 0, 'C' → 1, 'Q' → 2</span>
+
+<span class="cmt"># one-hot — when categories have NO order</span>
+df = pd.get_dummies(df, columns=[<span class="str">'Embarked'</span>])
+<span class="cmt"># adds Embarked_S, Embarked_C, Embarked_Q (0/1 each)</span></pre>
+        </div>
+        <div>
+          <h4 style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:6px;">picking encoder</h4>
+          <table class="param-tbl">
+            <tr><th>data shape</th><th>encoder</th></tr>
+            <tr><td>2 known values</td><td><code>.map(dict)</code></td></tr>
+            <tr><td>many ordered values</td><td><code>factorize</code></td></tr>
+            <tr><td>many unordered values</td><td><code>get_dummies</code></td></tr>
+            <tr><td>NaN present</td><td>fill first, then encode</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 10px;"><b class="tk-red">Trap</b>: <code>factorize</code> gives integer codes. Tree models OK. Linear models may misread "3 > 2 > 1" as ordering.</p>
+    </section>
+
+    <!-- 4. Impute -->
+    <section class="slide">
+      <h2>2. Impute — patch NaN</h2>
+      <p>Different columns need different fills. Pick by <b class="tk-blue">data shape</b>, not habit.</p>
+
+      <table class="param-tbl">
+        <tr><th>column type</th><th>strategy</th><th>why</th></tr>
+        <tr><td>numeric, bell-shaped (Age)</td><td><code>.fillna(.mean())</code></td><td>mean = center</td></tr>
+        <tr><td>numeric, heavy-tailed (Fare)</td><td><code>.fillna(.median())</code></td><td>outliers drag mean wrong</td></tr>
+        <tr><td>categorical (Embarked)</td><td><code>.fillna(.mode()[0])</code></td><td>"most common" makes sense</td></tr>
+        <tr><td>too many NaN (&gt;50%)</td><td><code>df.drop('col', axis=1)</code></td><td>not enough signal — drop column</td></tr>
+      </table>
+      <p class="callout fragment"><b class="tk-purple">Always</b> impute BEFORE encode/scale. Otherwise NaN survives into the model.</p>
+    </section>
+
+    <!-- 5. Feature engineering -->
+    <section class="slide">
+      <h2>3. Feature engineering — derive signal</h2>
+      <p>Combine existing columns into ones the model finds easier to use.</p>
+
+      <pre class="code">df[<span class="str">'FamilySize'</span>]    = df[<span class="str">'SibSp'</span>] + df[<span class="str">'Parch'</span>] + <span class="num">1</span>
+df[<span class="str">'IsAlone'</span>]       = (df[<span class="str">'FamilySize'</span>] == <span class="num">1</span>).astype(<span class="kw">int</span>)
+df[<span class="str">'FarePerPerson'</span>] = df[<span class="str">'Fare'</span>] / df[<span class="str">'FamilySize'</span>]
+df[<span class="str">'AgeGroup'</span>]      = pd.cut(df[<span class="str">'Age'</span>], bins=[<span class="num">0</span>,<span class="num">12</span>,<span class="num">18</span>,<span class="num">60</span>,<span class="num">100</span>], labels=[<span class="str">'child'</span>,<span class="str">'teen'</span>,<span class="str">'adult'</span>,<span class="str">'senior'</span>])</pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">Combine</b> 2 cols into 1 (FamilySize).</li>
+        <li class="fragment"><b class="tk-green">Threshold</b> a numeric to a flag (IsAlone).</li>
+        <li class="fragment"><b class="tk-purple">Ratio</b> two cols (FarePerPerson — captures wealth-per-person).</li>
+        <li class="fragment"><b class="tk-pink">Bin</b> a numeric into ranges (AgeGroup).</li>
+      </ul>
+      <p class="callout fragment">Good feature = pattern that's <b>easier</b> for the model to use than the raw inputs. Brainstorm 3-5 per task.</p>
+    </section>
+
+    <!-- 6. Encode pitfall -->
+    <section class="slide dense">
+      <h2>Encode pitfall — <code>ValueError</code></h2>
+      <p>Forgot to encode? Here's the error you'll see:</p>
+      <pre class="code" style="background:#ffe9e0;border-left:4px solid var(--accent-red);">ValueError: could not convert string to float: <span class="str">'female'</span></pre>
+
+      <div class="ba-row" style="margin-top: 10px;">
+        <div>
+          <h4>before — string in X</h4>
+          <table class="pd-mini">
+            <tr><th>Pclass</th><th>Sex</th><th>Age</th></tr>
+            <tr><td>3</td><td class="broken">male</td><td>22</td></tr>
+            <tr><td>1</td><td class="broken">female</td><td>38</td></tr>
+            <tr><td>3</td><td class="broken">female</td><td>26</td></tr>
+          </table>
+          <p style="font-size:12px;color:var(--accent-red);margin-top:6px;">model.fit(X) → ValueError</p>
+        </div>
+        <div class="fragment fade-only">
+          <h4>after — encoded</h4>
+          <table class="pd-mini">
+            <tr><th>Pclass</th><th>Sex</th><th>Age</th></tr>
+            <tr><td>3</td><td class="fixed">0</td><td>22</td></tr>
+            <tr><td>1</td><td class="fixed">1</td><td>38</td></tr>
+            <tr><td>3</td><td class="fixed">1</td><td>26</td></tr>
+          </table>
+          <p style="font-size:12px;color:var(--accent-green);margin-top:6px;">model.fit(X) → trains fine</p>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 12px;"><b>Workflow</b>: encode → impute → engineer. Then split. Then scale (if needed). Then fit.</p>
+    </section>
+
+    <!-- 7. Scale features -->
+    <section class="slide">
+      <h2>4. Scale — equal footing for distance models</h2>
+      <p>KNN measures Euclidean distance. <code>Fare</code> ranges 0-500, <code>Sex</code> is 0-1. Fare dominates. Scale fixes it.</p>
+
+      <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_train)
+<span class="cmt"># every column now has mean=0, std=1</span></pre>
+
+      <table class="param-tbl" style="margin-top: 14px;">
+        <tr><th>model</th><th>needs scale?</th></tr>
+        <tr><td>KNeighbors, SVM</td><td><b class="tk-red">YES</b> — distance based</td></tr>
+        <tr><td>LogisticRegression</td><td>recommended — helps converge</td></tr>
+        <tr><td>RandomForest, GradientBoost</td><td><b class="tk-green">NO</b> — split on thresholds, scale invariant</td></tr>
+        <tr><td>Neural nets</td><td><b class="tk-red">YES</b> — gradients explode otherwise</td></tr>
+      </table>
+      <p class="callout fragment" style="margin-top: 12px;"><b class="tk-red">Trap</b>: never <code>fit</code> the scaler on test data. Fit on train only. Apply to both.</p>
+    </section>
+
+    <!-- 8. Pipeline -->
+    <section class="slide dense">
+      <h2>5. Pipeline — chain steps, no leak</h2>
+      <p>Pipeline binds preprocessing + model. One <code>.fit()</code> trains everything correctly.</p>
+
+      <pre class="code"><span class="kw">from</span> sklearn.pipeline <span class="kw">import</span> Pipeline
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.neighbors <span class="kw">import</span> KNeighborsClassifier
+
+pipe = Pipeline([
+    (<span class="str">'scaler'</span>, StandardScaler()),
+    (<span class="str">'knn'</span>,    KNeighborsClassifier(n_neighbors=<span class="num">5</span>)),
+])
+
+pipe.fit(X_train, y_train)         <span class="cmt"># scaler fits on train, then knn fits on scaled train</span>
+preds = pipe.predict(X_test)        <span class="cmt"># scaler transforms test (NOT refit), knn predicts</span></pre>
+
+      <div class="pipe-stage">
+        <div class="pipe-block scaler">StandardScaler<br/><span style="font-size:10px;font-weight:400;">fit on train</span></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-block model">KNeighborsClassifier<br/><span style="font-size:10px;font-weight:400;">fit on scaled train</span></div>
+      </div>
+
+      <ul style="margin-top: 8px; font-size: 14px;">
+        <li class="fragment"><b class="tk-blue">No leak</b>: scaler never sees test data during fit.</li>
+        <li class="fragment"><b class="tk-green">One unit</b>: <code>pipe.predict</code> auto-applies scaler before model.</li>
+        <li class="fragment">Camp baselines look like this. Recognize on sight.</li>
+      </ul>
+    </section>
+
+    <!-- 9. Model zoo -->
+    <section class="slide dense">
+      <h2>6. Model zoo — pick by task shape</h2>
+      <div class="zoo-grid">
+        <div class="zoo-card">
+          <h4>LogisticRegression</h4>
+          <pre class="code">LogisticRegression(max_iter=<span class="num">1000</span>)</pre>
+          <div class="pros">+ fast, interpretable, good baseline</div>
+          <div class="cons">− linear only, weak on complex data</div>
+          <div class="when">use first, every time</div>
+        </div>
+        <div class="zoo-card">
+          <h4>RandomForestClassifier</h4>
+          <pre class="code">RandomForestClassifier(
+    n_estimators=<span class="num">100</span>,
+    random_state=<span class="num">42</span>)</pre>
+          <div class="pros">+ handles non-linear, robust to scale</div>
+          <div class="cons">− slower, can overfit small data</div>
+          <div class="when">strong default for tabular</div>
+        </div>
+        <div class="zoo-card">
+          <h4>GradientBoostingClassifier</h4>
+          <pre class="code">GradientBoostingClassifier(
+    random_state=<span class="num">42</span>)</pre>
+          <div class="pros">+ usually best on tabular</div>
+          <div class="cons">− slowest, needs more tuning</div>
+          <div class="when">final push for ranking</div>
+        </div>
+        <div class="zoo-card">
+          <h4>KNeighborsClassifier</h4>
+          <pre class="code">KNeighborsClassifier(n_neighbors=<span class="num">5</span>)</pre>
+          <div class="pros">+ no training, simple intuition</div>
+          <div class="cons">− slow predict, NEEDS scaling</div>
+          <div class="when">small data, when others fail</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 10px;">Train all 4. Pick winner. Same X/y for fair compare.</p>
+    </section>
+
+    <!-- 10. Feature importances -->
+    <section class="slide">
+      <h2>7. Which features mattered? — RandomForest tells you</h2>
+      <pre class="code">rf.fit(X_train, y_train)
+importances = pd.Series(rf.feature_importances_, index=X_train.columns)
+importances.sort_values(ascending=<span class="kw">False</span>).plot.bar()</pre>
+
+      <div style="margin-top: 14px; max-width: 580px;">
+        <div class="fi-row"><div class="fi-name">Sex</div><div class="fi-bar" style="width: 100%;"></div><div>0.30</div></div>
+        <div class="fi-row"><div class="fi-name">Fare</div><div class="fi-bar b1" style="width: 78%;"></div><div>0.23</div></div>
+        <div class="fi-row"><div class="fi-name">Age</div><div class="fi-bar b2" style="width: 65%;"></div><div>0.20</div></div>
+        <div class="fi-row"><div class="fi-name">Pclass</div><div class="fi-bar b3" style="width: 47%;"></div><div>0.14</div></div>
+        <div class="fi-row"><div class="fi-name">FamilySize</div><div class="fi-bar b4" style="width: 22%;"></div><div>0.07</div></div>
+        <div class="fi-row"><div class="fi-name">Embarked</div><div class="fi-bar" style="width: 17%; background:#ddd;"></div><div>0.05</div></div>
+      </div>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">Sum to 1</b> across all features.</li>
+        <li class="fragment"><b class="tk-red">Drop low-importance features</b> &lt; 0.01 if you must trim.</li>
+        <li class="fragment"><b class="tk-green">Sanity check</b>: matches your intuition? "Sex matters most for Titanic" — yes.</li>
+      </ul>
+    </section>
+
+    <!-- 11. Cross-validation -->
+    <section class="slide">
+      <h2>8. Cross-validation — single split lies</h2>
+      <p>Lucky split → score too high. Unlucky split → score too low. CV averages 5 folds for honest score.</p>
+
+      <pre class="code"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score
+
+scores = cross_val_score(rf, X, y, cv=<span class="num">5</span>)
+<span class="kw">print</span>(<span class="str">f'</span><span class="str">{scores.mean():.3f} ± {scores.std():.3f}'</span>)</pre>
+
+      <p style="margin-top: 14px; font-size: 14px; color: var(--ink-soft);">5 folds — each row gets used as test exactly once. Red = test fold for that round.</p>
+      <div class="cv-grid">
+        <div>
+          <div class="cv-bar"><div class="test"></div><div></div><div></div><div></div><div></div></div>
+          <div class="cv-label">fold 1</div>
+        </div>
+        <div>
+          <div class="cv-bar"><div></div><div class="test"></div><div></div><div></div><div></div></div>
+          <div class="cv-label">fold 2</div>
+        </div>
+        <div>
+          <div class="cv-bar"><div></div><div></div><div class="test"></div><div></div><div></div></div>
+          <div class="cv-label">fold 3</div>
+        </div>
+        <div>
+          <div class="cv-bar"><div></div><div></div><div></div><div class="test"></div><div></div></div>
+          <div class="cv-label">fold 4</div>
+        </div>
+        <div>
+          <div class="cv-bar"><div></div><div></div><div></div><div></div><div class="test"></div></div>
+          <div class="cv-label">fold 5</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 14px;"><b class="tk-blue">Use CV</b> for picking hyperparams. <b class="tk-red">Use single split</b> for final reported score.</p>
+    </section>
+
+    <!-- 12. Widget — feature picker + model -->
+    <section class="slide">
+      <h2>Try it — pick features + model, watch accuracy</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Toggle features on/off. Switch model. Live accuracy bars.</p>
+
+      <div class="cw-shell">
+        <div class="cw-grid">
+          <div class="cw-controls">
+            <label>features (toggle)</label>
+            <div class="cw-features" id="cw-feats">
+              <label><input type="checkbox" data-feat="Sex" checked> Sex</label>
+              <label><input type="checkbox" data-feat="Pclass" checked> Pclass</label>
+              <label><input type="checkbox" data-feat="Age" checked> Age</label>
+              <label><input type="checkbox" data-feat="Fare" checked> Fare</label>
+              <label><input type="checkbox" data-feat="FamilySize"> FamilySize</label>
+              <label><input type="checkbox" data-feat="IsAlone"> IsAlone</label>
+            </div>
+
+            <label>model</label>
+            <select id="cw-model">
+              <option value="logreg">LogisticRegression</option>
+              <option value="rf" selected>RandomForestClassifier</option>
+              <option value="gb">GradientBoostingClassifier</option>
+              <option value="knn">KNeighborsClassifier (scaled)</option>
+            </select>
+
+            <div class="cw-code" id="cw-code">model = RandomForestClassifier(n_estimators=100)</div>
+          </div>
+
+          <div class="cw-result" id="cw-result"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. Pitfalls -->
+    <section class="slide dense">
+      <h2>Pitfalls</h2>
+      <table class="param-tbl">
+        <tr><th>mistake</th><th>symptom / fix</th></tr>
+        <tr><td>target column inside X</td><td>data leak — score 99% on test, fails real-world. <code>X = df.drop('target', axis=1)</code></td></tr>
+        <tr><td>fit scaler on full data (X), then split</td><td>test info leaked through scaler stats. Always split FIRST, scale on train only.</td></tr>
+        <tr><td>forgot to encode strings</td><td><code>ValueError: could not convert string to float</code>. <code>map / factorize / get_dummies</code> first.</td></tr>
+        <tr><td>KNN/SVM without scaling</td><td>large-range features dominate. Wrap in Pipeline with StandardScaler.</td></tr>
+        <tr><td>imbalanced data, only check accuracy</td><td>"always predict majority" hits 95%. Check F1, recall, ROC-AUC.</td></tr>
+        <tr><td>random_state missing</td><td>different score every run. Set <code>random_state=42</code> on split AND model.</td></tr>
+        <tr><td>only test on one split</td><td>can be lucky/unlucky. Use <code>cross_val_score(cv=5)</code> for honest estimate.</td></tr>
+      </table>
+    </section>
+
+    <!-- 14. Recap -->
+    <section class="slide">
+      <h2>Recap — the workflow</h2>
+      <div class="cheat-strip">
+        <div><code>map / factorize</code><span>1. encode</span></div>
+        <div><code>fillna(mean/median/mode)</code><span>2. impute</span></div>
+        <div><code>df['new'] = ...</code><span>3. engineer</span></div>
+        <div><code>train_test_split</code><span>4. split</span></div>
+        <div><code>StandardScaler</code><span>5. scale (KNN/SVM)</span></div>
+        <div><code>model.fit / .predict</code><span>6. train + score</span></div>
+        <div><code>feature_importances_</code><span>7. inspect</span></div>
+        <div><code>cross_val_score</code><span>8. honest score</span></div>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Pipeline</b> binds steps — no leak, one fit, one predict.</li>
+        <li class="fragment"><b class="tk-red">Scale before</b> KNN / SVM. <b class="tk-green">Skip scaling</b> for trees.</li>
+        <li class="fragment"><b class="tk-purple">Critical</b>: encode/impute BEFORE split, scale AFTER split.</li>
+      </ul>
+      <p class="callout fragment">Companion notebook: <code>colab_exercises/05_classification.ipynb</code> — 6 problems on real Titanic.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 12 widget — feature/model picker, live mock accuracy */
+
+  // Feature contributions (mock — calibrated to real Titanic feature importances)
+  const FEAT_GAIN = {
+    Sex:        0.22,   // huge for Titanic
+    Pclass:     0.10,
+    Age:        0.06,
+    Fare:       0.09,
+    FamilySize: 0.04,
+    IsAlone:    0.02,
+  };
+  const BASE_ACC = 0.55;   // dummy / no features
+
+  const MODEL_BOOST = {
+    logreg: 0.92,   // multiplier on summed feature gain
+    rf:     1.05,
+    gb:     1.10,
+    knn:    0.95,
+  };
+
+  const MODEL_CODE = {
+    logreg: 'model = LogisticRegression(max_iter=1000)',
+    rf:     'model = RandomForestClassifier(n_estimators=100, random_state=42)',
+    gb:     'model = GradientBoostingClassifier(random_state=42)',
+    knn:    `model = Pipeline([
+    ('scaler', StandardScaler()),
+    ('knn',    KNeighborsClassifier(n_neighbors=5)),
+])`,
+  };
+
+  const MODEL_NAME = {
+    logreg: 'LogReg',
+    rf:     'RandomForest',
+    gb:     'GradBoost',
+    knn:    'KNN (scaled)',
+  };
+
+  const featChecks = document.querySelectorAll('#cw-feats input');
+  const modelEl  = document.getElementById('cw-model');
+  const codeEl   = document.getElementById('cw-code');
+  const resultEl = document.getElementById('cw-result');
+
+  function activeFeats() {
+    return Array.from(featChecks).filter(c => c.checked).map(c => c.dataset.feat);
+  }
+
+  function predictedAcc(feats, modelKey) {
+    if (feats.length === 0) return BASE_ACC;
+    let raw = BASE_ACC + feats.reduce((s, f) => s + FEAT_GAIN[f], 0);
+    raw *= MODEL_BOOST[modelKey];
+    return Math.min(0.92, Math.max(0.50, raw));
+  }
+
+  function update() {
+    const feats = activeFeats();
+    const m = modelEl.value;
+    codeEl.textContent = MODEL_CODE[m];
+
+    if (feats.length === 0) {
+      resultEl.innerHTML = '<div style="color:var(--ink-mute);font-size:13px;text-align:center;padding-top:80px;">pick at least one feature →</div>';
+      return;
+    }
+
+    const dummyAcc = 0.62;   // majority class baseline
+    const myAcc = predictedAcc(feats, m);
+
+    let html = `<div style="font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; margin-bottom:6px;">accuracy on test</div>`;
+
+    // your model
+    html += `<div class="cw-acc-row">
+      <div class="cw-name">${MODEL_NAME[m]}</div>
+      <div><div class="cw-acc-bar" style="width:${(myAcc * 100).toFixed(0)}%;"></div></div>
+      <div class="cw-val">${myAcc.toFixed(3)}</div>
+    </div>`;
+
+    // dummy baseline
+    html += `<div class="cw-acc-row">
+      <div class="cw-name">dummy</div>
+      <div><div class="cw-acc-bar dummy" style="width:${(dummyAcc * 100).toFixed(0)}%;"></div></div>
+      <div class="cw-val">${dummyAcc.toFixed(3)}</div>
+    </div>`;
+
+    const lift = myAcc - dummyAcc;
+    const liftColor = lift > 0.10 ? 'var(--accent-green)' : (lift > 0.03 ? 'var(--ink)' : 'var(--accent-red)');
+    html += `<div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">
+      lift over dummy: <b style="color:${liftColor};">+${lift.toFixed(3)}</b>
+    </div>`;
+
+    html += `<div style="margin-top:14px; font-size:11px; color:var(--ink-soft);">
+      features used: <b>${feats.length}</b> — ${feats.join(', ')}
+    </div>`;
+
+    if (m === 'knn' && (feats.includes('Fare') || feats.includes('Age'))) {
+      html += `<div style="margin-top:8px; font-size:11px; color:var(--accent-green);">
+        ✓ KNN scaled — Fare / Age normalized, won't dominate distance
+      </div>`;
+    }
+    if (feats.length === 1) {
+      html += `<div style="margin-top:8px; font-size:11px; color:var(--accent-red);">
+        ⚠ only 1 feature — most models can't learn much
+      </div>`;
+    }
+
+    resultEl.innerHTML = html;
+  }
+
+  featChecks.forEach(c => c.addEventListener('change', update));
+  modelEl.addEventListener('change', update);
+  update();
+})();
+</script>
+
+</body>
+</html>
