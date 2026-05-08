@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Neural Nets — Tensors + Layers</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* compare table — numpy vs torch */
+  .cmp-tbl {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    width: 100%;
+  }
+  .cmp-tbl th, .cmp-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 6px 12px;
+    background: #fff;
+  }
+  .cmp-tbl th { background: var(--cream); font-weight: 800; text-align: left; }
+  .cmp-tbl td.np { background: #c8e6ff; }
+  .cmp-tbl td.pt { background: #d6f5dd; }
+  .cmp-tbl td.gpu { background: var(--cream); font-weight: 700; }
+
+  /* MLP diagram */
+  .mlp-stage {
+    display: flex; gap: 0; align-items: center; justify-content: center;
+    margin: 14px 0;
+  }
+  .layer-col {
+    display: flex; flex-direction: column; gap: 4px;
+    align-items: center;
+    margin: 0 4px;
+  }
+  .neuron {
+    width: 30px; height: 30px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: #fff;
+    display: grid; place-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .neuron.input { background: #c8e6ff; }
+  .neuron.hidden { background: var(--cream); }
+  .neuron.output { background: #ffd6cc; }
+  .neuron.dots { border-style: dashed; background: #fafaf6; }
+  .layer-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    text-align: center;
+  }
+  .layer-shape {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink);
+    background: var(--cream-soft);
+    padding: 1px 6px;
+    margin-top: 2px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .arrow-block {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-blue);
+    font-weight: 800;
+    margin: 0 6px;
+    text-align: center;
+  }
+  .arrow-block .arr { font-size: 18px; }
+
+  /* matrix multiply viz */
+  .mm-stage {
+    display: flex; gap: 12px; align-items: center;
+    margin-top: 12px;
+  }
+  .mm-mat {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px;
+    display: inline-grid;
+    gap: 1px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .mm-cell {
+    width: 24px; height: 24px;
+    background: #fff;
+    border: 1px solid #ddd;
+    display: grid; place-items: center;
+  }
+  .mm-cell.w { background: var(--cream); }
+  .mm-cell.b { background: #c8e6ff; }
+  .mm-cell.in { background: #d6f5dd; }
+  .mm-cap {
+    font-size: 10px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+  .mm-op {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 6px;
+  }
+
+  /* relu plot */
+  .relu-plot { stroke: var(--accent-blue); stroke-width: 2.5; fill: none; }
+  .ax-line { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+  .ax-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--ink-soft);
+  }
+  .ax-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--ink);
+  }
+
+  /* params table */
+  .pt-tbl {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    width: 100%;
+  }
+  .pt-tbl th, .pt-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 6px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .pt-tbl th { background: var(--cream); font-weight: 800; }
+  .pt-tbl td.total { background: #d6f5dd; font-weight: 700; }
+  .pt-tbl code { font-weight: 700; }
+
+  /* widget */
+  .nw-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .nw-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .nw-controls label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 8px 0 4px;
+  }
+  .nw-controls input[type="range"] {
+    width: 100%;
+    height: 24px;
+  }
+  .nw-controls .vrow {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink);
+    font-weight: 700;
+    margin-top: -2px;
+  }
+  .nw-code {
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+  .nw-canvas {
+    border: 2px dashed var(--ink-mute);
+    background: #fff;
+    padding: 14px 18px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .nw-stats {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .nw-stats b { color: var(--ink); background: var(--cream); padding: 1px 5px; }
+
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    font-size: 12px;
+  }
+  .cheat-strip code { font-weight: 700; display: block; margin-bottom: 4px; }
+  .cheat-strip span { color: var(--ink-soft); font-size: 11px; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Neural Nets<br/>Tensors + Layers</h1>
+      <p class="subtitle">PyTorch basics — Day 3.<br/>Don't panic on first sight.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>sklearn ends. PyTorch begins.</h2>
+      <ul>
+        <li class="fragment">sklearn = great for tabular. <b class="tk-red">Limited</b> for images, text, audio.</li>
+        <li class="fragment">Camp Day 3+ = <b class="tk-blue">PyTorch</b>. Real datasets need real depth.</li>
+        <li class="fragment">Goal today: <b>read</b> a PyTorch model without panic.</li>
+        <li class="fragment">Goal tomorrow: <b>modify</b> a training loop. Not write from scratch.</li>
+      </ul>
+      <p class="callout fragment">PyTorch tensors = NumPy + GPU + automatic gradients. Same shape, more powers.</p>
+    </section>
+
+    <!-- 3. Tensor = NumPy + GPU + grad -->
+    <section class="slide">
+      <h2>Tensor — NumPy + GPU + autograd</h2>
+      <table class="cmp-tbl">
+        <tr><th></th><th>NumPy</th><th>PyTorch</th></tr>
+        <tr><td>create</td><td class="np"><code>np.array([1,2,3])</code></td><td class="pt"><code>torch.tensor([1,2,3])</code></td></tr>
+        <tr><td>shape</td><td class="np"><code>a.shape</code></td><td class="pt"><code>a.shape</code></td></tr>
+        <tr><td>add scalar</td><td class="np"><code>a + 1</code></td><td class="pt"><code>a + 1</code></td></tr>
+        <tr><td>mean</td><td class="np"><code>a.mean()</code></td><td class="pt"><code>a.mean()</code></td></tr>
+        <tr><td>matmul</td><td class="np"><code>a @ b</code></td><td class="pt"><code>a @ b</code></td></tr>
+        <tr><td>move to GPU</td><td>—</td><td class="gpu"><code>a.to('cuda')</code></td></tr>
+        <tr><td>track gradients</td><td>—</td><td class="gpu"><code>a.requires_grad_()</code></td></tr>
+      </table>
+      <p class="callout fragment" style="margin-top: 14px;">If you know NumPy, you already know 90% of PyTorch tensor syntax. The new bits are <b class="tk-red">GPU</b> + <b class="tk-purple">grad</b>.</p>
+    </section>
+
+    <!-- 4. Tensor ops -->
+    <section class="slide dense">
+      <h2>GPU + grad in code</h2>
+      <pre class="code"><span class="kw">import</span> torch
+
+<span class="cmt"># 1. create on CPU</span>
+a = torch.tensor([[<span class="num">1.0</span>, <span class="num">2.0</span>], [<span class="num">3.0</span>, <span class="num">4.0</span>]])
+<span class="kw">print</span>(a.shape)        <span class="cmt"># torch.Size([2, 2])</span>
+<span class="kw">print</span>(a.dtype)        <span class="cmt"># torch.float32</span>
+
+<span class="cmt"># 2. move to GPU (if available)</span>
+device = <span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">'cpu'</span>
+a = a.to(device)
+
+<span class="cmt"># 3. track gradients (for training)</span>
+w = torch.randn(<span class="num">3</span>, <span class="num">2</span>, requires_grad=<span class="kw">True</span>)
+
+<span class="cmt"># 4. NumPy ↔ PyTorch conversion</span>
+np_arr = a.cpu().numpy()         <span class="cmt"># to NumPy (must be on CPU first)</span>
+back   = torch.from_numpy(np_arr) <span class="cmt"># back to tensor</span></pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">device</b> string: <code>'cuda'</code> or <code>'cpu'</code>. Always check <code>cuda.is_available()</code>.</li>
+        <li class="fragment"><b class="tk-purple">requires_grad</b>: tensor remembers all ops, builds graph for backward pass.</li>
+        <li class="fragment">Going to NumPy: <b class="tk-red">first</b> <code>.cpu()</code>, <b>then</b> <code>.numpy()</code>. GPU tensors can't convert directly.</li>
+      </ul>
+    </section>
+
+    <!-- 5. Input shapes -->
+    <section class="slide">
+      <h2>Input shapes — vectors and batches</h2>
+      <p>Models eat <b class="tk-blue">batches of tensors</b>. The first dimension is always batch size.</p>
+
+      <table class="pt-tbl" style="margin-top: 12px;">
+        <tr><th>data type</th><th>shape</th><th>example</th></tr>
+        <tr><td>tabular row</td><td><code>(batch, n_features)</code></td><td><code>(32, 4)</code> — 32 Titanic rows, 4 features</td></tr>
+        <tr><td>flat image (MNIST)</td><td><code>(batch, 784)</code></td><td><code>(32, 784)</code> — 28×28 flattened</td></tr>
+        <tr><td>RGB image</td><td><code>(batch, 3, H, W)</code></td><td><code>(32, 3, 224, 224)</code></td></tr>
+        <tr><td>label vector</td><td><code>(batch,)</code></td><td><code>(32,)</code> — class id per row</td></tr>
+      </table>
+
+      <pre class="code" style="margin-top: 14px;"><span class="cmt"># flatten an image batch</span>
+images.shape             <span class="cmt"># (32, 1, 28, 28)</span>
+images.view(<span class="num">32</span>, -<span class="num">1</span>)         <span class="cmt"># (32, 784)</span>
+<span class="cmt"># or use nn.Flatten() inside the model</span></pre>
+
+      <p class="callout fragment"><b class="tk-red">Every shape mismatch error</b> traces back to a wrong batch or feature dimension. Always print <code>.shape</code> when stuck.</p>
+    </section>
+
+    <!-- 6. Linear layer -->
+    <section class="slide">
+      <h2>Linear layer — matmul + learnable weights</h2>
+
+      <div class="tight-split">
+        <div>
+          <pre class="code"><span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+layer = nn.Linear(<span class="num">3</span>, <span class="num">2</span>)   <span class="cmt"># in=3, out=2</span>
+x = torch.randn(<span class="num">5</span>, <span class="num">3</span>)     <span class="cmt"># batch of 5, 3 features each</span>
+y = layer(x)              <span class="cmt"># shape: (5, 2)</span>
+
+<span class="cmt"># inside, layer holds:</span>
+layer.weight              <span class="cmt"># shape (2, 3) — learned</span>
+layer.bias                <span class="cmt"># shape (2,)   — learned</span></pre>
+
+          <p style="margin-top: 14px; font-size: 14px;">Math: $y = xW^T + b$.</p>
+
+          <ul style="margin-top: 8px; font-size: 14px;">
+            <li class="fragment"><b class="tk-blue">in_features</b>: how many numbers come in per row.</li>
+            <li class="fragment"><b class="tk-purple">out_features</b>: how many come out.</li>
+            <li class="fragment">Weights start <b class="tk-red">random</b>. Training adjusts them.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="mm-stage" style="font-size: 12px;">
+            <div>
+              <div class="mm-mat" style="grid-template-columns: repeat(3, 24px);">
+                <div class="mm-cell in">x1</div><div class="mm-cell in">x2</div><div class="mm-cell in">x3</div>
+              </div>
+              <div class="mm-cap">x: (1, 3)</div>
+            </div>
+            <div class="mm-op">×</div>
+            <div>
+              <div class="mm-mat" style="grid-template-columns: repeat(2, 24px);">
+                <div class="mm-cell w">w</div><div class="mm-cell w">w</div>
+                <div class="mm-cell w">w</div><div class="mm-cell w">w</div>
+                <div class="mm-cell w">w</div><div class="mm-cell w">w</div>
+              </div>
+              <div class="mm-cap">W: (3, 2)</div>
+            </div>
+            <div class="mm-op">+</div>
+            <div>
+              <div class="mm-mat" style="grid-template-columns: repeat(2, 24px);">
+                <div class="mm-cell b">b</div><div class="mm-cell b">b</div>
+              </div>
+              <div class="mm-cap">b: (2,)</div>
+            </div>
+            <div class="mm-op">=</div>
+            <div>
+              <div class="mm-mat" style="grid-template-columns: repeat(2, 24px);">
+                <div class="mm-cell">y1</div><div class="mm-cell">y2</div>
+              </div>
+              <div class="mm-cap">y: (1, 2)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. ReLU -->
+    <section class="slide">
+      <h2>Activation — ReLU adds non-linearity</h2>
+      <p>Stack two Linear layers without activation $\Rightarrow$ still <b class="tk-red">just one big linear function</b>. Useless. Activation makes the network learn curves.</p>
+
+      <div class="tight-split">
+        <div>
+          <pre class="code">relu = nn.ReLU()
+
+x = torch.tensor([-<span class="num">2.0</span>, -<span class="num">0.5</span>, <span class="num">0.0</span>, <span class="num">1.0</span>, <span class="num">3.0</span>])
+relu(x)
+<span class="cmt"># tensor([0., 0., 0., 1., 3.])</span></pre>
+
+          <p style="margin-top: 12px; font-size: 14px;">Rule: $\text{ReLU}(x) = \max(0, x)$.</p>
+
+          <ul style="margin-top: 10px; font-size: 14px;">
+            <li class="fragment"><b class="tk-red">Negatives → 0</b>. Positives pass through.</li>
+            <li class="fragment">Cheap (one max op) and avoids vanishing gradients.</li>
+            <li class="fragment">Standard in 2025. Other options: <code>nn.GELU</code>, <code>nn.SiLU</code>, <code>nn.Tanh</code>.</li>
+          </ul>
+        </div>
+        <div>
+          <div style="border: 2px solid var(--ink); background: #fff; padding: 8px; display: inline-block;">
+            <svg width="240" height="180" viewBox="0 0 240 180">
+              <path class="ax-line" d="M 30 90 L 220 90"/>
+              <path class="ax-line" d="M 120 20 L 120 160"/>
+              <text class="ax-label" x="200" y="105" text-anchor="middle">x</text>
+              <text class="ax-label" x="135" y="30" text-anchor="middle">y</text>
+
+              <!-- ReLU shape: flat at 0 for x<0, linear for x>0 -->
+              <polyline class="relu-plot" points="30,90 120,90 200,20"/>
+
+              <!-- ticks -->
+              <text class="ax-text" x="60" y="105" text-anchor="middle">−2</text>
+              <text class="ax-text" x="180" y="105" text-anchor="middle">2</text>
+              <text class="ax-text" x="125" y="55" text-anchor="start">2</text>
+            </svg>
+            <div class="mm-cap" style="margin-top: 4px;">ReLU(x) = max(0, x)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. MLP diagram -->
+    <section class="slide">
+      <h2>MLP — multi-layer perceptron</h2>
+      <p>Stack: Linear → ReLU → Linear. Standard "hello world" architecture.</p>
+
+      <div class="mlp-stage">
+        <div class="layer-col">
+          <div class="layer-shape">784</div>
+          <div class="neuron input"></div>
+          <div class="neuron input"></div>
+          <div class="neuron input"></div>
+          <div class="neuron dots">⋮</div>
+          <div class="neuron input"></div>
+          <div class="layer-label">Input<br/>(flattened image)</div>
+        </div>
+        <div class="arrow-block">
+          <div class="arr">→</div>
+          <div>nn.Linear(784, 128)</div>
+        </div>
+        <div class="layer-col">
+          <div class="layer-shape">128</div>
+          <div class="neuron hidden"></div>
+          <div class="neuron hidden"></div>
+          <div class="neuron dots">⋮</div>
+          <div class="neuron hidden"></div>
+          <div class="layer-label">Hidden<br/>+ ReLU</div>
+        </div>
+        <div class="arrow-block">
+          <div class="arr">→</div>
+          <div>nn.Linear(128, 10)</div>
+        </div>
+        <div class="layer-col">
+          <div class="layer-shape">10</div>
+          <div class="neuron output">0</div>
+          <div class="neuron output">1</div>
+          <div class="neuron dots">⋮</div>
+          <div class="neuron output">9</div>
+          <div class="layer-label">Output<br/>(class scores)</div>
+        </div>
+      </div>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">Input</b>: 784 = 28×28 pixels flattened.</li>
+        <li class="fragment"><b class="tk-purple">Hidden</b>: 128 = arbitrary choice. Bigger = more capacity.</li>
+        <li class="fragment"><b class="tk-red">Output</b>: 10 = number of digit classes.</li>
+        <li class="fragment">No activation after the final layer for classification — loss handles it.</li>
+      </ul>
+    </section>
+
+    <!-- 9. nn.Sequential -->
+    <section class="slide">
+      <h2><code>nn.Sequential</code> — stack layers in order</h2>
+      <pre class="code"><span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+
+model = nn.Sequential(
+    nn.Flatten(),               <span class="cmt"># (B, 1, 28, 28) → (B, 784)</span>
+    nn.Linear(<span class="num">784</span>, <span class="num">128</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="num">128</span>, <span class="num">10</span>),
+)
+
+<span class="cmt"># forward pass — input flows top to bottom</span>
+x = torch.randn(<span class="num">32</span>, <span class="num">1</span>, <span class="num">28</span>, <span class="num">28</span>)
+output = model(x)               <span class="cmt"># shape: (32, 10)</span>
+
+<span class="kw">print</span>(model)                  <span class="cmt"># pretty-prints the architecture</span></pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">nn.Flatten</b>: reshape image batches into vectors. Replaces <code>.view(-1, 784)</code>.</li>
+        <li class="fragment"><b class="tk-purple">Each layer's output</b> = next layer's input. Sizes must match.</li>
+        <li class="fragment">Calling <code>model(x)</code> runs <code>forward</code> automatically. <b>Don't</b> call <code>model.forward(x)</code> directly.</li>
+      </ul>
+    </section>
+
+    <!-- 10. Forward pass animation -->
+    <section class="slide">
+      <h2>Forward pass — data flows in one direction</h2>
+      <p>Input enters. Each layer transforms it. Output emerges. <b class="tk-blue">Press → to step.</b></p>
+
+      <div style="display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
+        <div class="layer-col">
+          <div class="layer-shape">(B, 784)</div>
+          <div class="neuron input">x</div>
+          <div class="layer-label">input</div>
+        </div>
+
+        <div class="arrow-block fragment fade-only">
+          <div class="arr">→</div>
+          <div>Linear</div>
+        </div>
+        <div class="layer-col fragment fade-only">
+          <div class="layer-shape">(B, 128)</div>
+          <div class="neuron hidden">z₁</div>
+          <div class="layer-label">pre-activation</div>
+        </div>
+
+        <div class="arrow-block fragment fade-only">
+          <div class="arr">→</div>
+          <div>ReLU</div>
+        </div>
+        <div class="layer-col fragment fade-only">
+          <div class="layer-shape">(B, 128)</div>
+          <div class="neuron hidden">a₁</div>
+          <div class="layer-label">activated</div>
+        </div>
+
+        <div class="arrow-block fragment fade-only">
+          <div class="arr">→</div>
+          <div>Linear</div>
+        </div>
+        <div class="layer-col fragment fade-only">
+          <div class="layer-shape">(B, 10)</div>
+          <div class="neuron output">y</div>
+          <div class="layer-label">logits</div>
+        </div>
+      </div>
+
+      <p class="callout fragment" style="margin-top: 24px;"><b>Forward only</b> for now. Backward (gradients + weight updates) = next deck.</p>
+    </section>
+
+    <!-- 11. Parameters count -->
+    <section class="slide">
+      <h2>How many parameters?</h2>
+      <p>Each Linear layer ships <b class="tk-blue">weights + bias</b>. Count grows with width.</p>
+
+      <table class="pt-tbl">
+        <tr><th>layer</th><th>weights</th><th>bias</th><th>total</th></tr>
+        <tr><td><code>nn.Linear(784, 128)</code></td><td>784 × 128 = 100,352</td><td>128</td><td>100,480</td></tr>
+        <tr><td><code>nn.ReLU</code></td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td><code>nn.Linear(128, 10)</code></td><td>128 × 10 = 1,280</td><td>10</td><td>1,290</td></tr>
+        <tr><td colspan="3" style="text-align:right;"><b>total</b></td><td class="total"><b>101,770</b></td></tr>
+      </table>
+
+      <pre class="code" style="margin-top: 14px;"><span class="cmt"># count params programmatically</span>
+total = sum(p.numel() <span class="kw">for</span> p <span class="kw">in</span> model.parameters())
+trainable = sum(p.numel() <span class="kw">for</span> p <span class="kw">in</span> model.parameters() <span class="kw">if</span> p.requires_grad)</pre>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-blue">Activation layers</b> (ReLU) have <b>zero</b> parameters.</li>
+        <li class="fragment"><b class="tk-red">Most params</b> live in early Linear layers when input is wide.</li>
+        <li class="fragment">ResNet18 ≈ 11 million params. GPT-3 ≈ 175 billion. Same arithmetic, different scale.</li>
+      </ul>
+    </section>
+
+    <!-- 12. Widget — MLP builder -->
+    <section class="slide">
+      <h2>Try it — design an MLP, see param count</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Adjust hidden layer sizes. Watch architecture + parameter count update.</p>
+
+      <div class="nw-shell">
+        <div class="nw-grid">
+          <div class="nw-controls">
+            <label>input size</label>
+            <input type="range" id="nw-in" min="16" max="1024" step="16" value="784">
+            <div class="vrow"><span>16</span><b id="nw-in-val">784</b><span>1024</span></div>
+
+            <label>hidden 1</label>
+            <input type="range" id="nw-h1" min="16" max="512" step="16" value="128">
+            <div class="vrow"><span>16</span><b id="nw-h1-val">128</b><span>512</span></div>
+
+            <label>hidden 2 (0 = no second hidden)</label>
+            <input type="range" id="nw-h2" min="0" max="256" step="16" value="0">
+            <div class="vrow"><span>0</span><b id="nw-h2-val">0</b><span>256</span></div>
+
+            <label>output classes</label>
+            <input type="range" id="nw-out" min="2" max="100" step="1" value="10">
+            <div class="vrow"><span>2</span><b id="nw-out-val">10</b><span>100</span></div>
+
+            <div class="nw-code" id="nw-code"></div>
+          </div>
+
+          <div>
+            <div class="nw-canvas" id="nw-canvas"></div>
+            <div class="nw-stats" id="nw-stats"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. Recap -->
+    <section class="slide">
+      <h2>Recap — read PyTorch without panic</h2>
+      <div class="cheat-strip">
+        <div><code>torch.tensor</code><span>NumPy + GPU + grad</span></div>
+        <div><code>.to('cuda')</code><span>move to GPU</span></div>
+        <div><code>nn.Linear(in, out)</code><span>matmul + bias</span></div>
+        <div><code>nn.ReLU</code><span>non-linearity</span></div>
+        <div><code>nn.Flatten</code><span>image → vector</span></div>
+        <div><code>nn.Sequential([...])</code><span>stack layers</span></div>
+        <div><code>model(x)</code><span>forward pass</span></div>
+        <div><code>p.numel()</code><span>count params</span></div>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Tensor = NumPy</b> with GPU + autograd.</li>
+        <li class="fragment"><b class="tk-purple">MLP = Linear → ReLU → Linear</b>. Add Flatten if input is image.</li>
+        <li class="fragment"><b class="tk-red">Shapes</b>: always <code>(batch, ...)</code>. Print when stuck.</li>
+      </ul>
+      <p class="callout fragment">Next deck: training loop — 5 lines that update the weights.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 12 — MLP builder */
+
+  const inEl   = document.getElementById('nw-in');
+  const h1El   = document.getElementById('nw-h1');
+  const h2El   = document.getElementById('nw-h2');
+  const outEl  = document.getElementById('nw-out');
+  const inLbl  = document.getElementById('nw-in-val');
+  const h1Lbl  = document.getElementById('nw-h1-val');
+  const h2Lbl  = document.getElementById('nw-h2-val');
+  const outLbl = document.getElementById('nw-out-val');
+  const codeEl = document.getElementById('nw-code');
+  const canvas = document.getElementById('nw-canvas');
+  const stats  = document.getElementById('nw-stats');
+
+  function buildArch() {
+    const i = parseInt(inEl.value, 10);
+    const h1 = parseInt(h1El.value, 10);
+    const h2 = parseInt(h2El.value, 10);
+    const o = parseInt(outEl.value, 10);
+    inLbl.textContent = i;
+    h1Lbl.textContent = h1;
+    h2Lbl.textContent = h2;
+    outLbl.textContent = o;
+    return { i, h1, h2, o };
+  }
+
+  function paramsOfLinear(inF, outF) {
+    return inF * outF + outF;   // weights + bias
+  }
+
+  function format(n) {
+    return n.toLocaleString();
+  }
+
+  function render() {
+    const { i, h1, h2, o } = buildArch();
+
+    // build layer list
+    const layers = [];
+    layers.push({ name: 'Linear', inF: i, outF: h1 });
+    layers.push({ name: 'ReLU' });
+    if (h2 > 0) {
+      layers.push({ name: 'Linear', inF: h1, outF: h2 });
+      layers.push({ name: 'ReLU' });
+      layers.push({ name: 'Linear', inF: h2, outF: o });
+    } else {
+      layers.push({ name: 'Linear', inF: h1, outF: o });
+    }
+
+    // params
+    const total = layers.reduce((s, l) => s + (l.name === 'Linear' ? paramsOfLinear(l.inF, l.outF) : 0), 0);
+
+    // code
+    const codeLines = ['model = nn.Sequential('];
+    codeLines.push(`    nn.Linear(${i}, ${h1}),`);
+    codeLines.push('    nn.ReLU(),');
+    if (h2 > 0) {
+      codeLines.push(`    nn.Linear(${h1}, ${h2}),`);
+      codeLines.push('    nn.ReLU(),');
+      codeLines.push(`    nn.Linear(${h2}, ${o}),`);
+    } else {
+      codeLines.push(`    nn.Linear(${h1}, ${o}),`);
+    }
+    codeLines.push(')');
+    codeEl.textContent = codeLines.join('\n');
+
+    // visualization — neuron columns
+    const sizes = h2 > 0 ? [i, h1, h2, o] : [i, h1, o];
+    const labels = h2 > 0 ? ['input', 'hidden 1', 'hidden 2', 'output']
+                          : ['input', 'hidden', 'output'];
+    canvas.innerHTML = '';
+    const stage = document.createElement('div');
+    stage.style.display = 'flex';
+    stage.style.alignItems = 'center';
+    stage.style.gap = '4px';
+    stage.style.flexWrap = 'wrap';
+    stage.style.justifyContent = 'center';
+
+    sizes.forEach((sz, idx) => {
+      // neuron column — show 4 neurons + dots
+      const col = document.createElement('div');
+      col.className = 'layer-col';
+
+      const shape = document.createElement('div');
+      shape.className = 'layer-shape';
+      shape.textContent = sz;
+      col.appendChild(shape);
+
+      const neuronCount = Math.min(4, sz);
+      const cls = idx === 0 ? 'input' : (idx === sizes.length - 1 ? 'output' : 'hidden');
+      for (let n = 0; n < neuronCount; n++) {
+        const dot = document.createElement('div');
+        dot.className = 'neuron ' + cls;
+        col.appendChild(dot);
+      }
+      if (sz > 4) {
+        const dots = document.createElement('div');
+        dots.className = 'neuron dots';
+        dots.textContent = '⋮';
+        col.appendChild(dots);
+      }
+      const lab = document.createElement('div');
+      lab.className = 'layer-label';
+      lab.textContent = labels[idx];
+      col.appendChild(lab);
+
+      stage.appendChild(col);
+
+      if (idx < sizes.length - 1) {
+        const arr = document.createElement('div');
+        arr.className = 'arrow-block';
+        arr.innerHTML = '<div class="arr">→</div><div>Linear+ReLU</div>';
+        if (idx === sizes.length - 2) {
+          arr.innerHTML = '<div class="arr">→</div><div>Linear</div>';
+        }
+        stage.appendChild(arr);
+      }
+    });
+
+    canvas.appendChild(stage);
+
+    // stats line
+    const linears = layers.filter(l => l.name === 'Linear').length;
+    const note = total > 1_000_000
+      ? ` <span style="color:var(--accent-red);">⚠ over 1M params — train slow on CPU</span>`
+      : (total < 1_000
+        ? ` <span style="color:var(--accent-red);">⚠ tiny — likely too small to learn anything</span>`
+        : '');
+    stats.innerHTML = `params: <b>${format(total)}</b> &nbsp;·&nbsp; layers: <b>${linears}</b> Linear &nbsp;·&nbsp; output shape per row: <b>(${o},)</b>${note}`;
+  }
+
+  [inEl, h1El, h2El, outEl].forEach(el => el.addEventListener('input', render));
+  render();
+})();
+</script>
+
+</body>
+</html>
