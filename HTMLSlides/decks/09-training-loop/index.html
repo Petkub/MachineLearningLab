@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PyTorch — Training Loop</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* core 5-line block */
+  .core-block {
+    border: 3px solid var(--ink);
+    background: #fff;
+    padding: 18px 24px;
+    margin: 14px 0;
+    box-shadow: 6px 6px 0 var(--cream);
+  }
+  .core-line {
+    display: grid;
+    grid-template-columns: 32px 1fr 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 8px 6px;
+    border-bottom: 1.5px dashed var(--ink-mute);
+    font-family: var(--font-mono);
+  }
+  .core-line:last-child { border-bottom: none; }
+  .core-line .step {
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    font-weight: 800;
+    font-size: 13px;
+  }
+  .core-line .code {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .core-line .why {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+  }
+
+  /* ingredients table */
+  .ing-tbl {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    width: 100%;
+  }
+  .ing-tbl th, .ing-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 6px 12px;
+    background: #fff;
+  }
+  .ing-tbl th { background: var(--cream); font-weight: 800; text-align: left; }
+  .ing-tbl code { font-weight: 700; }
+
+  /* whiteboard analogy */
+  .wb-stage {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .wb-board {
+    border: 3px solid var(--ink);
+    background: #fff;
+    padding: 12px 16px;
+    min-width: 180px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .wb-board.bad { background: #ffd6cc; }
+  .wb-board.good { background: #d6f5dd; }
+  .wb-board .lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  /* loss curve */
+  .loss-line {
+    stroke: var(--accent-blue);
+    stroke-width: 2.5;
+    fill: none;
+  }
+  .loss-line.bad {
+    stroke: var(--accent-red);
+  }
+  .loss-line.flat {
+    stroke: var(--ink-mute);
+  }
+  .ax-line { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+  .ax-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--ink-soft);
+  }
+  .ax-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--ink);
+  }
+
+  /* batch viz */
+  .batch-stage {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .batch-row {
+    display: grid;
+    grid-template-columns: repeat(8, 22px);
+    gap: 2px;
+  }
+  .batch-cell {
+    width: 22px; height: 22px;
+    background: #c8e6ff;
+    border: 1.5px solid var(--ink);
+  }
+  .batch-cell.next { background: var(--cream); }
+  .batch-cell.dim { background: #fff; opacity: 0.4; }
+
+  /* widget */
+  .tw-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .tw-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .tw-controls label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 8px 0 4px;
+  }
+  .tw-controls input[type="range"] {
+    width: 100%;
+    height: 24px;
+  }
+  .tw-controls .vrow {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .tw-controls select {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px 8px;
+    width: 100%;
+  }
+  .tw-controls button {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: 2px solid var(--ink);
+    background: var(--cream);
+    padding: 6px 14px;
+    cursor: pointer;
+    font-weight: 800;
+    width: 100%;
+    margin-top: 10px;
+    transition: background 160ms var(--ease);
+  }
+  .tw-controls button:hover { background: #ffe084; }
+  .tw-canvas {
+    border: 2px dashed var(--ink-mute);
+    background: #fff;
+    padding: 12px 16px;
+    min-height: 280px;
+  }
+  .tw-stats {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .tw-stats b { color: var(--ink); background: var(--cream); padding: 1px 5px; }
+
+  /* pitfalls + cheat */
+  .param-tbl {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .param-tbl th, .param-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .param-tbl th { background: var(--cream); font-weight: 800; }
+  .param-tbl code { font-weight: 700; }
+
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 10px;
+    align-items: center;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    font-size: 13px;
+  }
+  .cheat-strip .num {
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    font-weight: 800;
+    font-size: 13px;
+  }
+  .cheat-strip code { font-weight: 700; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Training Loop<br/>5 Lines Learn</h1>
+      <p class="subtitle">Most important code in PyTorch.<br/>Memorize. Recognize. Modify.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>The 5 lines that learn</h2>
+      <ul>
+        <li class="fragment">Every PyTorch model trains via the <b class="tk-blue">same 5 lines</b>. CNN, MLP, transformer — same shape.</li>
+        <li class="fragment">Camp Day 3+ baselines all ship this exact pattern.</li>
+        <li class="fragment">Your job: <b class="tk-purple">recognize</b> it, then <b class="tk-green">modify</b> (change LR, add layer, swap loss).</li>
+        <li class="fragment">Don't write from scratch. Copy template, adapt to task.</li>
+      </ul>
+      <p class="callout fragment"><b>Memorize the order</b>: zero_grad → forward → loss → backward → step.</p>
+    </section>
+
+    <!-- 3. Ingredients -->
+    <section class="slide">
+      <h2>You need 4 things to train</h2>
+      <table class="ing-tbl">
+        <tr><th>ingredient</th><th>what</th><th>why</th></tr>
+        <tr><td><b class="tk-blue">model</b></td><td><code>nn.Sequential(...)</code></td><td>parameters to train (deck 08)</td></tr>
+        <tr><td><b class="tk-red">loss</b></td><td><code>nn.CrossEntropyLoss()</code></td><td>measures how wrong the prediction is</td></tr>
+        <tr><td><b class="tk-purple">optimizer</b></td><td><code>optim.Adam(model.parameters())</code></td><td>updates weights using gradients</td></tr>
+        <tr><td><b class="tk-green">data</b></td><td><code>DataLoader(dataset)</code></td><td>feeds batches into the loop</td></tr>
+      </table>
+
+      <pre class="code" style="margin-top: 12px;">model     = nn.Sequential(nn.Linear(<span class="num">784</span>, <span class="num">10</span>))
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=<span class="num">0.001</span>)
+loader    = DataLoader(train_dataset, batch_size=<span class="num">64</span>, shuffle=<span class="kw">True</span>)</pre>
+    </section>
+
+    <!-- 4. Loss -->
+    <section class="slide dense">
+      <h2>Loss — measure wrongness</h2>
+      <pre class="code">criterion = nn.CrossEntropyLoss()
+
+logits = model(x)              <span class="cmt"># shape (batch, num_classes)</span>
+loss   = criterion(logits, y)   <span class="cmt"># scalar — single number</span></pre>
+
+      <table class="ing-tbl" style="margin-top: 14px;">
+        <tr><th>task</th><th>loss</th><th>output shape needed</th></tr>
+        <tr><td>multi-class classification</td><td><code>nn.CrossEntropyLoss()</code></td><td><code>(batch, num_classes)</code> raw logits</td></tr>
+        <tr><td>binary classification</td><td><code>nn.BCEWithLogitsLoss()</code></td><td><code>(batch,)</code> single logit</td></tr>
+        <tr><td>regression</td><td><code>nn.MSELoss()</code></td><td><code>(batch,)</code> predicted value</td></tr>
+        <tr><td>multi-label</td><td><code>nn.BCEWithLogitsLoss()</code></td><td><code>(batch, num_labels)</code></td></tr>
+      </table>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-red">Trap</b>: <code>CrossEntropyLoss</code> applies softmax internally — pass <b>raw logits</b>, not softmax output.</li>
+        <li class="fragment"><b class="tk-blue">Trap</b>: labels for CrossEntropy must be <code>int64</code> class IDs, not one-hot.</li>
+      </ul>
+    </section>
+
+    <!-- 5. Optimizer -->
+    <section class="slide">
+      <h2>Optimizer — update weights using gradients</h2>
+      <pre class="code"><span class="kw">import</span> torch.optim <span class="kw">as</span> optim
+
+optimizer = optim.Adam(model.parameters(), lr=<span class="num">0.001</span>)
+<span class="cmt"># or:</span>
+optimizer = optim.SGD(model.parameters(), lr=<span class="num">0.01</span>, momentum=<span class="num">0.9</span>)</pre>
+
+      <table class="ing-tbl" style="margin-top: 14px;">
+        <tr><th>optimizer</th><th>typical lr</th><th>when to use</th></tr>
+        <tr><td><code>Adam</code></td><td>0.001</td><td>safe default — works on most tasks</td></tr>
+        <tr><td><code>SGD</code> + momentum</td><td>0.01–0.1</td><td>image classification, when carefully tuned</td></tr>
+        <tr><td><code>AdamW</code></td><td>0.001</td><td>transformers, weight decay handled correctly</td></tr>
+      </table>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-blue">First arg</b>: <code>model.parameters()</code> — tells optimizer which tensors to update.</li>
+        <li class="fragment"><b class="tk-red">lr too big</b> → loss explodes (NaN). <b class="tk-red">lr too small</b> → loss flat, no learning.</li>
+        <li class="fragment">When unsure: <b>Adam at lr=1e-3</b>.</li>
+      </ul>
+    </section>
+
+    <!-- 6. DataLoader -->
+    <section class="slide">
+      <h2>DataLoader — batches + shuffle</h2>
+      <pre class="code"><span class="kw">from</span> torch.utils.data <span class="kw">import</span> DataLoader
+
+loader = DataLoader(dataset, batch_size=<span class="num">64</span>, shuffle=<span class="kw">True</span>)
+
+<span class="kw">for</span> x, y <span class="kw">in</span> loader:           <span class="cmt"># yields (x_batch, y_batch) tuples</span>
+    x.shape                  <span class="cmt"># (64, 1, 28, 28) for MNIST</span>
+    y.shape                  <span class="cmt"># (64,)</span></pre>
+
+      <div class="batch-stage">
+        <div>
+          <div class="batch-row">
+            <div class="batch-cell"></div><div class="batch-cell"></div><div class="batch-cell"></div><div class="batch-cell"></div>
+            <div class="batch-cell"></div><div class="batch-cell"></div><div class="batch-cell"></div><div class="batch-cell"></div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:4px;">batch 1 (8 rows)</div>
+        </div>
+        <div style="font-size:18px; color:var(--accent-blue); font-weight:800;">→</div>
+        <div>
+          <div class="batch-row">
+            <div class="batch-cell next"></div><div class="batch-cell next"></div><div class="batch-cell next"></div><div class="batch-cell next"></div>
+            <div class="batch-cell next"></div><div class="batch-cell next"></div><div class="batch-cell next"></div><div class="batch-cell next"></div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-soft);text-align:center;margin-top:4px;">batch 2</div>
+        </div>
+        <div style="font-size:14px;color:var(--ink-soft);">…</div>
+      </div>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-blue">batch_size=64</b> typical. Bigger = faster, more RAM. Smaller = noisier gradients (sometimes helps).</li>
+        <li class="fragment"><b class="tk-red">shuffle=True</b> for train (avoid order bias). <b>False</b> for validation.</li>
+        <li class="fragment"><b class="tk-purple">Why batches</b>: full dataset doesn't fit in GPU RAM. Mini-batches approximate gradient cheaply.</li>
+      </ul>
+    </section>
+
+    <!-- 7. THE 5 LINES -->
+    <section class="slide">
+      <h2>THE 5 lines</h2>
+
+      <div class="core-block">
+        <div class="core-line">
+          <div class="step">1</div>
+          <div class="code">optimizer.zero_grad()</div>
+          <div class="why">erase old gradients</div>
+        </div>
+        <div class="core-line">
+          <div class="step">2</div>
+          <div class="code">output = model(x)</div>
+          <div class="why">forward pass — predict</div>
+        </div>
+        <div class="core-line">
+          <div class="step">3</div>
+          <div class="code">loss = criterion(output, y)</div>
+          <div class="why">measure wrongness</div>
+        </div>
+        <div class="core-line">
+          <div class="step">4</div>
+          <div class="code">loss.backward()</div>
+          <div class="why">compute gradients</div>
+        </div>
+        <div class="core-line">
+          <div class="step">5</div>
+          <div class="code">optimizer.step()</div>
+          <div class="why">update weights</div>
+        </div>
+      </div>
+
+      <p class="callout fragment"><b class="tk-red">Order matters</b>. Skip any line → training fails or breaks silently. Memorize.</p>
+    </section>
+
+    <!-- 8. zero_grad whiteboard -->
+    <section class="slide">
+      <h2>Step 1 — <code>zero_grad()</code> = erase whiteboard</h2>
+      <p>PyTorch <b class="tk-blue">accumulates</b> gradients by default. If you don't erase, every batch's gradient piles on top of the last.</p>
+
+      <div class="wb-stage">
+        <div class="wb-board bad">
+          <div class="lbl">no zero_grad</div>
+          ∂L/∂w = grad_1 + grad_2 + grad_3 + …
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-red);font-weight:400;">→ explodes, weights NaN</div>
+        </div>
+        <div style="font-size:18px;color:var(--accent-blue);font-weight:800;">vs</div>
+        <div class="wb-board good">
+          <div class="lbl">with zero_grad</div>
+          ∂L/∂w = grad_this_batch
+          <div style="margin-top:6px;font-size:10px;color:var(--accent-green);font-weight:400;">→ clean, training works</div>
+        </div>
+      </div>
+
+      <pre class="code" style="margin-top: 14px;"><span class="cmt"># forgot zero_grad — typical symptom:</span>
+loss after epoch <span class="num">0</span>: <span class="num">2.3</span>
+loss after epoch <span class="num">1</span>: <span class="num">847.5</span>
+loss after epoch <span class="num">2</span>: nan</pre>
+
+      <p class="callout fragment"><b class="tk-red">Most common PyTorch bug</b>. If your loss explodes, check this first.</p>
+    </section>
+
+    <!-- 9. forward + loss + backward -->
+    <section class="slide dense">
+      <h2>Steps 2–4 — forward, loss, backward</h2>
+      <pre class="code"><span class="cmt"># Step 2: forward — model runs, builds computation graph</span>
+output = model(x)
+<span class="cmt"># PyTorch records every op (Linear, ReLU, ...) as it runs</span>
+
+<span class="cmt"># Step 3: loss — single scalar number</span>
+loss = criterion(output, y)
+<span class="cmt"># this scalar is the "root" of the graph</span>
+
+<span class="cmt"># Step 4: backward — autograd traces graph backwards</span>
+loss.backward()
+<span class="cmt"># PyTorch fills .grad attribute on every parameter</span>
+<span class="cmt"># after this: model.weight.grad has the gradient ∂loss/∂weight</span></pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">forward</b> = predict + record ops.</li>
+        <li class="fragment"><b class="tk-purple">loss</b> = scalar. Always one number per batch.</li>
+        <li class="fragment"><b class="tk-green">backward</b> = chain rule, automated. You never write derivatives.</li>
+      </ul>
+      <p class="callout fragment" style="margin-top: 10px;"><b class="tk-red">Trap</b>: <code>loss.backward()</code> only works on a <b>scalar</b>. If loss is a tensor by accident, <code>.mean()</code> first.</p>
+    </section>
+
+    <!-- 10. optimizer.step -->
+    <section class="slide">
+      <h2>Step 5 — <code>optimizer.step()</code> = move weights</h2>
+      <pre class="code">optimizer.step()
+<span class="cmt"># for every parameter p in model:</span>
+<span class="cmt">#   p.data = p.data - lr * p.grad   (SGD intuition)</span>
+<span class="cmt"># Adam adds momentum + per-parameter learning rate</span></pre>
+
+      <p style="margin-top: 14px; font-size: 14px;">Math (SGD): $w \leftarrow w - \eta \cdot \nabla_w L$.</p>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-blue">Reads</b> <code>p.grad</code> (filled by <code>backward</code>).</li>
+        <li class="fragment"><b class="tk-purple">Writes</b> <code>p.data</code> (the weight values).</li>
+        <li class="fragment"><b class="tk-red">Doesn't reset</b> <code>p.grad</code> — that's <code>zero_grad()</code>'s job, called next iteration.</li>
+        <li class="fragment">Cycle: zero → forward → loss → backward → step → zero → …</li>
+      </ul>
+    </section>
+
+    <!-- 11. Full training loop -->
+    <section class="slide dense">
+      <h2>Full loop — epochs + batches + log</h2>
+      <pre class="code">num_epochs = <span class="num">5</span>
+
+<span class="kw">for</span> epoch <span class="kw">in</span> range(num_epochs):
+    model.train()                    <span class="cmt"># enable training mode (dropout / batchnorm)</span>
+    running_loss = <span class="num">0.0</span>
+
+    <span class="kw">for</span> x, y <span class="kw">in</span> train_loader:
+        x, y = x.to(device), y.to(device)
+
+        optimizer.zero_grad()         <span class="cmt"># 1</span>
+        output = model(x)             <span class="cmt"># 2</span>
+        loss = criterion(output, y)   <span class="cmt"># 3</span>
+        loss.backward()               <span class="cmt"># 4</span>
+        optimizer.step()              <span class="cmt"># 5</span>
+
+        running_loss += loss.item() * x.size(<span class="num">0</span>)
+
+    avg_loss = running_loss / len(train_loader.dataset)
+    <span class="kw">print</span>(<span class="str">f'epoch {epoch}: loss={avg_loss:.4f}'</span>)</pre>
+
+      <ul style="margin-top: 10px; font-size: 14px;">
+        <li class="fragment"><b class="tk-blue">epoch</b> = one full pass through the data. Typical: 5–50.</li>
+        <li class="fragment"><b class="tk-red">.item()</b> on loss — converts 0-d tensor to Python float (else memory leak).</li>
+        <li class="fragment"><b class="tk-purple">.to(device)</b> on EVERY batch — model and data must be on same device.</li>
+      </ul>
+    </section>
+
+    <!-- 12. Validation -->
+    <section class="slide dense">
+      <h2>Validation — score without learning</h2>
+      <pre class="code">model.eval()                          <span class="cmt"># disable dropout / batchnorm running stats</span>
+correct = <span class="num">0</span>
+total = <span class="num">0</span>
+
+<span class="kw">with</span> torch.no_grad():                  <span class="cmt"># skip gradient tracking — saves memory + time</span>
+    <span class="kw">for</span> x, y <span class="kw">in</span> val_loader:
+        x, y = x.to(device), y.to(device)
+        output = model(x)
+        preds = output.argmax(dim=<span class="num">1</span>)
+        correct += (preds == y).sum().item()
+        total += y.size(<span class="num">0</span>)
+
+<span class="kw">print</span>(<span class="str">f'val acc: {correct / total:.4f}'</span>)</pre>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-blue">model.eval()</b> + <b class="tk-blue">model.train()</b> — toggle at start of each phase.</li>
+        <li class="fragment"><b class="tk-purple">torch.no_grad()</b> — skips autograd graph, ~2× faster validation.</li>
+        <li class="fragment"><b class="tk-red">argmax(dim=1)</b> — pick highest-scoring class per row.</li>
+      </ul>
+      <p class="callout fragment" style="margin-top: 10px;"><b>Loop order</b>: train epoch → val epoch → log → repeat. Save best val checkpoint.</p>
+    </section>
+
+    <!-- 13. Widget — interactive training -->
+    <section class="slide">
+      <h2>Try it — pick LR, watch loss curve</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Tune learning rate + batch + epochs. Click <b>Train</b> to animate the loss curve.</p>
+
+      <div class="tw-shell">
+        <div class="tw-grid">
+          <div class="tw-controls">
+            <label>learning rate</label>
+            <select id="tw-lr">
+              <option value="1e-5">1e-5 (tiny)</option>
+              <option value="1e-4">1e-4 (slow)</option>
+              <option value="1e-3" selected>1e-3 (default)</option>
+              <option value="1e-2">1e-2 (aggressive)</option>
+              <option value="1e-1">1e-1 (explodes)</option>
+            </select>
+
+            <label>optimizer</label>
+            <select id="tw-opt">
+              <option value="adam" selected>Adam</option>
+              <option value="sgd">SGD + momentum</option>
+            </select>
+
+            <label>batch size</label>
+            <input type="range" id="tw-bs" min="8" max="256" step="8" value="64">
+            <div class="vrow"><span>8</span><b id="tw-bs-val">64</b><span>256</span></div>
+
+            <label>epochs</label>
+            <input type="range" id="tw-ep" min="1" max="20" step="1" value="10">
+            <div class="vrow"><span>1</span><b id="tw-ep-val">10</b><span>20</span></div>
+
+            <label>forget zero_grad?</label>
+            <select id="tw-zg">
+              <option value="no" selected>no — proper</option>
+              <option value="yes">yes — see what happens</option>
+            </select>
+
+            <button id="tw-go">▶ Train</button>
+          </div>
+
+          <div>
+            <div class="tw-canvas" id="tw-canvas"></div>
+            <div class="tw-stats" id="tw-stats"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. Pitfalls + Recap combined -->
+    <section class="slide dense">
+      <h2>Pitfalls + recap</h2>
+
+      <div class="tight-split">
+        <div>
+          <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.15em;color:var(--ink-soft);margin-bottom:6px;">5-line cheat</h4>
+          <div class="cheat-strip" style="display:grid;grid-template-columns:32px 1fr;gap:8px;">
+            <div class="num">1</div><code>optimizer.zero_grad()</code>
+            <div class="num">2</div><code>output = model(x)</code>
+            <div class="num">3</div><code>loss = criterion(output, y)</code>
+            <div class="num">4</div><code>loss.backward()</code>
+            <div class="num">5</div><code>optimizer.step()</code>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:0.15em;color:var(--ink-soft);margin-bottom:6px;">common bugs</h4>
+          <table class="param-tbl">
+            <tr><th>symptom</th><th>fix</th></tr>
+            <tr><td>loss → NaN epoch 1</td><td>lr too big OR forgot <code>zero_grad</code></td></tr>
+            <tr><td>loss flat, not learning</td><td>lr too small OR wrong loss for task</td></tr>
+            <tr><td><code>cuda out of memory</code></td><td>shrink batch_size</td></tr>
+            <tr><td><code>device mismatch</code></td><td>missing <code>.to(device)</code> on x or y</td></tr>
+            <tr><td><code>RuntimeError: scalar</code></td><td>loss is tensor, not scalar — <code>.mean()</code></td></tr>
+            <tr><td>val acc > train acc</td><td>forgot <code>model.eval()</code> for val</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <p class="callout fragment" style="margin-top: 14px;"><b class="tk-blue">Day 4</b>: transfer learning — replace head, fine-tune ResNet18, win race day.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 13 — fake training simulator */
+
+  const lrEl  = document.getElementById('tw-lr');
+  const optEl = document.getElementById('tw-opt');
+  const bsEl  = document.getElementById('tw-bs');
+  const epEl  = document.getElementById('tw-ep');
+  const zgEl  = document.getElementById('tw-zg');
+  const goBtn = document.getElementById('tw-go');
+  const bsVal = document.getElementById('tw-bs-val');
+  const epVal = document.getElementById('tw-ep-val');
+  const canvas = document.getElementById('tw-canvas');
+  const stats  = document.getElementById('tw-stats');
+
+  bsEl.addEventListener('input', () => bsVal.textContent = bsEl.value);
+  epEl.addEventListener('input', () => epVal.textContent = epEl.value);
+
+  let animTimer = null;
+
+  function genCurve() {
+    const lr = parseFloat(lrEl.value);
+    const opt = optEl.value;
+    const epochs = parseInt(epEl.value, 10);
+    const bs = parseInt(bsEl.value, 10);
+    const forgotZG = zgEl.value === 'yes';
+
+    const losses = [];
+
+    if (forgotZG) {
+      // gradients accumulate → loss explodes
+      let l = 2.3;
+      for (let e = 0; e < epochs; e++) {
+        l *= (1 + lr * 8000);  // grows fast
+        if (l > 1e6) l = NaN;
+        losses.push(l);
+        if (isNaN(l)) {
+          for (let i = e + 1; i < epochs; i++) losses.push(NaN);
+          break;
+        }
+      }
+      return { losses, status: 'exploded — forgot zero_grad' };
+    }
+
+    if (lr >= 0.1) {
+      // explosion zone
+      let l = 2.3;
+      for (let e = 0; e < epochs; e++) {
+        l *= (1 + lr * 50);
+        if (l > 1e6) l = NaN;
+        losses.push(l);
+        if (isNaN(l)) {
+          for (let i = e + 1; i < epochs; i++) losses.push(NaN);
+          break;
+        }
+      }
+      return { losses, status: 'exploded — lr too big' };
+    }
+
+    if (lr <= 1e-5) {
+      // flat — no learning
+      let l = 2.3;
+      for (let e = 0; e < epochs; e++) {
+        l *= 0.999;   // barely moves
+        losses.push(l);
+      }
+      return { losses, status: 'flat — lr too small' };
+    }
+
+    // normal training: exponential decay toward floor depending on lr + bs
+    const optBoost = opt === 'adam' ? 1.0 : 0.85;
+    const bsPenalty = bs > 128 ? 0.95 : (bs < 32 ? 1.1 : 1.0);
+    const decay = 0.65 + (Math.log10(lr) + 5) * 0.05;
+    const finalLoss = 0.15 + (Math.log10(lr) + 5) * 0.04;
+    let l = 2.3;
+    for (let e = 0; e < epochs; e++) {
+      l = finalLoss + (l - finalLoss) * (1 - decay * optBoost / bsPenalty);
+      // small noise per epoch
+      l += (Math.sin(e * 1.7) * 0.03);
+      losses.push(Math.max(0.01, l));
+    }
+    let status = 'training cleanly';
+    if (lr === 0.01) status = 'aggressive — learns fast, may overshoot';
+    if (lr === 1e-4) status = 'slow — works but takes more epochs';
+    if (opt === 'sgd') status += ' (SGD, slower convergence)';
+    return { losses, status };
+  }
+
+  function renderCurve(losses, animated, status) {
+    const W = 460, H = 240;
+    const pad = { l: 50, r: 20, t: 20, b: 36 };
+    const innerW = W - pad.l - pad.r;
+    const innerH = H - pad.t - pad.b;
+
+    // y-range
+    const validVals = losses.filter(v => !isNaN(v) && isFinite(v));
+    const yMin = 0;
+    const yMax = validVals.length ? Math.max(...validVals) * 1.1 : 3.0;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    // axes
+    const ax1 = document.createElementNS(SVG_NS, 'path');
+    ax1.setAttribute('d', `M ${pad.l} ${H - pad.b} L ${W - pad.r} ${H - pad.b}`);
+    ax1.setAttribute('class', 'ax-line');
+    svg.appendChild(ax1);
+    const ax2 = document.createElementNS(SVG_NS, 'path');
+    ax2.setAttribute('d', `M ${pad.l} ${pad.t} L ${pad.l} ${H - pad.b}`);
+    ax2.setAttribute('class', 'ax-line');
+    svg.appendChild(ax2);
+
+    // axis labels
+    function txt(x, y, t, anchor) {
+      const e = document.createElementNS(SVG_NS, 'text');
+      e.setAttribute('x', x); e.setAttribute('y', y);
+      e.setAttribute('text-anchor', anchor || 'middle');
+      e.setAttribute('class', 'ax-label');
+      e.textContent = t;
+      return e;
+    }
+    svg.appendChild(txt((pad.l + W - pad.r) / 2, H - 8, 'epoch'));
+    const yLab = txt(15, H / 2, 'loss', 'middle');
+    yLab.setAttribute('transform', `rotate(-90 15 ${H / 2})`);
+    svg.appendChild(yLab);
+
+    // ticks
+    function smallTxt(x, y, t, anchor) {
+      const e = document.createElementNS(SVG_NS, 'text');
+      e.setAttribute('x', x); e.setAttribute('y', y);
+      e.setAttribute('text-anchor', anchor || 'middle');
+      e.setAttribute('class', 'ax-text');
+      e.textContent = t;
+      return e;
+    }
+    svg.appendChild(smallTxt(pad.l - 8, H - pad.b + 4, '0', 'end'));
+    svg.appendChild(smallTxt(pad.l - 8, pad.t + 8, yMax.toFixed(1), 'end'));
+    svg.appendChild(smallTxt(W - pad.r, H - pad.b + 14, losses.length, 'end'));
+
+    // curve
+    const isExploding = losses.some(v => isNaN(v) || v > 100);
+    const isFlat = !isExploding && (Math.max(...validVals) - Math.min(...validVals)) < 0.05;
+
+    function pointFor(i, v) {
+      const x = pad.l + (i / Math.max(1, losses.length - 1)) * innerW;
+      let y;
+      if (isNaN(v) || !isFinite(v)) {
+        y = pad.t;   // pin to top to show divergence
+      } else {
+        y = H - pad.b - ((v - yMin) / (yMax - yMin || 1)) * innerH;
+      }
+      return [x, y];
+    }
+
+    const upTo = animated ? 0 : losses.length;
+    const polyline = document.createElementNS(SVG_NS, 'polyline');
+    polyline.setAttribute('class', isExploding ? 'loss-line bad' : (isFlat ? 'loss-line flat' : 'loss-line'));
+    polyline.setAttribute('points', losses.slice(0, upTo).map((v, i) => pointFor(i, v).join(',')).join(' '));
+    svg.appendChild(polyline);
+
+    canvas.innerHTML = '';
+    canvas.appendChild(svg);
+
+    // animate
+    if (animated) {
+      let i = 1;
+      clearInterval(animTimer);
+      animTimer = setInterval(() => {
+        if (i > losses.length) { clearInterval(animTimer); return; }
+        polyline.setAttribute('points', losses.slice(0, i).map((v, j) => pointFor(j, v).join(',')).join(' '));
+        // last value tooltip
+        const lastV = losses[i - 1];
+        const lastStr = isNaN(lastV) ? 'NaN' : lastV.toFixed(3);
+        stats.innerHTML = `epoch ${i}/${losses.length} &nbsp;·&nbsp; loss = <b>${lastStr}</b> &nbsp;·&nbsp; <b>${status}</b>`;
+        i++;
+      }, 130);
+    } else {
+      const lastV = losses[losses.length - 1];
+      const lastStr = isNaN(lastV) ? 'NaN' : lastV.toFixed(3);
+      stats.innerHTML = `final loss = <b>${lastStr}</b> &nbsp;·&nbsp; <b>${status}</b>`;
+    }
+  }
+
+  function trainOnce(animated) {
+    const { losses, status } = genCurve();
+    renderCurve(losses, animated, status);
+  }
+
+  goBtn.addEventListener('click', () => trainOnce(true));
+
+  // initial static render
+  trainOnce(false);
+})();
+</script>
+
+</body>
+</html>
