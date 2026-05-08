@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Transfer Learning &amp; Race Day Survival</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* CNN flow diagram */
+  .cnn-stage {
+    display: flex; gap: 4px; align-items: center; flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 14px;
+  }
+  .cnn-block {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 8px 10px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 80px;
+  }
+  .cnn-block .lbl {
+    font-size: 9px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .cnn-block.input { background: #c8e6ff; }
+  .cnn-block.conv { background: var(--cream); }
+  .cnn-block.pool { background: #d6f5dd; }
+  .cnn-block.fc { background: #ffd6cc; }
+  .cnn-arrow {
+    font-size: 18px;
+    color: var(--accent-blue);
+    font-weight: 800;
+  }
+
+  /* mode comparison */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .mode-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 10px 14px;
+  }
+  .mode-card h4 {
+    background: var(--cream);
+    padding: 2px 8px;
+    display: inline-block;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .mode-card.recommended { border-width: 3px; box-shadow: 4px 4px 0 var(--cream); }
+  .mode-card .when { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .mode-card .speed { font-size: 11px; color: var(--accent-green); font-weight: 700; }
+  .mode-card .cost { font-size: 11px; color: var(--accent-red); font-weight: 700; }
+
+  /* race day phases */
+  .phase-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 12px 18px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .phase-card .phase-num {
+    position: absolute;
+    top: -14px; left: 14px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+  }
+  .phase-card h4 {
+    margin: 4px 0 6px;
+    font-size: 16px;
+  }
+  .phase-card .time {
+    font-size: 11px;
+    color: var(--accent-red);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .phase-card ul {
+    margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.5;
+  }
+  .phase-card.warning { background: #fff8d6; }
+  .phase-card.go { background: #d6f5dd; }
+  .phase-card.iterate { background: #c8e6ff; }
+  .phase-card.stuck { background: #ffd6cc; }
+
+  /* don'ts list */
+  .dont-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .dont-item {
+    border: 2px solid var(--accent-red);
+    background: #fff;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .dont-item b { color: var(--accent-red); }
+  .dont-item .x { font-size: 18px; font-weight: 800; color: var(--accent-red); margin-right: 4px; }
+
+  /* widget — frozen layer slider */
+  .fz-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .fz-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .fz-controls label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 8px 0 4px;
+  }
+  .fz-controls input[type="range"] {
+    width: 100%;
+    height: 24px;
+  }
+  .fz-controls .vrow {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .fz-controls input[type="number"] {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: 2px solid var(--ink);
+    padding: 4px 8px;
+    width: 100%;
+  }
+  .fz-code {
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+  .fz-canvas {
+    border: 2px dashed var(--ink-mute);
+    background: #fff;
+    padding: 12px 14px;
+  }
+  .fz-layer {
+    display: grid;
+    grid-template-columns: 130px 60px 1fr 70px;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 8px;
+    border-bottom: 1px dashed var(--ink-mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .fz-layer:last-child { border-bottom: none; }
+  .fz-layer.frozen { background: #c8e6ff; opacity: 0.65; }
+  .fz-layer.train { background: #d6f5dd; }
+  .fz-layer.head { background: var(--cream); border-left: 3px solid var(--accent-red); }
+  .fz-name { font-weight: 700; }
+  .fz-bar {
+    height: 14px;
+    background: var(--accent-blue);
+    border: 1.5px solid var(--ink);
+  }
+  .fz-bar.frozen { background: #c8e6ff; opacity: 0.5; }
+  .fz-bar.train { background: var(--accent-green); }
+  .fz-bar.head { background: var(--accent-red); }
+  .fz-stats {
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .fz-stats b { color: var(--ink); background: var(--cream); padding: 1px 5px; }
+
+  /* resources table */
+  .res-tbl {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+  .res-tbl th, .res-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 6px 12px;
+    text-align: left;
+    background: #fff;
+  }
+  .res-tbl th { background: var(--cream); font-weight: 800; }
+  .res-tbl td.pri { background: #d6f5dd; font-weight: 700; }
+
+  /* cheat strip — final */
+  .final-cheat {
+    background: #fff;
+    border: 3px solid var(--ink);
+    padding: 14px 20px;
+    box-shadow: 6px 6px 0 var(--cream);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .final-cheat h4 {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 4px 10px;
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+  .final-cheat code { font-weight: 700; background: var(--cream-soft); padding: 0 4px; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
+
+  /* param/pitfall table */
+  .param-tbl {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .param-tbl th, .param-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .param-tbl th { background: var(--cream); font-weight: 800; }
+  .param-tbl code { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Transfer Learning<br/>+ Race Day</h1>
+      <p class="subtitle">Stand on giants. Survive camp.<br/>Day 4 — final deck.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. CNN one-pager -->
+    <section class="slide">
+      <h2>CNN — what flows through</h2>
+      <p>Diagram only — math optional. Image enters. Layers detect patterns. Final layer classifies.</p>
+
+      <div class="cnn-stage">
+        <div class="cnn-block input">
+          <div class="lbl">input</div>
+          (3, 224, 224)
+          <div style="font-size:9px;color:var(--ink-soft);">RGB image</div>
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block conv">
+          <div class="lbl">conv</div>
+          edges,<br/>colors
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block pool">
+          <div class="lbl">pool</div>
+          shrink
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block conv">
+          <div class="lbl">conv</div>
+          shapes,<br/>textures
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block pool">
+          <div class="lbl">pool</div>
+          shrink
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block conv">
+          <div class="lbl">conv</div>
+          eyes,<br/>wheels
+        </div>
+        <div class="cnn-arrow">→</div>
+        <div class="cnn-block fc">
+          <div class="lbl">FC</div>
+          classify
+        </div>
+      </div>
+
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Early layers</b> — simple features (edges, colors). Generic.</li>
+        <li class="fragment"><b class="tk-purple">Middle layers</b> — combinations (shapes, textures). Less generic.</li>
+        <li class="fragment"><b class="tk-red">Late layers + FC head</b> — task-specific (cat vs dog).</li>
+      </ul>
+      <p class="callout fragment"><b>Insight</b>: early/middle layers learn things that transfer across tasks. Don't retrain them.</p>
+    </section>
+
+    <!-- 3. Why pretrained wins -->
+    <section class="slide">
+      <h2>Why pretrained wins</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">ResNet18</b> trained on <b>ImageNet</b> = 1.2M images, 1000 classes, weeks of GPU time.</li>
+        <li class="fragment">It already knows what <b class="tk-purple">edges, eyes, wheels, fur, metal</b> look like.</li>
+        <li class="fragment">Your task: 500 flower images. Train from scratch $\Rightarrow$ <b class="tk-red">overfit, garbage</b>.</li>
+        <li class="fragment">Smart move: <b class="tk-green">replace just the last layer</b>. Let it adapt to your classes.</li>
+      </ul>
+
+      <div style="background: #fff; border: 2px solid var(--ink); padding: 12px 18px; margin-top: 16px; font-family: var(--font-mono); font-size: 13px;">
+        <b>Story</b>: ResNet learned to see edges by looking at 1.2M cats, dogs, planes. When you give it flowers, it doesn't need to relearn what an edge is. It only needs to learn <i>which combinations of edges = which flower</i>.
+      </div>
+
+      <p class="callout fragment" style="margin-top: 14px;"><b>Rule</b>: 95% of NOAI image tasks → start with <code>pretrained=True</code>. Never train from scratch on small data.</p>
+    </section>
+
+    <!-- 4. 3 modes -->
+    <section class="slide">
+      <h2>3 transfer learning modes</h2>
+      <div class="mode-grid">
+        <div class="mode-card recommended">
+          <h4>1. FROZEN BASE</h4>
+          <div>Freeze ALL pretrained layers. Train only new head.</div>
+          <div class="speed">+ fastest, ~5 min</div>
+          <div class="cost">− least flexibility</div>
+          <div class="when"><b>Use when</b>: ≤ 1k images, similar domain (animals → flowers)</div>
+        </div>
+        <div class="mode-card">
+          <h4>2. PARTIAL FT</h4>
+          <div>Freeze early layers. Fine-tune last few + head.</div>
+          <div class="speed">+ middle ground</div>
+          <div class="cost">− more careful tuning needed</div>
+          <div class="when"><b>Use when</b>: 1k–10k images, somewhat different domain</div>
+        </div>
+        <div class="mode-card">
+          <h4>3. FULL FT</h4>
+          <div>Unfreeze everything. Train all layers (small lr).</div>
+          <div class="speed">+ most flexibility</div>
+          <div class="cost">− slow, easy to wreck pretrained weights</div>
+          <div class="when"><b>Use when</b>: ≥ 10k images, different domain (X-rays, satellite)</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 14px;"><b class="tk-blue">For NOAI</b>: <b>almost always mode 1 or 2</b>. Race day = no time to tune mode 3.</p>
+    </section>
+
+    <!-- 5. Template — load -->
+    <section class="slide">
+      <h2>Template part 1 — load pretrained</h2>
+      <pre class="code"><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">from</span> torchvision <span class="kw">import</span> models
+
+<span class="cmt"># 1. load pretrained model</span>
+model = models.resnet18(pretrained=<span class="kw">True</span>)
+<span class="cmt"># downloads ImageNet weights (~45 MB) on first run</span>
+<span class="cmt"># in newer torchvision: weights=models.ResNet18_Weights.DEFAULT</span></pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">torchvision.models</b> ships dozens of architectures with pretrained weights.</li>
+        <li class="fragment">Other options: <code>resnet50</code>, <code>efficientnet_b0</code>, <code>mobilenet_v3_small</code>.</li>
+        <li class="fragment"><b class="tk-red">Trap</b>: forget <code>pretrained=True</code> $\Rightarrow$ random weights. Trains forever, never converges.</li>
+      </ul>
+      <p class="callout fragment"><b>Camp tip</b>: ResNet18 is the survival default. Small enough to fit, big enough to win baselines.</p>
+    </section>
+
+    <!-- 6. Template — freeze -->
+    <section class="slide">
+      <h2>Template part 2 — freeze the base</h2>
+      <pre class="code"><span class="cmt"># 2. freeze all parameters</span>
+<span class="kw">for</span> param <span class="kw">in</span> model.parameters():
+    param.requires_grad = <span class="kw">False</span>
+
+<span class="cmt"># after this, NO gradients flow through any layer</span>
+<span class="cmt"># model is now read-only</span></pre>
+
+      <p style="margin-top: 14px; font-size: 14px;">What just happened:</p>
+      <ul style="margin-top: 4px;">
+        <li class="fragment"><b class="tk-blue">requires_grad = False</b> on every weight $\Rightarrow$ no gradient, no update.</li>
+        <li class="fragment">Forward pass still runs (predictions work). Backward simply skips them.</li>
+        <li class="fragment">Saves <b class="tk-green">memory</b> (no gradient buffers) and <b class="tk-green">time</b> (no backprop math).</li>
+      </ul>
+      <p class="callout fragment" style="margin-top: 12px;"><b>Why this works</b>: pretrained features are already good. We just add a small task-specific layer on top.</p>
+    </section>
+
+    <!-- 7. Template — replace head -->
+    <section class="slide">
+      <h2>Template part 3 — swap the head</h2>
+      <pre class="code"><span class="cmt"># 3. replace the final classification layer</span>
+NUM_CLASSES = <span class="num">10</span>   <span class="cmt"># your dataset's number of classes</span>
+
+<span class="cmt"># ResNet's last layer is named 'fc'</span>
+model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
+<span class="cmt"># in_features = 512 for ResNet18, automatic</span>
+
+<span class="cmt"># the new head has requires_grad=True by default</span>
+<span class="cmt"># it's the only thing that will train</span></pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">model.fc.in_features</b> — read it from the model, don't hardcode.</li>
+        <li class="fragment">Different architecture, different name: <code>model.classifier</code> (DenseNet, EfficientNet), <code>model.heads</code> (ViT).</li>
+        <li class="fragment"><b class="tk-red">Trap</b>: replacing <code>model.fc</code> AFTER the freeze loop $\Rightarrow$ new layer is trainable. Order matters.</li>
+      </ul>
+    </section>
+
+    <!-- 8. Template — train head only -->
+    <section class="slide dense">
+      <h2>Template part 4 — train only the head</h2>
+      <pre class="code"><span class="cmt"># 4. move to GPU + training setup</span>
+device = <span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">'cpu'</span>
+model = model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.fc.parameters(), lr=<span class="num">0.001</span>)
+<span class="cmt"># ↑ pass model.fc.parameters() — NOT model.parameters()</span>
+
+<span class="cmt"># 5. standard training loop (only the head trains)</span>
+<span class="kw">for</span> epoch <span class="kw">in</span> range(<span class="num">3</span>):
+    <span class="kw">for</span> x, y <span class="kw">in</span> train_loader:
+        x, y = x.to(device), y.to(device)
+        optimizer.zero_grad()
+        output = model(x)
+        loss = criterion(output, y)
+        loss.backward()
+        optimizer.step()</pre>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-red">Pass <code>model.fc.parameters()</code></b> — not full <code>model.parameters()</code>. Optimizer ignores frozen layers anyway, but cleaner this way.</li>
+        <li class="fragment"><b class="tk-blue">3 epochs</b> usually enough for frozen-base mode. Head converges fast.</li>
+        <li class="fragment">Same 5-line loop as deck 09. Recognize the shape.</li>
+      </ul>
+    </section>
+
+    <!-- 9. Image DataLoader -->
+    <section class="slide dense">
+      <h2>Image DataLoader — feed pretrained model</h2>
+      <pre class="code"><span class="kw">from</span> torchvision <span class="kw">import</span> transforms, datasets
+<span class="kw">from</span> torch.utils.data <span class="kw">import</span> DataLoader
+
+transform = transforms.Compose([
+    transforms.Resize((<span class="num">224</span>, <span class="num">224</span>)),         <span class="cmt"># ResNet expects 224x224</span>
+    transforms.ToTensor(),                  <span class="cmt"># PIL → tensor (0..1)</span>
+    transforms.Normalize(
+        mean=[<span class="num">0.485</span>, <span class="num">0.456</span>, <span class="num">0.406</span>],     <span class="cmt"># ImageNet stats</span>
+        std =[<span class="num">0.229</span>, <span class="num">0.224</span>, <span class="num">0.225</span>],
+    ),
+])
+
+train_ds = datasets.ImageFolder(<span class="str">'data/train'</span>, transform=transform)
+train_loader = DataLoader(train_ds, batch_size=<span class="num">32</span>, shuffle=<span class="kw">True</span>)</pre>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment"><b class="tk-red">CRITICAL</b>: use <b>ImageNet's</b> mean/std for <b>any</b> ImageNet-pretrained model. Same numbers, copy-paste.</li>
+        <li class="fragment"><b class="tk-blue">Resize to 224x224</b> for ResNet/ViT/most ImageNet models. EfficientNet may want different.</li>
+        <li class="fragment"><b class="tk-purple">ImageFolder</b> auto-reads <code>data/train/&lt;class_name&gt;/img.jpg</code> structure.</li>
+      </ul>
+    </section>
+
+    <!-- 10. Full template -->
+    <section class="slide dense">
+      <h2>Full template — print + memorize</h2>
+      <pre class="code"><span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.optim <span class="kw">as</span> optim
+<span class="kw">from</span> torchvision <span class="kw">import</span> models, transforms, datasets
+<span class="kw">from</span> torch.utils.data <span class="kw">import</span> DataLoader
+
+<span class="cmt"># 1. data</span>
+transform = transforms.Compose([
+    transforms.Resize((<span class="num">224</span>, <span class="num">224</span>)), transforms.ToTensor(),
+    transforms.Normalize([<span class="num">0.485</span>,<span class="num">0.456</span>,<span class="num">0.406</span>], [<span class="num">0.229</span>,<span class="num">0.224</span>,<span class="num">0.225</span>]),
+])
+train_loader = DataLoader(datasets.ImageFolder(<span class="str">'data/train'</span>, transform=transform), batch_size=<span class="num">32</span>, shuffle=<span class="kw">True</span>)
+
+<span class="cmt"># 2. model — load + freeze + new head</span>
+model = models.resnet18(pretrained=<span class="kw">True</span>)
+<span class="kw">for</span> p <span class="kw">in</span> model.parameters(): p.requires_grad = <span class="kw">False</span>
+NUM_CLASSES = <span class="num">10</span>
+model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
+
+<span class="cmt"># 3. train</span>
+device = <span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">'cpu'</span>
+model = model.to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.fc.parameters(), lr=<span class="num">1e-3</span>)
+
+<span class="kw">for</span> epoch <span class="kw">in</span> range(<span class="num">3</span>):
+    <span class="kw">for</span> x, y <span class="kw">in</span> train_loader:
+        x, y = x.to(device), y.to(device)
+        optimizer.zero_grad()
+        loss = criterion(model(x), y)
+        loss.backward()
+        optimizer.step()</pre>
+      <p class="callout fragment" style="margin-top: 8px;">~25 lines. Wins most camp image baselines. Copy, change <code>NUM_CLASSES</code>, run.</p>
+    </section>
+
+    <!-- 11. Widget — frozen layer slider -->
+    <section class="slide">
+      <h2>Try it — drag the freeze line</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Move the freeze line. See trainable param count + which layers train.</p>
+
+      <div class="fz-shell">
+        <div class="fz-grid">
+          <div class="fz-controls">
+            <label>freeze first N layers (0 = train all, 4 = frozen base)</label>
+            <input type="range" id="fz-line" min="0" max="4" step="1" value="4">
+            <div class="vrow"><span>0</span><b id="fz-line-val">4</b><span>4</span></div>
+
+            <label>num classes (your task)</label>
+            <input type="number" id="fz-classes" min="2" max="1000" value="10">
+
+            <div class="fz-code" id="fz-code"></div>
+          </div>
+
+          <div>
+            <div class="fz-canvas" id="fz-canvas"></div>
+            <div class="fz-stats" id="fz-stats"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. Race Day Phase 1 -->
+    <section class="slide">
+      <h2>Race Day — Phase 1: read, don't code</h2>
+      <div class="phase-card warning">
+        <div class="phase-num">PHASE 1</div>
+        <div class="time">first 15 min — DO NOT TOUCH KEYBOARD</div>
+        <h4>Understand the task before you code anything</h4>
+        <ul>
+          <li>Read the task description <b>completely</b>. Twice.</li>
+          <li>Identify the <b class="tk-red">scoring metric</b>: accuracy? F1? IoU? RMSE? mAP?</li>
+          <li>Look at the <b class="tk-blue">sample submission</b> file. What format? CSV? JSON? What columns?</li>
+          <li>Open the <b class="tk-purple">baseline notebook</b> if provided. What does it do? What model? What data?</li>
+          <li>Check the dataset: <code>train.csv</code>, <code>test.csv</code>, image folders? Sizes?</li>
+        </ul>
+      </div>
+      <p class="callout fragment"><b class="tk-red">Mistake</b>: students start coding immediately, write the wrong metric, submit garbage for hours. <b>15 min reading saves 4 hours.</b></p>
+    </section>
+
+    <!-- 13. Race Day Phase 2 -->
+    <section class="slide">
+      <h2>Race Day — Phase 2: get a working pipeline</h2>
+      <div class="phase-card go">
+        <div class="phase-num">PHASE 2</div>
+        <div class="time">next 45 min — get any score on the leaderboard</div>
+        <h4>Run baseline → submit → confirm scoring works</h4>
+        <ul>
+          <li>Run the baseline as-is. Don't change anything yet.</li>
+          <li>Produce the submission file. Confirm format matches sample.</li>
+          <li>Submit. Confirm it's accepted. Get a score.</li>
+          <li><b class="tk-green">Goal</b>: non-zero score on leaderboard within first hour.</li>
+        </ul>
+      </div>
+      <p class="callout fragment"><b class="tk-blue">Why this matters</b>: a working pipeline beats a fancy idea. With pipeline working, you can iterate fast. Without pipeline, you can't iterate at all.</p>
+    </section>
+
+    <!-- 14. Race Day Phase 3 -->
+    <section class="slide">
+      <h2>Race Day — Phase 3: improve incrementally</h2>
+      <div class="phase-card iterate">
+        <div class="phase-num">PHASE 3</div>
+        <div class="time">remaining time — climb the leaderboard</div>
+        <h4>Change ONE thing. Submit. Note direction.</h4>
+        <ul>
+          <li>Try different model: <code>LogisticRegression</code> → <code>RandomForest</code>, <code>resnet18</code> → <code>resnet50</code>.</li>
+          <li>Add or remove ONE feature. Re-train. Submit.</li>
+          <li>Increase epochs (only if loss still falling).</li>
+          <li>Adjust learning rate (lower if unstable, higher if too slow).</li>
+          <li><b class="tk-red">Track every submission</b>: what changed, what score moved.</li>
+        </ul>
+      </div>
+      <p class="callout fragment"><b class="tk-red">Trap</b>: change 5 things, score drops, no idea which one broke it. <b>One thing at a time.</b></p>
+    </section>
+
+    <!-- 15. Race Day Phase 4 -->
+    <section class="slide">
+      <h2>Race Day — Phase 4: when stuck</h2>
+      <div class="phase-card stuck">
+        <div class="phase-num">PHASE 4</div>
+        <div class="time">when nothing works — recovery protocol</div>
+        <h4>Diagnose, don't panic</h4>
+        <ul>
+          <li>Read the <b>last line</b> of the error message, not the first. That's the actual problem.</li>
+          <li>Print <code>df.head()</code>, <code>tensor.shape</code>, <code>len(dataset)</code> at every step. Verify each.</li>
+          <li>If model isn't learning: <b class="tk-blue">lower lr</b> by 10×, simplify model, smaller batch.</li>
+          <li>If <code>cuda out of memory</code>: shrink batch size, use <code>resnet18</code> not <code>resnet50</code>.</li>
+          <li>Forget zero_grad? See deck 09.</li>
+          <li><b class="tk-green">Asking mentors is allowed and expected.</b> Don't waste 2 hours on something they fix in 30 sec.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 16. Don'ts + Resources -->
+    <section class="slide">
+      <h2>Don'ts + resources</h2>
+
+      <div class="dont-list" style="margin-bottom: 14px;">
+        <div class="dont-item"><span class="x">✗</span><b>Don't</b> train from scratch when pretrained is available.</div>
+        <div class="dont-item"><span class="x">✗</span><b>Don't</b> write "clean" code first. Make it work, clean later.</div>
+        <div class="dont-item"><span class="x">✗</span><b>Don't</b> run 100 epochs on first try. Try 2-3.</div>
+        <div class="dont-item"><span class="x">✗</span><b>Don't</b> change multiple things between submissions.</div>
+      </div>
+
+      <table class="res-tbl">
+        <tr><th>priority</th><th>resource</th><th>when to use</th></tr>
+        <tr><td class="pri">1</td><td><a href="https://www.kaggle.com/learn/pandas">Kaggle Learn — Pandas</a></td><td>reinforce Pandas</td></tr>
+        <tr><td class="pri">2</td><td><a href="https://www.kaggle.com/learn">Kaggle Learn — Intro/Intermediate ML</a></td><td>practice sklearn</td></tr>
+        <tr><td class="pri">3</td><td><a href="https://github.com/jaredliw/ioai-tsp-2025">Malaysia IOAI TSP 2025 repo</a></td><td>see real baseline notebooks</td></tr>
+        <tr><td>4</td><td><a href="https://course.fast.ai/">Fast.ai Practical Deep Learning</a></td><td>go deeper into DL</td></tr>
+        <tr><td>5</td><td><a href="https://github.com/IOAI-official">IOAI 2024/2025 Tasks</a></td><td>practice on real problems</td></tr>
+        <tr><td>6</td><td><a href="https://pytorch.org/tutorials/">PyTorch Tutorials</a></td><td>reference</td></tr>
+      </table>
+    </section>
+
+    <!-- 17. Final cheat sheet -->
+    <section class="slide dense">
+      <h2>Final cheat sheet — bootcamp recap</h2>
+      <div class="final-cheat">
+        <h4>PANDAS</h4>
+        <code>pd.read_csv(...)</code> · <code>df.head() / .info() / .describe()</code> · <code>df[df['x'] &gt; 5]</code> · <code>df.fillna(value)</code> · <code>df.groupby('k')['v'].mean()</code><br/><br/>
+
+        <h4>NUMPY</h4>
+        <code>np.array</code> · <code>arr.shape / .reshape</code> · <code>arr.mean(axis=0)</code> · broadcasting<br/><br/>
+
+        <h4>SKLEARN PIPELINE — 5 STEPS</h4>
+        1. <code>df = pd.read_csv(...)</code> &nbsp; 2. <code>train_test_split(X, y, test_size=0.2)</code> &nbsp; 3. <code>model.fit(X_train, y_train)</code> &nbsp; 4. <code>preds = model.predict(X_test)</code> &nbsp; 5. <code>accuracy_score(y_test, preds)</code><br/><br/>
+
+        <h4>PYTORCH TRAINING LOOP — 5 LINES</h4>
+        <code>optimizer.zero_grad()</code> · <code>output = model(x)</code> · <code>loss = criterion(output, y)</code> · <code>loss.backward()</code> · <code>optimizer.step()</code><br/><br/>
+
+        <h4>TRANSFER LEARNING — 3 STEPS</h4>
+        <code>model = models.resnet18(pretrained=True)</code><br/>
+        <code>for p in model.parameters(): p.requires_grad = False</code><br/>
+        <code>model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)</code><br/><br/>
+
+        <h4>RACE DAY</h4>
+        1. Read task + metric (15 min, no code yet) &nbsp; 2. Run baseline → first submission &nbsp; 3. Improve ONE thing → submit → repeat &nbsp; 4. Stuck? Read last error line, print shapes, ask mentor
+      </div>
+      <p class="callout fragment" style="margin-top: 14px; text-align: center; font-size: 16px;"><b>You now survive. Go win.</b> 🎯</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 11 — frozen layer widget */
+
+  const lineEl    = document.getElementById('fz-line');
+  const lineVal   = document.getElementById('fz-line-val');
+  const classesEl = document.getElementById('fz-classes');
+  const codeEl    = document.getElementById('fz-code');
+  const canvas    = document.getElementById('fz-canvas');
+  const stats     = document.getElementById('fz-stats');
+
+  // Fake ResNet18 layer params (approximate ImageNet values)
+  // Order: shallow → deep
+  const LAYERS = [
+    { name: 'conv1+bn1',  params: 9_536 },
+    { name: 'layer1 (2x BasicBlock)', params: 147_968 },
+    { name: 'layer2 (2x BasicBlock)', params: 525_568 },
+    { name: 'layer3 (2x BasicBlock)', params: 2_099_712 },
+    { name: 'layer4 (2x BasicBlock)', params: 8_393_728 },
+  ];
+  // Total of 'frozen' bases at each cut: 0, 1, 2, 3, 4 layer GROUPS frozen
+  // freezeN means: layers[0..freezeN-1] frozen, rest train
+
+  function format(n) { return n.toLocaleString(); }
+
+  function render() {
+    const freezeN = parseInt(lineEl.value, 10);
+    lineVal.textContent = freezeN;
+    const numClasses = Math.max(2, Math.min(1000, parseInt(classesEl.value || '10', 10) || 10));
+
+    // head — replaced fc layer
+    const headParams = 512 * numClasses + numClasses;
+
+    // build layer list
+    const rows = [];
+    let frozenCount = 0, trainCount = 0;
+    LAYERS.forEach((L, i) => {
+      const frozen = i < freezeN;
+      rows.push({ name: L.name, params: L.params, state: frozen ? 'frozen' : 'train' });
+      if (frozen) frozenCount += L.params;
+      else trainCount += L.params;
+    });
+    rows.push({ name: 'fc (NEW HEAD)', params: headParams, state: 'head' });
+    trainCount += headParams;
+
+    // render bars — width relative to max
+    const maxP = Math.max(...rows.map(r => r.params));
+
+    canvas.innerHTML = '';
+    rows.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'fz-layer ' + r.state;
+      const w = (r.params / maxP) * 100;
+      const stateText = r.state === 'frozen' ? 'FROZEN' : (r.state === 'head' ? 'NEW HEAD' : 'TRAIN');
+      div.innerHTML = `
+        <div class="fz-name">${r.name}</div>
+        <div style="font-size:10px;color:var(--ink-soft);font-weight:700;">${stateText}</div>
+        <div><div class="fz-bar ${r.state}" style="width:${w}%;"></div></div>
+        <div style="text-align:right;font-weight:700;">${format(r.params)}</div>
+      `;
+      canvas.appendChild(div);
+    });
+
+    // code block
+    const freezeLine = freezeN === 0
+      ? '# no freeze — full fine-tune'
+      : `# freeze first ${freezeN} of 5 layer groups
+for name, p in model.named_parameters():
+    if not name.startswith('fc'):  # don't freeze new head
+        # custom logic to freeze first ${freezeN} groups
+        p.requires_grad = False`;
+    const codeStr = `model = models.resnet18(pretrained=True)
+${freezeLine}
+model.fc = nn.Linear(model.fc.in_features, ${numClasses})
+
+optimizer = optim.Adam(
+    [p for p in model.parameters() if p.requires_grad],
+    lr=${freezeN === 5 ? '1e-3' : (freezeN >= 3 ? '5e-4' : '1e-4')})`;
+    codeEl.textContent = codeStr;
+
+    // stats
+    const totalP = frozenCount + trainCount;
+    const trainPct = (trainCount / totalP * 100).toFixed(1);
+    let mode;
+    if (freezeN === 0)      mode = 'mode 3: FULL FT — slowest, most flexible';
+    else if (freezeN <= 2)  mode = 'mode 2: PARTIAL FT — middle ground';
+    else if (freezeN === 4) mode = 'mode 2 (deep): PARTIAL FT — top group + head only';
+    else if (freezeN === 5) mode = 'mode 1: FROZEN BASE — fastest, only head trains';
+
+    let warning = '';
+    if (freezeN === 5 && numClasses === 1000) {
+      warning = ' <span style="color:var(--accent-red);">⚠ 1000 classes = ImageNet itself, why fine-tune?</span>';
+    } else if (freezeN === 0 && numClasses < 10) {
+      warning = ' <span style="color:var(--accent-red);">⚠ small classes + full FT = will overfit</span>';
+    }
+
+    stats.innerHTML = `total params: <b>${format(totalP)}</b> &nbsp;·&nbsp; trainable: <b>${format(trainCount)}</b> (${trainPct}%) &nbsp;·&nbsp; <b>${mode}</b>${warning}`;
+  }
+
+  lineEl.addEventListener('input', render);
+  classesEl.addEventListener('input', render);
+  render();
+})();
+</script>
+
+</body>
+</html>
