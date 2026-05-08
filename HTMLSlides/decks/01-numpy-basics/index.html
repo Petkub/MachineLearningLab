@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NumPy Basics</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* ---- deck-local viz styles ---- */
+
+  /* generic numpy cell grid */
+  .np-grid { display: inline-grid; gap: 4px; font-family: var(--font-mono); }
+  .np-cell {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: #fff; border: 2px solid var(--ink);
+    font-weight: 700; font-size: 16px;
+    transition: background 280ms var(--ease), transform 280ms var(--ease), border-color 280ms var(--ease);
+  }
+  .np-cell.hi    { background: var(--cream); }
+  .np-cell.pick  { background: #b8eef0; transform: scale(1.08); }
+  .np-cell.row   { background: #ffd6cc; }
+  .np-cell.row.r1{ background: #ffe3a8; }
+  .np-cell.col   { background: #e6d2ff; }
+  .np-cell.col.c1{ background: #c8e6ff; }
+  .np-cell.col.c2{ background: #d6f5dd; }
+  .agg-wrap { display: inline-grid; grid-template-columns: auto auto; gap: 6px; align-items: start; }
+  .agg-sums { display: grid; gap: 4px; font-family: var(--font-mono); font-weight: 700; }
+  .agg-sum-cell {
+    display: grid; place-items: center;
+    width: 44px; height: 44px;
+    background: var(--cream); border: 2px dashed var(--ink);
+    font-size: 16px;
+  }
+  .agg-axis-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+  .np-cell.mask  { background: #d6f5dd; border-color: var(--accent-green); }
+  .np-cell.maskF { background: #fff; opacity: 0.35; }
+  .np-cell.dim   { opacity: 0.25; }
+  .np-cell.small { width: 32px; height: 32px; font-size: 13px; }
+  .np-cell.tiny  { width: 26px; height: 26px; font-size: 11px; }
+
+  /* indexing playground (slide 7) */
+  .idx-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin: 14px 0 8px;
+  }
+  .idx-btn {
+    font-family: var(--font-mono);
+    font-size: 14px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 6px 12px; cursor: pointer;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .idx-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .idx-btn.active { background: var(--cream); }
+  .idx-result {
+    margin-top: 10px;
+    font-size: 16px; color: var(--ink-soft);
+    font-family: var(--font-mono);
+  }
+  .idx-result b { color: var(--ink); background: var(--cream); padding: 1px 6px; }
+
+  /* axis-collapse animation (slide 10) */
+  .axis-demo { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+  .axis-arrow {
+    stroke: var(--accent-purple); stroke-width: 3; fill: none;
+    marker-end: url(#arr);
+  }
+
+  /* mask filter animation (slide 11) */
+  @keyframes maskDrop {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(60px); opacity: 0; }
+  }
+  .mask-out { animation: maskDrop 600ms var(--ease) forwards; }
+
+  /* reshape morphing (slide 6) */
+  .reshape-stage { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .reshape-arrow {
+    font-size: 26px; color: var(--accent-blue); font-weight: 700;
+  }
+
+  /* tighten dense pre */
+  .slide.dense pre.code { font-size: 15px; line-height: 1.45; }
+  .pitfall-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+  .pitfall-row > div { font-size: 17px; }
+  .pitfall-row pre.code { margin-top: 6px; font-size: 13px; }
+
+  /* broadcast pulse */
+  @keyframes bcPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .bc-pulse rect { animation: bcPulse 1.6s var(--ease) infinite; transform-origin: center; transform-box: fill-box; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>NumPy<br/>Basics</h1>
+      <p class="subtitle">Arrays, vectorize, win.<br/>Foundation under every AI library.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>Why arrays?</h2>
+      <ul>
+        <li class="fragment">You have <b class="tk-blue">1,000,000 numbers</b>. Multiply each by 2.</li>
+        <li class="fragment">Python list + <code>for</code> loop $\Rightarrow$ <b class="tk-red">slow</b>. Seconds.</li>
+        <li class="fragment">NumPy: <code>a * 2</code>. <b class="tk-green">One line. ~50× faster.</b></li>
+        <li class="fragment">Same idea powers training neural nets on GPUs.</li>
+      </ul>
+      <p class="callout fragment">Loops are expensive. Arrays are cheap. Learn to think in arrays.</p>
+    </section>
+
+    <!-- 3. What is NumPy -->
+    <section class="slide">
+      <h2>What is NumPy?</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">N-dimensional array</b> library for Python.</li>
+        <li class="fragment">Foundation under <b class="tk-purple">pandas, scikit-learn, PyTorch, TensorFlow</b>.</li>
+        <li class="fragment">Written in C $\Rightarrow$ fast loops without writing C.</li>
+      </ul>
+      <pre class="code"><span class="cmt"># install once</span>
+<span class="kw">pip</span> install numpy
+
+<span class="cmt"># in every script</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np</pre>
+      <p class="callout fragment"><b>Convention:</b> always <code>np</code>. Everyone reads it that way.</p>
+    </section>
+
+    <!-- 4. First array -->
+    <section class="slide">
+      <h2>Your first array</h2>
+      <div class="split">
+        <div class="col">
+          <pre class="code">a = np.array([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>])
+
+a.shape   <span class="cmt"># (4,)</span>
+a.dtype   <span class="cmt"># int64</span>
+a.ndim    <span class="cmt"># 1</span></pre>
+        </div>
+        <div class="col">
+          <div class="np-grid" style="grid-template-columns: repeat(4, 44px);">
+            <div class="np-cell">1</div>
+            <div class="np-cell">2</div>
+            <div class="np-cell">3</div>
+            <div class="np-cell">4</div>
+          </div>
+          <div style="margin-top:10px; font-size:14px; color:var(--ink-soft);">
+            shape = (4,) &nbsp; ndim = 1
+          </div>
+        </div>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">shape</b> — size in each dimension.</li>
+        <li class="fragment"><b class="tk-purple">dtype</b> — element type. All same. Unlike Python lists.</li>
+      </ul>
+    </section>
+
+    <!-- 5. Create arrays -->
+    <section class="slide dense">
+      <h2>Make arrays without typing them</h2>
+      <pre class="code">np.zeros(<span class="num">5</span>)              <span class="cmt"># [0. 0. 0. 0. 0.]</span>
+np.ones((<span class="num">2</span>, <span class="num">3</span>))          <span class="cmt"># 2x3 ones</span>
+np.arange(<span class="num">0</span>, <span class="num">10</span>, <span class="num">2</span>)       <span class="cmt"># [0 2 4 6 8]</span>
+np.linspace(<span class="num">0</span>, <span class="num">1</span>, <span class="num">5</span>)      <span class="cmt"># [0. 0.25 0.5 0.75 1.]</span>
+np.random.rand(<span class="num">3</span>)        <span class="cmt"># 3 uniform [0,1)</span>
+np.eye(<span class="num">3</span>)                <span class="cmt"># 3x3 identity</span></pre>
+      <ul>
+        <li class="fragment"><b class="tk-blue">zeros / ones</b> — initialize buffers.</li>
+        <li class="fragment"><b class="tk-green">arange</b> — like <code>range</code> but float-friendly.</li>
+        <li class="fragment"><b class="tk-purple">linspace</b> — N evenly-spaced points. Plotting workhorse.</li>
+        <li class="fragment"><b class="tk-pink">random.rand</b> — quick test data.</li>
+      </ul>
+    </section>
+
+    <!-- 6. Shape & reshape — VISUALIZED -->
+    <section class="slide">
+      <h2>Shape & reshape</h2>
+      <p>Same 12 numbers — change shape, not memory.</p>
+      <div class="reshape-stage">
+
+        <!-- 1D row of 12 -->
+        <div>
+          <div class="np-grid" style="grid-template-columns: repeat(12, 32px);">
+            <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div><div class="np-cell small">3</div>
+            <div class="np-cell small">4</div><div class="np-cell small">5</div><div class="np-cell small">6</div><div class="np-cell small">7</div>
+            <div class="np-cell small">8</div><div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-top:6px;text-align:center;">(12,)</div>
+        </div>
+
+        <div class="reshape-arrow fragment fade-only">→</div>
+
+        <!-- (3,4) -->
+        <div class="fragment fade-only">
+          <div class="np-grid" style="grid-template-columns: repeat(4, 32px);">
+            <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div><div class="np-cell small">3</div>
+            <div class="np-cell small">4</div><div class="np-cell small">5</div><div class="np-cell small">6</div><div class="np-cell small">7</div>
+            <div class="np-cell small">8</div><div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-top:6px;text-align:center;">(3, 4)</div>
+        </div>
+
+        <div class="reshape-arrow fragment fade-only">→</div>
+
+        <!-- (2,2,3) — two 2x3 grids -->
+        <div class="fragment fade-only">
+          <div style="display:flex; gap:10px;">
+            <div>
+              <div class="np-grid" style="grid-template-columns: repeat(3, 32px);">
+                <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div>
+                <div class="np-cell small">3</div><div class="np-cell small">4</div><div class="np-cell small">5</div>
+              </div>
+            </div>
+            <div>
+              <div class="np-grid" style="grid-template-columns: repeat(3, 32px);">
+                <div class="np-cell small">6</div><div class="np-cell small">7</div><div class="np-cell small">8</div>
+                <div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-top:6px;text-align:center;">(2, 2, 3)</div>
+        </div>
+      </div>
+
+      <pre class="code" style="margin-top: 14px;">a = np.arange(<span class="num">12</span>)
+b = a.reshape(<span class="num">3</span>, <span class="num">4</span>)
+c = a.reshape(<span class="num">2</span>, <span class="num">2</span>, <span class="num">3</span>)
+d = a.reshape(<span class="num">3</span>, -<span class="num">1</span>)   <span class="cmt"># -1 = "you figure it out"</span></pre>
+      <p class="callout fragment">Memory unchanged. Only <b class="tk-blue">interpretation</b> changes.</p>
+    </section>
+
+    <!-- 7. Indexing & slicing — INTERACTIVE PLAYGROUND -->
+    <section class="slide">
+      <h2>Indexing & slicing</h2>
+      <p>Click an expression. Highlight shows what it picks.</p>
+
+      <div id="idx-grid-1d" style="margin: 8px 0;">
+        <div style="font-size:14px; color:var(--ink-soft); margin-bottom:6px;">a = np.arange(10)</div>
+        <div class="np-grid" data-row="1d" style="grid-template-columns: repeat(10, 44px);">
+          <!-- generated indexes 0..9 -->
+        </div>
+      </div>
+
+      <div class="idx-bar" data-bar="1d">
+        <button class="idx-btn" data-pick="0">a[0]</button>
+        <button class="idx-btn" data-pick="-1">a[-1]</button>
+        <button class="idx-btn" data-pick="2:5">a[2:5]</button>
+        <button class="idx-btn" data-pick="::2">a[::2]</button>
+        <button class="idx-btn" data-pick=":">a[:]</button>
+      </div>
+      <div class="idx-result" id="idx-out-1d">→ click a button</div>
+
+      <div style="margin-top: 18px;">
+        <div style="font-size:14px; color:var(--ink-soft); margin-bottom:6px;">m = np.arange(12).reshape(3, 4)</div>
+        <div class="np-grid" data-row="2d" style="grid-template-columns: repeat(4, 44px);">
+          <!-- generated 3x4 -->
+        </div>
+      </div>
+      <div class="idx-bar" data-bar="2d">
+        <button class="idx-btn" data-pick="m[1,2]">m[1, 2]</button>
+        <button class="idx-btn" data-pick="m[:,0]">m[:, 0]</button>
+        <button class="idx-btn" data-pick="m[0,:]">m[0, :]</button>
+        <button class="idx-btn" data-pick="m[1:,1:]">m[1:, 1:]</button>
+      </div>
+      <div class="idx-result" id="idx-out-2d">→ click a button</div>
+    </section>
+
+    <!-- 8. Vectorized ops -->
+    <section class="slide">
+      <h2>Vectorized math</h2>
+      <div class="split">
+        <div class="col">
+          <pre class="code">a = np.array([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+b = np.array([<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>])
+
+a + b        <span class="cmt"># [11 22 33]</span>
+a * b        <span class="cmt"># [10 40 90]</span>
+a ** <span class="num">2</span>       <span class="cmt"># [1 4 9]</span>
+np.sqrt(b)   <span class="cmt"># [3.16 4.47 5.48]</span></pre>
+        </div>
+        <div class="col">
+          <!-- element-wise viz: a + b -->
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+            <div class="np-grid" style="grid-template-columns: repeat(3, 44px);">
+              <div class="np-cell">1</div><div class="np-cell">2</div><div class="np-cell">3</div>
+            </div>
+            <div style="font-size:22px;font-weight:800;">+</div>
+            <div class="np-grid" style="grid-template-columns: repeat(3, 44px);">
+              <div class="np-cell">10</div><div class="np-cell">20</div><div class="np-cell">30</div>
+            </div>
+            <div style="font-size:22px;font-weight:800;color:var(--accent-blue);">↓</div>
+            <div class="np-grid" style="grid-template-columns: repeat(3, 44px);">
+              <div class="np-cell hi">11</div><div class="np-cell hi">22</div><div class="np-cell hi">33</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment"><span class="tk-red">Rule of thumb:</span> if you wrote a loop, NumPy has a one-liner.</p>
+    </section>
+
+    <!-- 9. Broadcasting -->
+    <section class="slide dense">
+      <h2>Broadcasting</h2>
+      <p>Different shapes — NumPy <b class="tk-blue">stretches</b> them to match.</p>
+      <div class="split">
+        <div class="col">
+          <pre class="code">a = np.array([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>])    <span class="cmt"># (3,)</span>
+a + <span class="num">10</span>                <span class="cmt"># scalar broadcasts</span>
+<span class="cmt"># [11 12 13]</span>
+
+m = np.ones((<span class="num">3</span>,<span class="num">3</span>))     <span class="cmt"># (3,3)</span>
+m + a                <span class="cmt"># row broadcasts</span></pre>
+          <p style="margin-top:14px;"><b class="tk-purple">Rule:</b> compare shapes from right.<br/>Dim OK if equal, or one is 1.</p>
+          <ul>
+            <li class="fragment"><code>(3,3) + (3,)</code> ✓</li>
+            <li class="fragment"><code>(3,1) + (1,3) → (3,3)</code> ✓</li>
+            <li class="fragment"><code>(3,) + (4,)</code> <span class="tk-red">✗ ValueError</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <svg viewBox="0 0 240 270" style="width:100%;max-width:260px;" class="bc-pulse">
+            <defs>
+              <marker id="bcArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#1d3fb6"/>
+              </marker>
+            </defs>
+            <!-- column (3,1) -->
+            <rect x="10"  y="20"  width="40" height="40" fill="#b8eef0" stroke="#111" stroke-width="2"/>
+            <text x="30" y="46" font-family="JetBrains Mono" font-size="14" text-anchor="middle">1</text>
+            <rect x="10"  y="60"  width="40" height="40" fill="#b8eef0" stroke="#111" stroke-width="2"/>
+            <text x="30" y="86" font-family="JetBrains Mono" font-size="14" text-anchor="middle">2</text>
+            <rect x="10"  y="100" width="40" height="40" fill="#b8eef0" stroke="#111" stroke-width="2"/>
+            <text x="30" y="126" font-family="JetBrains Mono" font-size="14" text-anchor="middle">3</text>
+            <text x="30" y="158" font-family="JetBrains Mono" font-size="11" text-anchor="middle">(3,1)</text>
+
+            <text x="76" y="86" font-family="JetBrains Mono" font-size="20" text-anchor="middle">+</text>
+
+            <!-- row (1,3) -->
+            <rect x="100" y="20"  width="40" height="40" fill="#fde9a3" stroke="#111" stroke-width="2"/>
+            <text x="120" y="46" font-family="JetBrains Mono" font-size="14" text-anchor="middle">10</text>
+            <rect x="140" y="20"  width="40" height="40" fill="#fde9a3" stroke="#111" stroke-width="2"/>
+            <text x="160" y="46" font-family="JetBrains Mono" font-size="14" text-anchor="middle">20</text>
+            <rect x="180" y="20"  width="40" height="40" fill="#fde9a3" stroke="#111" stroke-width="2"/>
+            <text x="200" y="46" font-family="JetBrains Mono" font-size="14" text-anchor="middle">30</text>
+            <text x="160" y="78" font-family="JetBrains Mono" font-size="11" text-anchor="middle">(1,3)</text>
+
+            <line x1="60" y1="100" x2="100" y2="160" stroke="#1d3fb6" stroke-width="2" marker-end="url(#bcArr)"/>
+            <line x1="200" y1="78" x2="200" y2="148" stroke="#1d3fb6" stroke-width="2" marker-end="url(#bcArr)"/>
+
+            <!-- result grid -->
+            <g transform="translate(100,160)">
+              <rect x="0"  y="0"  width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="36" y="0"  width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="72" y="0"  width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="0"  y="28" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="36" y="28" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="72" y="28" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="0"  y="56" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="36" y="56" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <rect x="72" y="56" width="36" height="28" fill="#d6f5dd" stroke="#111" stroke-width="1.5"/>
+              <text x="18" y="20" font-family="JetBrains Mono" font-size="11" text-anchor="middle">11</text>
+              <text x="54" y="20" font-family="JetBrains Mono" font-size="11" text-anchor="middle">21</text>
+              <text x="90" y="20" font-family="JetBrains Mono" font-size="11" text-anchor="middle">31</text>
+              <text x="18" y="48" font-family="JetBrains Mono" font-size="11" text-anchor="middle">12</text>
+              <text x="54" y="48" font-family="JetBrains Mono" font-size="11" text-anchor="middle">22</text>
+              <text x="90" y="48" font-family="JetBrains Mono" font-size="11" text-anchor="middle">32</text>
+              <text x="18" y="76" font-family="JetBrains Mono" font-size="11" text-anchor="middle">13</text>
+              <text x="54" y="76" font-family="JetBrains Mono" font-size="11" text-anchor="middle">23</text>
+              <text x="90" y="76" font-family="JetBrains Mono" font-size="11" text-anchor="middle">33</text>
+              <text x="54" y="100" font-family="JetBrains Mono" font-size="11" text-anchor="middle">(3,3)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Aggregations — VISUALIZED -->
+    <section class="slide">
+      <h2>Aggregations & axes</h2>
+      <p>Click an arrow direction to see which cells collapse.</p>
+
+      <div class="split">
+        <div class="col">
+          <pre class="code">a = np.array([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],
+              [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])
+
+a.sum()         <span class="cmt"># 21</span>
+a.sum(axis=<span class="num">0</span>)   <span class="cmt"># [5 7 9]</span>
+a.sum(axis=<span class="num">1</span>)   <span class="cmt"># [6 15]</span></pre>
+          <div class="idx-bar">
+            <button class="idx-btn agg-btn" data-axis="all">all</button>
+            <button class="idx-btn agg-btn" data-axis="0">axis=0</button>
+            <button class="idx-btn agg-btn" data-axis="1">axis=1</button>
+          </div>
+          <div class="idx-result" id="agg-out">→ pick an axis</div>
+        </div>
+        <div class="col">
+          <div class="agg-wrap">
+            <div id="agg-grid" class="np-grid" style="grid-template-columns: repeat(3, 44px);">
+              <!-- generated -->
+            </div>
+            <div id="agg-rowsums" class="agg-sums" style="grid-template-rows: repeat(2, 44px);"></div>
+            <div id="agg-colsums" class="agg-sums" style="grid-column: 1; grid-row: 2; grid-template-columns: repeat(3, 44px); grid-auto-flow: column;"></div>
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment"><b class="tk-purple">axis=0</b> = collapse rows, keep columns.<br/><b class="tk-pink">axis=1</b> = collapse columns, keep rows.</p>
+    </section>
+
+    <!-- 11. Boolean masks — ANIMATED FILTER -->
+    <section class="slide">
+      <h2>Boolean masks</h2>
+      <p>Filter <code>scores > 70</code> — false cells fade out.</p>
+
+      <div style="margin: 8px 0;">
+        <div style="font-size:14px;color:var(--ink-soft);margin-bottom:6px;">scores</div>
+        <div id="mask-grid" class="np-grid" style="grid-template-columns: repeat(5, 64px);">
+          <!-- generated -->
+        </div>
+      </div>
+
+      <div style="margin: 16px 0 6px; font-size:14px;color:var(--ink-soft);">scores > 70</div>
+      <div id="mask-bool" class="np-grid" style="grid-template-columns: repeat(5, 64px);">
+        <!-- generated -->
+      </div>
+
+      <div class="idx-bar">
+        <button class="idx-btn" id="mask-apply">apply mask</button>
+        <button class="idx-btn" id="mask-reset">reset</button>
+      </div>
+      <div class="idx-result" id="mask-out">scores[scores > 70] → ?</div>
+
+      <pre class="code" style="margin-top:10px;">scores[scores > <span class="num">70</span>]     <span class="cmt"># pick passing</span>
+(scores > <span class="num">70</span>).sum()     <span class="cmt"># count passing</span></pre>
+    </section>
+
+    <!-- 11b. More moves — argmin/where/clip/fancy idx -->
+    <section class="slide dense">
+      <h2>More moves you’ll need</h2>
+      <p style="margin-bottom:6px;">Sample: <code>a = [10, 25, 33, 50]</code>. Each tool answers different question.</p>
+      <div class="split" style="gap:28px; align-items:start;">
+        <div class="col" style="gap:8px;">
+          <p style="margin:0;"><b class="tk-blue">arg*</b> — “<i>where</i>?” Returns <b>position</b>, not value.</p>
+          <pre class="code" style="font-size:13px; padding:10px 14px; margin:0;">a.argmin()      <span class="cmt"># 0  (10 at idx 0)</span>
+a.argmax()      <span class="cmt"># 3  (50 at idx 3)</span>
+np.argsort(a)   <span class="cmt"># [0 1 2 3] sort order</span></pre>
+
+          <p style="margin:6px 0 0;"><b class="tk-purple">where / clip / maximum</b> — reshape values by rule.</p>
+          <pre class="code" style="font-size:13px; padding:10px 14px; margin:0;">np.where(a&gt;<span class="num">20</span>, a, <span class="num">0</span>)  <span class="cmt"># [0 25 33 50] keep>20 else 0</span>
+np.maximum(a, <span class="num">30</span>)     <span class="cmt"># [30 30 33 50] floor at 30</span>
+np.clip(a, <span class="num">20</span>, <span class="num">40</span>)    <span class="cmt"># [20 25 33 40] both bounds</span>
+np.abs(a - <span class="num">30</span>)        <span class="cmt"># [20 5 3 20]   distance</span></pre>
+        </div>
+        <div class="col" style="gap:8px;">
+          <p style="margin:0;"><b class="tk-green">fancy index</b> — pass <b>list of positions</b>, get items in that order.</p>
+          <pre class="code" style="font-size:13px; padding:10px 14px; margin:0;">a[[<span class="num">0</span>, -<span class="num">1</span>]]      <span class="cmt"># [10 50]   first+last</span>
+a[[<span class="num">3</span>, <span class="num">0</span>, <span class="num">3</span>]]    <span class="cmt"># [50 10 50] repeat OK</span></pre>
+
+          <p style="margin:6px 0 0;">2D — two lists pair up: <code>(row[i], col[i])</code>.</p>
+          <pre class="code" style="font-size:13px; padding:10px 14px; margin:0;">m = np.arange(<span class="num">9</span>).reshape(<span class="num">3</span>,<span class="num">3</span>)
+<span class="cmt"># [[0 1 2] [3 4 5] [6 7 8]]</span>
+m[[<span class="num">2</span>, <span class="num">0</span>]]   <span class="cmt"># row 2 then row 0</span>
+m[[<span class="num">0</span>,<span class="num">0</span>,-<span class="num">1</span>,-<span class="num">1</span>], [<span class="num">0</span>,-<span class="num">1</span>,<span class="num">0</span>,-<span class="num">1</span>]]
+<span class="cmt"># [0 2 6 8]   four corners</span></pre>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top:10px;">Two patterns cover most exercises: <b>condition → mask → reduce</b> or <b>position → index → value</b>.</p>
+    </section>
+
+    <!-- 12. Worked example — z-score -->
+    <section class="slide dense">
+      <h2>Worked: standardize a dataset</h2>
+      <p><b class="tk-blue">Z-score</b> $z = \dfrac{x - \mu}{\sigma}$ — center then scale, so mean=0 std=1. <span style="font-size:14px;color:var(--ink-soft);">Why? Features like <code>age (0–100)</code> vs <code>salary (0–200k)</code> have different scales — models weight big numbers more. Z-score = same ruler for all.</span></p>
+      <div class="split">
+        <div class="col">
+          <pre class="code">x = np.array([<span class="num">10</span>,<span class="num">20</span>,<span class="num">30</span>,<span class="num">40</span>,<span class="num">50</span>])
+
+mu    = x.mean()       <span class="cmt"># 30.0  ← center</span>
+sigma = x.std()        <span class="cmt"># 14.14 ← spread</span>
+
+<span class="cmt"># step 1: center (subtract mean)</span>
+x - mu                 <span class="cmt"># [-20 -10 0 10 20]</span>
+
+<span class="cmt"># step 2: scale (divide by std)</span>
+z = (x - mu)/sigma     <span class="cmt"># broadcast both ops</span>
+<span class="cmt"># [-1.41 -0.71 0. 0.71 1.41]</span></pre>
+        </div>
+        <div class="col">
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">x — raw (μ=30, σ=14.14)</div>
+          <div class="np-grid" style="grid-template-columns: repeat(5, 64px); gap:3px;">
+            <div class="np-cell">10</div><div class="np-cell">20</div><div class="np-cell">30</div><div class="np-cell">40</div><div class="np-cell">50</div>
+          </div>
+          <div style="text-align:center; font-size:13px; margin: 4px 0; color: var(--accent-purple);">↓ subtract μ (center)</div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">x − μ (μ=0, σ=14.14)</div>
+          <div class="np-grid" style="grid-template-columns: repeat(5, 64px); gap:3px;">
+            <div class="np-cell col">−20</div><div class="np-cell col">−10</div><div class="np-cell col">0</div><div class="np-cell col">10</div><div class="np-cell col">20</div>
+          </div>
+          <div style="text-align:center; font-size:13px; margin: 4px 0; color: var(--accent-blue);">↓ divide by σ (scale)</div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">z (μ=0, σ=1)</div>
+          <div class="np-grid" style="grid-template-columns: repeat(5, 64px); gap:3px;">
+            <div class="np-cell hi" style="font-size:13px;">−1.41</div>
+            <div class="np-cell hi" style="font-size:13px;">−0.71</div>
+            <div class="np-cell hi" style="font-size:13px;">0</div>
+            <div class="np-cell hi" style="font-size:13px;">0.71</div>
+            <div class="np-cell hi" style="font-size:13px;">1.41</div>
+          </div>
+          <div style="margin-top:6px;font-size:12px;color:var(--ink-soft);line-height:1.4;">
+            z = std-devs from mean. <code>0</code>=avg, <code>±1</code>=typical, <code>±2+</code>=outlier.
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment">3 lines. No loops. Same code for 5 numbers or 5 million — broadcast does the heavy lifting.</p>
+    </section>
+
+    <!-- 13. Pitfalls — clean two-column grid, no nested li/pre -->
+    <section class="slide dense">
+      <h2>Pitfalls</h2>
+      <div class="pitfall-row">
+        <div class="fragment">
+          <b class="tk-red">View vs copy.</b> Slicing returns a view — mutating mutates original.
+<pre class="code">b = a[:<span class="num">3</span>]
+b[<span class="num">0</span>] = <span class="num">999</span>      <span class="cmt"># a changes too!</span>
+b = a[:<span class="num">3</span>].copy()  <span class="cmt"># safe</span></pre>
+        </div>
+        <div class="fragment">
+          <b class="tk-red">Shape mismatch.</b> Always check <code>.shape</code> when puzzled.
+<pre class="code">a + b   <span class="cmt"># ValueError if</span>
+        <span class="cmt"># shapes don't broadcast</span></pre>
+        </div>
+        <div class="fragment">
+          <b class="tk-red">Integer overflow.</b> <code>np.int8</code> wraps at 127.
+<pre class="code">np.array([<span class="num">200</span>], dtype=np.int8)
+<span class="cmt"># wraps to -56!</span>
+<span class="cmt"># prefer float64 if unsure</span></pre>
+        </div>
+        <div class="fragment">
+          <b class="tk-red">axis confusion.</b> Repeat: <b>down=0, across=1</b>.
+<pre class="code">m.sum(axis=<span class="num">0</span>)  <span class="cmt"># down columns</span>
+m.sum(axis=<span class="num">1</span>)  <span class="cmt"># across rows</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14. Try this -->
+    <section class="slide">
+      <h2>Try this</h2>
+      <p>Given grades for 6 students:</p>
+      <pre class="code">grades = np.array([<span class="num">55</span>, <span class="num">82</span>, <span class="num">90</span>, <span class="num">47</span>, <span class="num">73</span>, <span class="num">68</span>])</pre>
+      <ul>
+        <li class="fragment">1. Compute the mean and std.</li>
+        <li class="fragment">2. Build z-scores.</li>
+        <li class="fragment">3. Count students <b class="tk-green">above average</b>.</li>
+        <li class="fragment">4. Get indices of the top 2 (hint: <code>argsort</code>).</li>
+      </ul>
+      <p class="callout fragment">No loops allowed. One line per task.</p>
+    </section>
+
+    <!-- 15. Why for AI -->
+    <section class="slide">
+      <h2>Why this matters for AI</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">PyTorch tensor</b> = NumPy array + GPU + autograd.</li>
+        <li class="fragment"><b class="tk-purple">TensorFlow tensor</b> = same idea.</li>
+        <li class="fragment"><b class="tk-green">scikit-learn</b> takes NumPy arrays as input.</li>
+        <li class="fragment"><b class="tk-pink">pandas DataFrame</b> sits on top of NumPy.</li>
+        <li class="fragment">Images, audio, embeddings, weights — all arrays.</li>
+      </ul>
+      <p class="callout fragment">Learn NumPy once. Use it everywhere in AI.</p>
+    </section>
+
+    <!-- 16. Recap -->
+    <section class="slide">
+      <h2>Recap</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">Array</b> — fixed-type, n-dim grid. Has <code>shape</code>, <code>dtype</code>.</li>
+        <li class="fragment"><b class="tk-green">Vectorize</b> — drop loops. Operator works on every element.</li>
+        <li class="fragment"><b class="tk-purple">Broadcast</b> — different shapes auto-stretch (when compatible).</li>
+        <li class="fragment"><b class="tk-pink">Aggregate</b> — <code>sum / mean / max</code> across an <code>axis</code>.</li>
+        <li class="fragment"><b class="tk-red">Mask</b> — boolean array as index = filter.</li>
+      </ul>
+      <p class="callout fragment">Next: pandas, then real ML with scikit-learn.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<!-- deck-local interactive logic -->
+<script>
+(function(){
+  // helper
+  function el(tag, cls, txt){
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  }
+
+  /* ------ slide 7: indexing playground ------ */
+  const grid1d = document.querySelector('[data-row="1d"]');
+  if (grid1d) {
+    for (let i = 0; i < 10; i++) {
+      const c = el('div', 'np-cell', i);
+      c.dataset.idx = i;
+      grid1d.appendChild(c);
+    }
+  }
+  const grid2d = document.querySelector('[data-row="2d"]');
+  if (grid2d) {
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        const cell = el('div', 'np-cell', r*4 + c);
+        cell.dataset.r = r; cell.dataset.c = c;
+        grid2d.appendChild(cell);
+      }
+    }
+  }
+
+  function clearMarks(grid){
+    grid.querySelectorAll('.np-cell').forEach(c => {
+      c.classList.remove('hi','pick','row','col','dim','mask','maskF');
+    });
+  }
+
+  document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid1d);
+      document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid1d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach((c, i) => {
+        let on = false;
+        if (pick === '0' && i === 0) on = true;
+        else if (pick === '-1' && i === 9) on = true;
+        else if (pick === '2:5' && i >= 2 && i < 5) on = true;
+        else if (pick === '::2' && i % 2 === 0) on = true;
+        else if (pick === ':') on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-1d');
+      out.innerHTML = `a[${pick}] → <b>[${result.join(', ')}]</b>`;
+    });
+  });
+
+  document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid2d);
+      document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid2d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach(c => {
+        const r = +c.dataset.r, col = +c.dataset.c;
+        let on = false;
+        if (pick === 'm[1,2]' && r === 1 && col === 2) on = true;
+        else if (pick === 'm[:,0]' && col === 0) on = true;
+        else if (pick === 'm[0,:]' && r === 0) on = true;
+        else if (pick === 'm[1:,1:]' && r >= 1 && col >= 1) on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-2d');
+      out.innerHTML = `${pick} → <b>${result.length === 1 ? result[0] : '[' + result.join(', ') + ']'}</b>`;
+    });
+  });
+
+  /* ------ slide 10: aggregation viz ------ */
+  const aggGrid = document.getElementById('agg-grid');
+  const aggData = [[1,2,3],[4,5,6]];
+  if (aggGrid) {
+    aggData.forEach((row, r) => {
+      row.forEach((v, c) => {
+        const cell = el('div', 'np-cell', v);
+        cell.dataset.r = r; cell.dataset.c = c;
+        aggGrid.appendChild(cell);
+      });
+    });
+  }
+
+  const aggRowSums = document.getElementById('agg-rowsums');
+  const aggColSums = document.getElementById('agg-colsums');
+  function clearAggSums() {
+    if (aggRowSums) aggRowSums.innerHTML = '';
+    if (aggColSums) aggColSums.innerHTML = '';
+  }
+  function showColSums() {
+    if (!aggColSums) return;
+    const sums = [0,0,0];
+    aggData.forEach(row => row.forEach((v,c) => sums[c]+=v));
+    sums.forEach((s,c) => {
+      const cell = el('div', 'agg-sum-cell col c'+c, '↓'+s);
+      aggColSums.appendChild(cell);
+    });
+  }
+  function showRowSums() {
+    if (!aggRowSums) return;
+    const sums = aggData.map(row => row.reduce((a,b)=>a+b,0));
+    sums.forEach((s,r) => {
+      const cell = el('div', 'agg-sum-cell row r'+r, '→'+s);
+      aggRowSums.appendChild(cell);
+    });
+  }
+
+  document.querySelectorAll('.agg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const axis = btn.dataset.axis;
+      const cells = aggGrid.querySelectorAll('.np-cell');
+      cells.forEach(c => c.classList.remove('hi','row','col','pick','r0','r1','c0','c1','c2'));
+      clearAggSums();
+      document.querySelectorAll('.agg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const out = document.getElementById('agg-out');
+      if (axis === 'all') {
+        cells.forEach(c => c.classList.add('hi'));
+        out.innerHTML = 'a.sum() → <b>21</b> &nbsp;<span style="color:#888">(everything collapses)</span>';
+      } else if (axis === '0') {
+        cells.forEach(c => { c.classList.add('col','c'+c.dataset.c); });
+        showColSums();
+        out.innerHTML = 'a.sum(axis=0) → <b>[5, 7, 9]</b> &nbsp;<span style="color:#888">(rows collapse ↓ — one sum per column)</span>';
+      } else if (axis === '1') {
+        cells.forEach(c => { c.classList.add('row','r'+c.dataset.r); });
+        showRowSums();
+        out.innerHTML = 'a.sum(axis=1) → <b>[6, 15]</b> &nbsp;<span style="color:#888">(cols collapse → — one sum per row)</span>';
+      }
+    });
+  });
+
+  /* ------ slide 11: mask filter ------ */
+  const scores = [42, 88, 71, 95, 60];
+  const maskGrid = document.getElementById('mask-grid');
+  const maskBool = document.getElementById('mask-bool');
+  if (maskGrid) {
+    scores.forEach((v, i) => {
+      const c = el('div', 'np-cell', v);
+      c.dataset.i = i;
+      maskGrid.appendChild(c);
+      const b = el('div', 'np-cell', v > 70 ? 'T' : 'F');
+      b.dataset.i = i;
+      if (v > 70) b.classList.add('mask'); else b.classList.add('maskF');
+      maskBool.appendChild(b);
+    });
+  }
+
+  const applyBtn = document.getElementById('mask-apply');
+  const resetBtn = document.getElementById('mask-reset');
+  const maskOut  = document.getElementById('mask-out');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      const cells = maskGrid.querySelectorAll('.np-cell');
+      const passed = [];
+      cells.forEach((c, i) => {
+        if (scores[i] > 70) {
+          c.classList.add('mask');
+          passed.push(scores[i]);
+        } else {
+          c.classList.add('mask-out');
+        }
+      });
+      maskOut.innerHTML = `scores[scores > 70] → <b>[${passed.join(', ')}]</b> &nbsp; count = <b>${passed.length}</b>`;
+    });
+    resetBtn.addEventListener('click', () => {
+      const cells = maskGrid.querySelectorAll('.np-cell');
+      cells.forEach(c => { c.classList.remove('mask','mask-out'); });
+      maskOut.innerHTML = 'scores[scores > 70] → ?';
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

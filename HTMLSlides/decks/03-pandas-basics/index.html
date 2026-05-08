@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pandas Basics</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* ---- pandas table viz ---- */
+  .pd-table {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: #fff;
+  }
+  .pd-table th, .pd-table td {
+    border: 2px solid var(--ink);
+    padding: 6px 12px;
+    text-align: left;
+    transition: background 240ms var(--ease), opacity 240ms var(--ease);
+  }
+  .pd-table th {
+    background: var(--cream);
+    font-weight: 800;
+  }
+  .pd-table .idx {
+    background: var(--cream-soft);
+    font-weight: 700;
+    text-align: right;
+    color: var(--ink-soft);
+  }
+  .pd-table tr.hi td:not(.idx) { background: #d6f5dd; }
+  .pd-table td.hi { background: var(--cream); }
+  .pd-table tr.dim td { opacity: 0.25; }
+  .pd-table td.nan {
+    background: #ffd6cc;
+    color: var(--accent-red);
+    font-weight: 700;
+  }
+  .pd-table td.fixed {
+    background: #d6f5dd;
+    font-weight: 700;
+  }
+
+  /* selection highlight overlays */
+  .pd-table td.col-pick { background: #c8e6ff; }
+  .pd-table td.row-pick { background: #ffe3a8; }
+  .pd-table td.cell-pick {
+    background: var(--cream);
+    transform: scale(1.05);
+    border-color: var(--accent-red);
+  }
+
+  /* selector buttons */
+  .sel-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin: 14px 0 8px;
+  }
+  .sel-btn {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 6px 12px; cursor: pointer;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .sel-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .sel-btn.active { background: var(--cream); }
+  .sel-out {
+    margin-top: 10px;
+    font-size: 15px; color: var(--ink-soft);
+    font-family: var(--font-mono);
+  }
+  .sel-out b { color: var(--ink); background: var(--cream); padding: 1px 6px; }
+
+  /* groupby split-apply-combine */
+  .gb-stage {
+    display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .gb-arrow {
+    font-size: 26px; color: var(--accent-blue); font-weight: 700;
+    align-self: center;
+  }
+  .gb-group {
+    border: 2px dashed var(--ink);
+    padding: 8px;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .gb-group h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 6px;
+    color: var(--ink-soft);
+  }
+  .gb-group.g0 { border-color: var(--accent-blue); }
+  .gb-group.g1 { border-color: var(--accent-red); }
+  .gb-group.g2 { border-color: var(--accent-green); }
+  .gb-group.g0 h4 { color: var(--accent-blue); }
+  .gb-group.g1 h4 { color: var(--accent-red); }
+  .gb-group.g2 h4 { color: var(--accent-green); }
+
+  /* widget shell */
+  .tw-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+    margin-top: 8px;
+  }
+  .tw-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .tw-row label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .tw-row select, .tw-row input {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px 8px;
+  }
+  .tw-result {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
+  }
+  .tw-result b { background: var(--cream); padding: 1px 6px; }
+
+  /* reveal panel — Q&A */
+  .qgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+    margin-top: 6px;
+  }
+  .qcard {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 6px 10px;
+  }
+  .qcard .qnum {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 1px 8px;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+    margin-right: 6px;
+  }
+  .qcard .qtext {
+    font-size: 13px;
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+  .qcard .qreveal {
+    display: none;
+    background: #d6f5dd;
+    border-left: 3px solid var(--accent-green);
+    padding: 5px 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .qcard.open .qreveal { display: block; }
+  .qcard button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 180ms var(--ease);
+  }
+  .qcard button:hover { background: var(--cream-soft); }
+  .qcard.open button { background: var(--cream); }
+  .qcard button { font-size: 11px; padding: 2px 8px; }
+
+  /* recap cheat strip */
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 28px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 16px 22px;
+    font-size: 14px;
+  }
+  .cheat-strip code { font-weight: 700; }
+
+  /* missing-value before/after */
+  .mv-row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .mv-row > div { flex: 1 1 280px; }
+  .mv-row h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 6px;
+    color: var(--ink-soft);
+  }
+
+  /* dense fix */
+  .slide.dense pre.code { font-size: 14px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Pandas<br/>Basics</h1>
+      <p class="subtitle">Tables for AI.<br/>Load any CSV, slice it, ship it.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>Why pandas?</h2>
+      <ul>
+        <li class="fragment">Every NOAI task ships <b class="tk-blue">CSV files</b>. <code>train.csv</code>, <code>test.csv</code>, <code>sample_submission.csv</code>.</li>
+        <li class="fragment">Python lists $\Rightarrow$ <b class="tk-red">no labels, no types, no joins</b>.</li>
+        <li class="fragment">NumPy 2D $\Rightarrow$ all numbers only. CSV has strings, dates, NaN.</li>
+        <li class="fragment">Pandas: labeled tables. <b class="tk-green">Load → explore → clean → train.</b></li>
+      </ul>
+      <p class="callout fragment">90% of camp Day 1 = pandas. Master 7 commands, survive.</p>
+    </section>
+
+    <!-- 3. What is a DataFrame -->
+    <section class="slide">
+      <h2>What is a DataFrame?</h2>
+      <p>Think Excel sheet. Rows = samples. Columns = features. Each column has a name and a type.</p>
+      <div style="margin-top: 18px;">
+        <table class="pd-table">
+          <thead>
+            <tr><th></th><th>Name</th><th>Age</th><th>Pclass</th><th>Survived</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="idx">0</td><td>Braund</td><td>22</td><td>3</td><td>0</td></tr>
+            <tr><td class="idx">1</td><td>Cumings</td><td>38</td><td>1</td><td>1</td></tr>
+            <tr><td class="idx">2</td><td>Heikkinen</td><td>26</td><td>3</td><td>1</td></tr>
+            <tr><td class="idx">3</td><td>Futrelle</td><td>35</td><td>1</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Index</b> — left column. Default 0,1,2,…</li>
+        <li class="fragment"><b class="tk-purple">Columns</b> — top row. Each has a name.</li>
+        <li class="fragment"><b class="tk-green">dtype per column</b> — Age=int, Name=string. Mixed OK.</li>
+      </ul>
+    </section>
+
+    <!-- 4. Loading -->
+    <section class="slide">
+      <h2>Load any CSV</h2>
+      <pre class="code"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+df = pd.read_csv(<span class="str">'train.csv'</span>)
+df = pd.read_csv(<span class="str">'train.csv'</span>, index_col=<span class="num">0</span>)  <span class="cmt"># use first col as index</span></pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">Convention</b>: always <code>import pandas as pd</code>.</li>
+        <li class="fragment">Variable named <code>df</code> by tradition. "DataFrame" $\Rightarrow$ <code>df</code>.</li>
+        <li class="fragment">One line. CSV in memory. Done.</li>
+      </ul>
+      <p class="callout fragment">Other readers: <code>pd.read_excel</code>, <code>pd.read_json</code>, <code>pd.read_parquet</code>. Same idea.</p>
+    </section>
+
+    <!-- 5. Inspect 4-up -->
+    <section class="slide dense">
+      <h2>Inspect first. Always.</h2>
+      <p>Before touching the data, run these 4. Know what you have.</p>
+      <pre class="code">df.shape         <span class="cmt"># (891, 12) — rows, columns</span>
+df.columns       <span class="cmt"># Index(['Name','Age','Pclass',...])</span>
+df.head(<span class="num">5</span>)       <span class="cmt"># first 5 rows — eyeball</span>
+df.info()        <span class="cmt"># dtype + non-null count per column</span>
+df.describe()    <span class="cmt"># min/max/mean/std for numeric columns</span>
+df.dtypes        <span class="cmt"># type of each column</span></pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-red">.info()</b> — fastest way to spot missing values.</li>
+        <li class="fragment"><b class="tk-blue">.describe()</b> — fastest way to spot outliers (huge max, weird min).</li>
+        <li class="fragment"><b class="tk-green">.head() / .tail()</b> — fastest way to spot encoding issues.</li>
+      </ul>
+      <p class="callout fragment">5 minutes inspection saves 5 hours debugging.</p>
+    </section>
+
+    <!-- 6. Selection -->
+    <section class="slide">
+      <h2>Selection — pick parts</h2>
+      <p>Click an expression. Highlight shows what it picks.</p>
+
+      <table class="pd-table" id="sel-table">
+        <thead>
+          <tr><th></th><th>Name</th><th>Age</th><th>Pclass</th><th>Survived</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="idx">0</td><td>Braund</td><td>22</td><td>3</td><td>0</td></tr>
+          <tr><td class="idx">1</td><td>Cumings</td><td>38</td><td>1</td><td>1</td></tr>
+          <tr><td class="idx">2</td><td>Heikkinen</td><td>26</td><td>3</td><td>1</td></tr>
+          <tr><td class="idx">3</td><td>Futrelle</td><td>35</td><td>1</td><td>1</td></tr>
+          <tr><td class="idx">4</td><td>Allen</td><td>35</td><td>3</td><td>0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sel-bar">
+        <button class="sel-btn" data-pick="col">df['Age']</button>
+        <button class="sel-btn" data-pick="cols2">df[['Name','Age']]</button>
+        <button class="sel-btn" data-pick="loc">df.loc[2]</button>
+        <button class="sel-btn" data-pick="iloc">df.iloc[0:3]</button>
+        <button class="sel-btn" data-pick="cell">df.loc[1, 'Age']</button>
+      </div>
+      <div class="sel-out" id="sel-out">→ click a button</div>
+
+      <ul style="margin-top: 12px; font-size: 14px;">
+        <li class="fragment"><code>df['col']</code> — one column $\Rightarrow$ <b class="tk-blue">Series</b>.</li>
+        <li class="fragment"><code>.loc[label]</code> — by index <b>label</b>. <code>.iloc[pos]</code> — by integer <b>position</b>.</li>
+      </ul>
+    </section>
+
+    <!-- 7. Filtering -->
+    <section class="slide">
+      <h2>Filter rows — boolean mask</h2>
+      <p>Same idea as NumPy. Comparison gives True/False per row. Pass it back to <code>df[...]</code>.</p>
+
+      <pre class="code">df[df[<span class="str">'Age'</span>] &gt; <span class="num">30</span>]                     <span class="cmt"># adults</span>
+df[df[<span class="str">'Sex'</span>] == <span class="str">'female'</span>]               <span class="cmt"># women</span>
+df[(df[<span class="str">'Pclass'</span>] == <span class="num">1</span>) &amp; (df[<span class="str">'Survived'</span>] == <span class="num">1</span>)]  <span class="cmt"># 1st-class survivors</span></pre>
+
+      <table class="pd-table" id="mask-table" style="margin-top: 14px;">
+        <thead>
+          <tr><th></th><th>Name</th><th>Age</th><th>Pclass</th><th>Survived</th></tr>
+        </thead>
+        <tbody>
+          <tr data-age="22"><td class="idx">0</td><td>Braund</td><td>22</td><td>3</td><td>0</td></tr>
+          <tr data-age="38"><td class="idx">1</td><td>Cumings</td><td>38</td><td>1</td><td>1</td></tr>
+          <tr data-age="26"><td class="idx">2</td><td>Heikkinen</td><td>26</td><td>3</td><td>1</td></tr>
+          <tr data-age="35"><td class="idx">3</td><td>Futrelle</td><td>35</td><td>1</td><td>1</td></tr>
+          <tr data-age="35"><td class="idx">4</td><td>Allen</td><td>35</td><td>3</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <div class="sel-bar">
+        <button class="sel-btn" id="mask-apply">df[df['Age'] &gt; 30]</button>
+        <button class="sel-btn" id="mask-reset">reset</button>
+      </div>
+
+      <p class="callout fragment"><b class="tk-red">Trap:</b> use <code>&amp;</code> and <code>|</code>, NOT <code>and</code>/<code>or</code>. Wrap clauses in parens.</p>
+    </section>
+
+    <!-- 8. Missing values -->
+    <section class="slide">
+      <h2>Missing values — NaN</h2>
+      <p>Real CSVs have holes. Pandas marks them <code>NaN</code>. Handle them or models break.</p>
+
+      <pre class="code">df.isnull().sum()       <span class="cmt"># count NaN per column</span>
+df[<span class="str">'Age'</span>].fillna(df[<span class="str">'Age'</span>].mean())   <span class="cmt"># fill with mean</span>
+df.dropna()             <span class="cmt"># drop rows with any NaN</span>
+df.dropna(subset=[<span class="str">'Age'</span>])    <span class="cmt"># drop rows where Age is NaN</span></pre>
+
+      <div class="mv-row" style="margin-top: 14px;">
+        <div>
+          <h4>before</h4>
+          <table class="pd-table">
+            <thead><tr><th></th><th>Name</th><th>Age</th></tr></thead>
+            <tbody>
+              <tr><td class="idx">0</td><td>Braund</td><td>22</td></tr>
+              <tr><td class="idx">1</td><td>Cumings</td><td class="nan">NaN</td></tr>
+              <tr><td class="idx">2</td><td>Heikkinen</td><td>26</td></tr>
+              <tr><td class="idx">3</td><td>Futrelle</td><td class="nan">NaN</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="fragment fade-only">
+          <h4>after fillna(mean=24)</h4>
+          <table class="pd-table">
+            <thead><tr><th></th><th>Name</th><th>Age</th></tr></thead>
+            <tbody>
+              <tr><td class="idx">0</td><td>Braund</td><td>22</td></tr>
+              <tr><td class="idx">1</td><td>Cumings</td><td class="fixed">24</td></tr>
+              <tr><td class="idx">2</td><td>Heikkinen</td><td>26</td></tr>
+              <tr><td class="idx">3</td><td>Futrelle</td><td class="fixed">24</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="callout fragment"><b>Rule of thumb:</b> mean/median for numeric, mode or <code>"unknown"</code> for strings.</p>
+    </section>
+
+    <!-- 9. Groupby -->
+    <section class="slide">
+      <h2>Groupby — split, apply, combine</h2>
+      <p>"Did first-class passengers survive more than third?" One line.</p>
+      <pre class="code">df.groupby(<span class="str">'Pclass'</span>)[<span class="str">'Survived'</span>].mean()
+<span class="cmt"># Pclass</span>
+<span class="cmt"># 1    0.63</span>
+<span class="cmt"># 2    0.47</span>
+<span class="cmt"># 3    0.24</span></pre>
+
+      <div class="gb-stage">
+        <div class="gb-group g0 fragment fade-only">
+          <h4>Pclass = 1</h4>
+          <table class="pd-table">
+            <tbody>
+              <tr><td class="idx">1</td><td>Cumings</td><td>1</td></tr>
+              <tr><td class="idx">3</td><td>Futrelle</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="gb-group g1 fragment fade-only">
+          <h4>Pclass = 3</h4>
+          <table class="pd-table">
+            <tbody>
+              <tr><td class="idx">0</td><td>Braund</td><td>0</td></tr>
+              <tr><td class="idx">2</td><td>Heikkinen</td><td>1</td></tr>
+              <tr><td class="idx">4</td><td>Allen</td><td>0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="gb-arrow fragment fade-only">→ mean</div>
+        <div class="gb-group fragment fade-only" style="border-color: var(--ink);">
+          <h4>combined</h4>
+          <table class="pd-table">
+            <thead><tr><th>Pclass</th><th>Survived</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td class="fixed">1.00</td></tr>
+              <tr><td>3</td><td class="fixed">0.33</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="callout fragment">Pattern: <code>groupby(KEY)[METRIC].AGG()</code>. Swap any of three.</p>
+    </section>
+
+    <!-- 10. New columns -->
+    <section class="slide">
+      <h2>Make new columns</h2>
+      <pre class="code"><span class="cmt"># derive from existing</span>
+df[<span class="str">'FamilySize'</span>] = df[<span class="str">'SibSp'</span>] + df[<span class="str">'Parch'</span>]
+df[<span class="str">'IsChild'</span>]    = df[<span class="str">'Age'</span>] &lt; <span class="num">12</span>
+df[<span class="str">'FareLog'</span>]    = np.log1p(df[<span class="str">'Fare'</span>])
+
+<span class="cmt"># map categories to numbers (needed for sklearn)</span>
+df[<span class="str">'Sex'</span>] = df[<span class="str">'Sex'</span>].map({<span class="str">'male'</span>: <span class="num">0</span>, <span class="str">'female'</span>: <span class="num">1</span>})
+
+<span class="cmt"># count categories</span>
+df[<span class="str">'Pclass'</span>].value_counts()   <span class="cmt"># 3: 491, 1: 216, 2: 184</span></pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">Vectorized</b> — applies to every row at once. Same as NumPy.</li>
+        <li class="fragment">Boolean column ($&lt;$, $&gt;$, $==$) gives <code>True</code>/<code>False</code> $\Rightarrow$ usable as 0/1.</li>
+        <li class="fragment"><b class="tk-purple">.map()</b> — turn strings into numbers. Models eat numbers only.</li>
+      </ul>
+    </section>
+
+    <!-- 11. Widget — Titanic Explorer -->
+    <section class="slide">
+      <h2>Try it — Titanic Explorer</h2>
+      <p>Pick a filter and an aggregation. See the answer + the matching pandas line.</p>
+
+      <div class="tw-shell">
+        <div class="tw-row">
+          <label>filter:</label>
+          <select id="tw-filter">
+            <option value="all">no filter — full table</option>
+            <option value="female">Sex == 'female'</option>
+            <option value="male">Sex == 'male'</option>
+            <option value="first">Pclass == 1</option>
+            <option value="third">Pclass == 3</option>
+            <option value="adult">Age &gt; 30</option>
+            <option value="child">Age &lt; 12</option>
+          </select>
+        </div>
+        <div class="tw-row">
+          <label>group by:</label>
+          <select id="tw-group">
+            <option value="none">— none —</option>
+            <option value="Pclass">Pclass</option>
+            <option value="Sex">Sex</option>
+          </select>
+        </div>
+        <div class="tw-row">
+          <label>metric:</label>
+          <select id="tw-metric">
+            <option value="count">count(rows)</option>
+            <option value="survived_mean">Survived.mean() — survival rate</option>
+            <option value="age_mean">Age.mean()</option>
+            <option value="fare_mean">Fare.mean()</option>
+          </select>
+        </div>
+        <pre class="code" id="tw-code" style="margin-top: 8px;">df.shape[0]</pre>
+        <div class="tw-result" id="tw-result">click any control →</div>
+      </div>
+    </section>
+
+    <!-- 12. Mini-task — 5 Q reveal -->
+    <section class="slide dense">
+      <h2>Mini-task — 5 questions on Titanic</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Try each in your head first. Click <b>show</b> to compare.</p>
+
+      <div class="qgrid">
+        <div class="qcard">
+          <span class="qnum">Q 1</span>
+          <span class="qtext">How many passengers total?</span>
+          <button onclick="this.parentElement.classList.toggle('open')">show</button>
+          <div class="qreveal"><code>len(df)</code> or <code>df.shape[0]</code> → <b>891</b></div>
+        </div>
+
+        <div class="qcard">
+          <span class="qnum">Q 2</span>
+          <span class="qtext">Average age (handle NaN).</span>
+          <button onclick="this.parentElement.classList.toggle('open')">show</button>
+          <div class="qreveal"><code>df['Age'].mean()</code> — skips NaN → <b>≈ 29.7</b></div>
+        </div>
+
+        <div class="qcard">
+          <span class="qnum">Q 3</span>
+          <span class="qtext">What % survived?</span>
+          <button onclick="this.parentElement.classList.toggle('open')">show</button>
+          <div class="qreveal"><code>df['Survived'].mean()*100</code> → <b>≈ 38%</b></div>
+        </div>
+
+        <div class="qcard">
+          <span class="qnum">Q 4</span>
+          <span class="qtext">1st-class survival vs 3rd-class?</span>
+          <button onclick="this.parentElement.classList.toggle('open')">show</button>
+          <div class="qreveal"><code>df.groupby('Pclass')['Survived'].mean()</code> → <b>1: 0.63 · 3: 0.24</b></div>
+        </div>
+
+        <div class="qcard" style="grid-column: span 2;">
+          <span class="qnum">Q 5</span>
+          <span class="qtext">Avg fare — survivors vs non-survivors?</span>
+          <button onclick="this.parentElement.classList.toggle('open')">show</button>
+          <div class="qreveal"><code>df.groupby('Survived')['Fare'].mean()</code> → <b>0: 22.1 · 1: 48.4</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. Recap cheat strip -->
+    <section class="slide">
+      <h2>Recap — 7 commands cover 80%</h2>
+      <div class="cheat-strip">
+        <div><code>pd.read_csv('f.csv')</code><br/><span style="color:var(--ink-soft);font-size:12px;">load any CSV</span></div>
+        <div><code>df.head() / .info() / .describe()</code><br/><span style="color:var(--ink-soft);font-size:12px;">inspect first</span></div>
+        <div><code>df['col']</code> &nbsp; <code>df.loc / .iloc</code><br/><span style="color:var(--ink-soft);font-size:12px;">select</span></div>
+        <div><code>df[df['x'] &gt; 5]</code><br/><span style="color:var(--ink-soft);font-size:12px;">filter — boolean mask</span></div>
+        <div><code>df.isnull().sum() / .fillna(...)</code><br/><span style="color:var(--ink-soft);font-size:12px;">missing values</span></div>
+        <div><code>df.groupby('k')['v'].mean()</code><br/><span style="color:var(--ink-soft);font-size:12px;">split-apply-combine</span></div>
+        <div><code>df['new'] = df['a'] + df['b']</code><br/><span style="color:var(--ink-soft);font-size:12px;">derive new column</span></div>
+        <div><code>df['c'].value_counts()</code><br/><span style="color:var(--ink-soft);font-size:12px;">category frequency</span></div>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Inspect</b> — always first, before any model.</li>
+        <li class="fragment"><b class="tk-green">Filter + groupby</b> — answers most "what / which / how many" questions.</li>
+        <li class="fragment"><b class="tk-purple">Fill NaN</b> — before sklearn, no exceptions.</li>
+      </ul>
+      <p class="callout fragment">Next: matplotlib (4 plots), then the 5-step ML pipeline.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<!-- deck-local interactive logic -->
+<script>
+(function(){
+  /* ------ slide 6: selection playground ------ */
+  const selTable = document.getElementById('sel-table');
+  const selOut = document.getElementById('sel-out');
+  const selBtns = document.querySelectorAll('.sel-bar [data-pick]');
+
+  function clearSel(){
+    selTable.querySelectorAll('td').forEach(td => {
+      td.classList.remove('col-pick','row-pick','cell-pick');
+    });
+  }
+
+  selBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearSel();
+      document.querySelectorAll('.sel-bar [data-pick]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const pick = btn.dataset.pick;
+      const rows = selTable.querySelectorAll('tbody tr');
+
+      if (pick === 'col') {
+        // Age column = 3rd td (after idx)
+        rows.forEach(r => r.children[2].classList.add('col-pick'));
+        selOut.innerHTML = "df['Age'] → <b>Series of 5 ages</b> (one column)";
+      } else if (pick === 'cols2') {
+        rows.forEach(r => {
+          r.children[1].classList.add('col-pick');
+          r.children[2].classList.add('col-pick');
+        });
+        selOut.innerHTML = "df[['Name','Age']] → <b>DataFrame, 5 rows × 2 cols</b>";
+      } else if (pick === 'loc') {
+        const r = rows[2];
+        Array.from(r.children).slice(1).forEach(td => td.classList.add('row-pick'));
+        selOut.innerHTML = "df.loc[2] → <b>Series — row with index label 2</b> (Heikkinen)";
+      } else if (pick === 'iloc') {
+        for (let i = 0; i < 3; i++) {
+          Array.from(rows[i].children).slice(1).forEach(td => td.classList.add('row-pick'));
+        }
+        selOut.innerHTML = "df.iloc[0:3] → <b>first 3 rows</b> (positions 0, 1, 2)";
+      } else if (pick === 'cell') {
+        rows[1].children[2].classList.add('cell-pick');
+        selOut.innerHTML = "df.loc[1, 'Age'] → <b>38</b> (single value)";
+      }
+    });
+  });
+
+  /* ------ slide 7: filter mask ------ */
+  const maskTable = document.getElementById('mask-table');
+  const maskApply = document.getElementById('mask-apply');
+  const maskReset = document.getElementById('mask-reset');
+
+  if (maskApply) {
+    maskApply.addEventListener('click', () => {
+      const rows = maskTable.querySelectorAll('tbody tr');
+      rows.forEach(r => {
+        const age = parseInt(r.dataset.age, 10);
+        r.classList.remove('hi','dim');
+        if (age > 30) r.classList.add('hi');
+        else r.classList.add('dim');
+      });
+    });
+    maskReset.addEventListener('click', () => {
+      const rows = maskTable.querySelectorAll('tbody tr');
+      rows.forEach(r => r.classList.remove('hi','dim'));
+    });
+  }
+
+  /* ------ slide 11: Titanic explorer widget ------ */
+  // Synthetic Titanic-shape data — small enough to compute live.
+  // Survival rates calibrated to the real dataset.
+  const TITANIC = [
+    // [Sex, Pclass, Age, Survived, Fare]
+    ['male',   3, 22, 0,  7.25],
+    ['female', 1, 38, 1, 71.28],
+    ['female', 3, 26, 1,  7.92],
+    ['female', 1, 35, 1, 53.10],
+    ['male',   3, 35, 0,  8.05],
+    ['male',   3,  2, 0, 21.07],
+    ['male',   1, 54, 0, 51.86],
+    ['male',   3,  2, 0, 21.07],
+    ['female', 3, 27, 1, 11.13],
+    ['female', 2, 14, 1, 30.07],
+    ['female', 3,  4, 1, 16.70],
+    ['female', 1, 58, 1, 26.55],
+    ['male',   3, 20, 0,  8.05],
+    ['male',   3, 39, 0, 31.27],
+    ['female', 3, 14, 0,  7.85],
+    ['female', 2, 55, 1, 16.00],
+    ['male',   3,  2, 0, 29.12],
+    ['male',   2, 31, 1, 13.00],
+    ['female', 3, 31, 0, 18.00],
+    ['female', 3, 22, 1,  7.22],
+    ['male',   2, 35, 0, 26.00],
+    ['male',   2, 34, 1, 13.00],
+    ['female', 3, 15, 0,  8.02],
+    ['male',   3, 28, 0,  8.05],
+    ['female', 3,  8, 0, 21.07],
+    ['male',   3, 38, 0,  7.05],
+    ['female', 1, 19, 1, 90.00],
+    ['female', 3, 33, 1,  7.85],
+    ['male',   2, 32, 0, 10.50],
+    ['female', 1, 49, 1, 76.73],
+  ];
+
+  const filterEl = document.getElementById('tw-filter');
+  const groupEl  = document.getElementById('tw-group');
+  const metricEl = document.getElementById('tw-metric');
+  const codeEl   = document.getElementById('tw-code');
+  const resultEl = document.getElementById('tw-result');
+
+  function applyFilter(rows, f) {
+    if (f === 'all') return rows;
+    if (f === 'female') return rows.filter(r => r[0] === 'female');
+    if (f === 'male')   return rows.filter(r => r[0] === 'male');
+    if (f === 'first')  return rows.filter(r => r[1] === 1);
+    if (f === 'third')  return rows.filter(r => r[1] === 3);
+    if (f === 'adult')  return rows.filter(r => r[2] > 30);
+    if (f === 'child')  return rows.filter(r => r[2] < 12);
+    return rows;
+  }
+  const FILTER_CODE = {
+    all: '',
+    female: "df[df['Sex']=='female']",
+    male:   "df[df['Sex']=='male']",
+    first:  "df[df['Pclass']==1]",
+    third:  "df[df['Pclass']==3]",
+    adult:  "df[df['Age']>30]",
+    child:  "df[df['Age']<12]",
+  };
+
+  function metricFn(rows, m) {
+    if (rows.length === 0) return '— (empty)';
+    if (m === 'count') return rows.length;
+    if (m === 'survived_mean') {
+      const v = rows.reduce((a,r) => a+r[3], 0) / rows.length;
+      return v.toFixed(3);
+    }
+    if (m === 'age_mean') {
+      const v = rows.reduce((a,r) => a+r[2], 0) / rows.length;
+      return v.toFixed(2);
+    }
+    if (m === 'fare_mean') {
+      const v = rows.reduce((a,r) => a+r[4], 0) / rows.length;
+      return v.toFixed(2);
+    }
+  }
+  const METRIC_CODE = {
+    count:         '.shape[0]',
+    survived_mean: "['Survived'].mean()",
+    age_mean:      "['Age'].mean()",
+    fare_mean:     "['Fare'].mean()",
+  };
+  const METRIC_LABEL = {
+    count: 'rows',
+    survived_mean: 'survival rate',
+    age_mean: 'avg Age',
+    fare_mean: 'avg Fare',
+  };
+
+  function groupKey(row, g) {
+    if (g === 'Pclass') return row[1];
+    if (g === 'Sex')    return row[0];
+    return null;
+  }
+
+  function update() {
+    const f = filterEl.value;
+    const g = groupEl.value;
+    const m = metricEl.value;
+
+    const filtered = applyFilter(TITANIC, f);
+    const filterCode = FILTER_CODE[f] || 'df';
+    const base = filterCode || 'df';
+
+    if (g === 'none') {
+      // single value
+      const code = m === 'count'
+        ? `${base}.shape[0]`
+        : `${base}${METRIC_CODE[m]}`;
+      codeEl.textContent = code;
+      const v = metricFn(filtered, m);
+      resultEl.innerHTML = `→ <b>${v}</b> &nbsp;<span style="color:#888">(${METRIC_LABEL[m]} on ${filtered.length} rows)</span>`;
+    } else {
+      // groupby
+      const groups = {};
+      filtered.forEach(r => {
+        const k = groupKey(r, g);
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(r);
+      });
+      const keys = Object.keys(groups).sort();
+
+      let codeStr;
+      if (m === 'count') {
+        codeStr = `${base}.groupby('${g}').size()`;
+      } else {
+        const col = METRIC_CODE[m].match(/\['(\w+)'\]/)[1];
+        codeStr = `${base}.groupby('${g}')['${col}'].mean()`;
+      }
+      codeEl.textContent = codeStr;
+
+      const lines = keys.map(k => {
+        const v = metricFn(groups[k], m);
+        return `<b>${k}</b>: ${v}`;
+      });
+      resultEl.innerHTML = '→ ' + lines.join(' &nbsp;·&nbsp; ');
+    }
+  }
+
+  [filterEl, groupEl, metricEl].forEach(el => el && el.addEventListener('change', update));
+  update();
+})();
+</script>
+
+</body>
+</html>

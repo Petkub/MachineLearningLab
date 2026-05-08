@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>aiMainSlide — AI with Python</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #fafaf6;
+    --ink: #111;
+    --ink-soft: #555;
+    --ink-mute: #999;
+    --cream: #fde9a3;
+    --cream-soft: #fff3c2;
+    --accent-red: #d62828;
+    --accent-blue: #1d3fb6;
+    --font-mono: 'JetBrains Mono', monospace;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background:
+      radial-gradient(circle at 10% -10%, rgba(253,233,163,0.5), transparent 35%),
+      radial-gradient(circle at 100% 110%, rgba(253,233,163,0.4), transparent 40%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .frame {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 80px 60px 120px;
+    position: relative;
+  }
+
+  .pill-deco {
+    position: fixed;
+    background: var(--cream);
+    border-radius: 60px;
+    z-index: -1;
+  }
+  .pill-deco.tl { top: -80px; left: 8%; width: 70px; height: 280px; }
+  .pill-deco.tr { top: -50px; right: 6%; width: 90px; height: 240px; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 24px;
+    margin-bottom: 60px;
+  }
+  header h1 {
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  header h1 em {
+    font-style: normal;
+    background: var(--cream);
+    padding: 0 6px;
+  }
+  header .meta { font-size: 14px; color: var(--ink-soft); text-align: right; }
+
+  .lede {
+    font-size: 20px;
+    line-height: 1.55;
+    max-width: 720px;
+    margin-bottom: 60px;
+    color: var(--ink-soft);
+  }
+  .lede b { color: var(--ink); }
+
+  .section-label {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 4px 10px;
+    margin-bottom: 28px;
+  }
+  .section-label + .section-label { margin-left: 0; }
+  .section-block { margin-bottom: 24px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 60px;
+  }
+  .card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 24px 24px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 240ms var(--ease), box-shadow 240ms var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cream);
+    transform: translateY(101%);
+    transition: transform 320ms var(--ease);
+    z-index: 0;
+  }
+  .card > * { position: relative; z-index: 1; }
+  .card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+  .card:hover::after { transform: translateY(70%); }
+  .card.coming-soon {
+    border-style: dashed;
+    color: var(--ink-mute);
+  }
+  .card.coming-soon:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .card.coming-soon::after { display: none; }
+
+  .card .num {
+    font-size: 14px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+  .card h3 {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .card .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 11px;
+    margin-top: auto;
+  }
+  .tag {
+    border: 1px solid var(--ink);
+    padding: 2px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .card.coming-soon .tag { border-color: var(--ink-mute); }
+
+  .card .arrow {
+    font-size: 22px;
+    align-self: flex-end;
+    transition: transform 240ms var(--ease);
+  }
+  .card:hover .arrow { transform: translateX(6px); }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    border-top: 3px solid var(--ink);
+    padding-top: 18px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  .keys {
+    display: inline-block;
+    background: var(--cream-soft);
+    border: 1px solid var(--ink);
+    padding: 12px 16px;
+    margin-bottom: 40px;
+    font-size: 14px;
+  }
+  .keys b { background: #fff; border: 1px solid var(--ink); padding: 1px 6px; margin: 0 2px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .grid > * {
+    opacity: 0;
+    animation: fadeUp 600ms var(--ease) forwards;
+  }
+  .grid > *:nth-child(1) { animation-delay: 0.05s; }
+  .grid > *:nth-child(2) { animation-delay: 0.10s; }
+  .grid > *:nth-child(3) { animation-delay: 0.15s; }
+  .grid > *:nth-child(4) { animation-delay: 0.20s; }
+  .grid > *:nth-child(5) { animation-delay: 0.25s; }
+  .grid > *:nth-child(6) { animation-delay: 0.30s; }
+  .grid > *:nth-child(7) { animation-delay: 0.35s; }
+</style>
+</head>
+<body>
+
+<div class="pill-deco tl"></div>
+<div class="pill-deco tr"></div>
+
+<div class="frame">
+
+  <header>
+    <h1>ai<em>Main</em>Slide</h1>
+    <div class="meta">
+      AI with Python · Built by Petkub<br/>
+      Press <b>→</b> to advance, <b>F</b> for fullscreen
+    </div>
+  </header>
+
+  <p class="lede">
+    AI with Python, taught in slides you can <b>play with</b>.
+    From NumPy arrays to neural nets — each topic ships an interactive widget,
+    not just diagrams to stare at.
+  </p>
+
+  <div class="keys">
+    <b>→</b> next &nbsp; <b>←</b> back &nbsp; <b>Space</b> step &nbsp; <b>F</b> fullscreen &nbsp; <b>Home/End</b> jump
+  </div>
+
+  <span class="section-label">Foundations</span>
+  <div class="grid">
+
+    <a class="card" href="decks/01-numpy-basics/index.html">
+      <div class="num">01</div>
+      <h3>NumPy<br/>Basics</h3>
+      <div class="tags">
+        <span class="tag">Arrays</span>
+        <span class="tag">Vectorize</span>
+        <span class="tag">Broadcast</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="decks/02-numpy-exercises/index.html">
+      <div class="num">02</div>
+      <h3>NumPy<br/>Exercises</h3>
+      <div class="tags">
+        <span class="tag">10 Problems</span>
+        <span class="tag">Hint+Solution</span>
+        <span class="tag">No Loops</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="decks/03-pandas-basics/index.html">
+      <div class="num">03</div>
+      <h3>Pandas<br/>Basics</h3>
+      <div class="tags">
+        <span class="tag">DataFrame</span>
+        <span class="tag">Filter+GroupBy</span>
+        <span class="tag">Interactive</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="decks/E03-pandas-exercises/index.html">
+      <div class="num">E03</div>
+      <h3>Pandas<br/>Exercises</h3>
+      <div class="tags">
+        <span class="tag">6 Problems</span>
+        <span class="tag">Hint+Solution</span>
+        <span class="tag">Pick Tool</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="decks/04-matplotlib-basics/index.html">
+      <div class="num">04</div>
+      <h3>Matplotlib<br/>Basics</h3>
+      <div class="tags">
+        <span class="tag">4 Plot Types</span>
+        <span class="tag">SVG Demos</span>
+        <span class="tag">Interactive</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+  </div>
+
+  <span class="section-label">Classical ML</span>
+  <div class="grid">
+
+    <a class="card" href="decks/05-ml-pipeline/index.html">
+      <div class="num">05</div>
+      <h3>ML Pipeline<br/>5 Steps</h3>
+      <div class="tags">
+        <span class="tag">sklearn</span>
+        <span class="tag">Stepper</span>
+        <span class="tag">Interactive</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <div class="card coming-soon">
+      <div class="num">06</div>
+      <h3>Classification<br/>with sklearn</h3>
+      <div class="tags"><span class="tag">Slides soon</span></div>
+    </div>
+
+    <div class="card coming-soon">
+      <div class="num">07</div>
+      <h3>Clustering &<br/>Dimensionality</h3>
+      <div class="tags"><span class="tag">Slides soon</span></div>
+    </div>
+
+  </div>
+
+  <span class="section-label">Colab Exercises</span>
+  <p style="font-size:13px; color:var(--ink-soft); margin: -16px 0 18px;">
+    Hands-on notebooks. Real Titanic / iris data. Click a badge → opens in Google Colab.
+  </p>
+  <div class="grid">
+
+    <a class="card" href="https://colab.research.google.com/github/Petkub/MachineLearningLab/blob/main/HTMLSlides/decks/03-pandas-basics/exercises.ipynb" target="_blank" rel="noopener">
+      <div class="num">N03</div>
+      <h3>Pandas<br/>Notebook</h3>
+      <div class="tags">
+        <span class="tag">6 Problems</span>
+        <span class="tag">Real Titanic</span>
+        <span class="tag">Colab</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="https://colab.research.google.com/github/Petkub/MachineLearningLab/blob/main/HTMLSlides/decks/04-matplotlib-basics/exercises.ipynb" target="_blank" rel="noopener">
+      <div class="num">N04</div>
+      <h3>Matplotlib<br/>Notebook</h3>
+      <div class="tags">
+        <span class="tag">6 Problems</span>
+        <span class="tag">Fix Bugs</span>
+        <span class="tag">Colab</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="https://colab.research.google.com/github/Petkub/MachineLearningLab/blob/main/HTMLSlides/decks/05-ml-pipeline/exercises.ipynb" target="_blank" rel="noopener">
+      <div class="num">N05</div>
+      <h3>ML Pipeline<br/>Notebook</h3>
+      <div class="tags">
+        <span class="tag">5-Step Mantra</span>
+        <span class="tag">Swap Models</span>
+        <span class="tag">Colab</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="https://colab.research.google.com/github/Petkub/MachineLearningLab/blob/main/HTMLSlides/decks/06-classification/exercises.ipynb" target="_blank" rel="noopener">
+      <div class="num">N06</div>
+      <h3>Classification<br/>Notebook</h3>
+      <div class="tags">
+        <span class="tag">6 Problems</span>
+        <span class="tag">Pipeline+Scaler</span>
+        <span class="tag">Colab</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+    <a class="card" href="https://colab.research.google.com/github/Petkub/MachineLearningLab/blob/main/HTMLSlides/decks/07-clustering/exercises.ipynb" target="_blank" rel="noopener">
+      <div class="num">N07</div>
+      <h3>Clustering<br/>Notebook</h3>
+      <div class="tags">
+        <span class="tag">KMeans</span>
+        <span class="tag">Elbow+Silhouette</span>
+        <span class="tag">Colab</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+    </a>
+
+  </div>
+
+  <span class="section-label">Deep Learning</span>
+  <div class="grid">
+
+    <div class="card coming-soon">
+      <div class="num">08</div>
+      <h3>Neural Net<br/>from Scratch</h3>
+      <div class="tags"><span class="tag">Coming soon</span></div>
+    </div>
+
+    <div class="card coming-soon">
+      <div class="num">09</div>
+      <h3>PyTorch<br/>Basics</h3>
+      <div class="tags"><span class="tag">Coming soon</span></div>
+    </div>
+
+    <div class="card coming-soon">
+      <div class="num">10</div>
+      <h3>LLMs &<br/>Anthropic API</h3>
+      <div class="tags"><span class="tag">Coming soon</span></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>aiMainSlide · Petkub</span>
+    <span>v0.1 — extensible deck system</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

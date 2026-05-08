@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ML Pipeline — 5 Steps</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* mantra pill block */
+  .mantra {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .mantra-step {
+    border: 3px solid var(--ink);
+    background: #fff;
+    padding: 14px 10px;
+    text-align: center;
+    position: relative;
+    transition: background 280ms var(--ease), transform 280ms var(--ease);
+  }
+  .mantra-step .num {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--bg);
+    width: 24px; height: 24px;
+    line-height: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .mantra-step .name {
+    font-size: 16px; font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+  .mantra-step .api {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-weight: 700;
+  }
+  .mantra-step.active {
+    background: var(--cream);
+    transform: translateY(-4px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .mantra-step.done {
+    background: #d6f5dd;
+  }
+
+  /* X / y diagram */
+  .xy-stage { display: flex; gap: 20px; align-items: center; }
+  .xy-tbl {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .xy-tbl th, .xy-tbl td {
+    border: 2px solid var(--ink);
+    padding: 4px 10px;
+    background: #fff;
+  }
+  .xy-tbl th { background: var(--cream); font-weight: 800; }
+  .xy-tbl .yhead { background: #ffd6cc; }
+  .xy-tbl .ycol  { background: #ffe3a8; font-weight: 700; }
+  .xy-tbl .xhead { background: #c8e6ff; }
+
+  /* split diagram */
+  .split-bar {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    gap: 0;
+    border: 2px solid var(--ink);
+    height: 40px;
+    margin: 12px 0;
+  }
+  .split-train { background: var(--accent-blue); display: grid; place-items: center; color: #fff; font-weight: 700; }
+  .split-test  { background: var(--accent-red);  display: grid; place-items: center; color: #fff; font-weight: 700; }
+
+  /* confusion matrix */
+  .cm {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 14px;
+  }
+  .cm th, .cm td {
+    border: 2px solid var(--ink);
+    padding: 14px 22px;
+    text-align: center;
+    background: #fff;
+  }
+  .cm th { background: var(--cream); font-weight: 800; }
+  .cm .tp { background: #d6f5dd; }
+  .cm .tn { background: #d6f5dd; }
+  .cm .fp { background: #ffd6cc; }
+  .cm .fn { background: #ffd6cc; }
+  .cm .lbl {
+    font-size: 10px;
+    color: var(--ink-soft);
+    font-weight: 700;
+    display: block;
+    letter-spacing: 0.1em;
+  }
+  .cm .num-big { font-size: 22px; font-weight: 800; }
+
+  /* widget — pipeline stepper */
+  .pipe-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 12px 16px;
+  }
+  .pipe-controls {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .pipe-btn {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 160ms var(--ease);
+  }
+  .pipe-btn:hover { background: var(--cream-soft); }
+  .pipe-btn.active { background: var(--cream); }
+
+  .pipe-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .pipe-code {
+    background: #fafaf6;
+    border: 2px solid var(--ink);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre;
+    min-height: 240px;
+  }
+  .pipe-code .hl {
+    background: var(--cream);
+    padding: 0 4px;
+    border-left: 3px solid var(--accent-red);
+    display: inline-block;
+  }
+  .pipe-code .dim { color: var(--ink-mute); }
+  .pipe-state {
+    border: 2px dashed var(--ink-mute);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: #fff;
+    min-height: 240px;
+  }
+  .pipe-state h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+  .pipe-state ul { list-style: none; padding: 0; }
+  .pipe-state li { margin: 3px 0; }
+  .pipe-state b { color: var(--ink); background: var(--cream); padding: 1px 6px; }
+
+  /* model swap card */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .model-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 10px 14px;
+  }
+  .model-card h4 {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    background: var(--cream);
+    padding: 2px 8px;
+    display: inline-block;
+  }
+  .model-card pre.code { font-size: 12px; line-height: 1.45; margin: 4px 0; padding: 4px 6px; }
+  .model-card .when { font-size: 11px; color: var(--ink-soft); }
+
+  /* cheat strip */
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .cheat-strip code { font-weight: 700; display: block; margin-bottom: 4px; }
+  .cheat-strip span { color: var(--ink-soft); font-size: 10px; }
+
+  /* pitfalls table */
+  .param-tbl {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .param-tbl th, .param-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .param-tbl th { background: var(--cream); font-weight: 800; }
+  .param-tbl code { font-weight: 700; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>ML Pipeline<br/>5 Steps</h1>
+      <p class="subtitle">Same shape. Every model.<br/>Learn once, apply forever.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>Same shape, every model</h2>
+      <ul>
+        <li class="fragment">scikit-learn ships <b class="tk-blue">100s of models</b>. LogReg, RandomForest, SVM, KNN…</li>
+        <li class="fragment"><b class="tk-red">Every single one</b> follows 5 lines. Identical.</li>
+        <li class="fragment">Memorize once $\Rightarrow$ swap any model in one keystroke.</li>
+        <li class="fragment">Camp baselines built on this exact pattern.</li>
+      </ul>
+      <p class="callout fragment">Don't memorize models. Memorize the pipeline.</p>
+    </section>
+
+    <!-- 3. The mantra -->
+    <section class="slide">
+      <h2>The 5-step mantra</h2>
+      <p>Recite this. Out loud. Memorize the order.</p>
+      <div class="mantra">
+        <div class="mantra-step">
+          <div class="num">1</div>
+          <div class="name">LOAD</div>
+          <div class="api">pd.read_csv()</div>
+        </div>
+        <div class="mantra-step">
+          <div class="num">2</div>
+          <div class="name">SPLIT</div>
+          <div class="api">train_test_split()</div>
+        </div>
+        <div class="mantra-step">
+          <div class="num">3</div>
+          <div class="name">FIT</div>
+          <div class="api">model.fit()</div>
+        </div>
+        <div class="mantra-step">
+          <div class="num">4</div>
+          <div class="name">PREDICT</div>
+          <div class="api">model.predict()</div>
+        </div>
+        <div class="mantra-step">
+          <div class="num">5</div>
+          <div class="name">EVALUATE</div>
+          <div class="api">accuracy_score()</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 24px;">Order matters. Skip split $\Rightarrow$ overfitting score. Skip evaluate $\Rightarrow$ flying blind.</p>
+    </section>
+
+    <!-- 4. X vs y -->
+    <section class="slide">
+      <h2>Features (X) vs Labels (y)</h2>
+      <p>Models eat numbers. <b class="tk-blue">X</b> = inputs, <b class="tk-red">y</b> = answer to predict.</p>
+      <div class="xy-stage" style="margin-top: 14px;">
+        <table class="xy-tbl">
+          <tr>
+            <th class="xhead">Pclass</th><th class="xhead">Sex</th><th class="xhead">Age</th><th class="xhead">Fare</th>
+            <th class="yhead">Survived</th>
+          </tr>
+          <tr><td>3</td><td>0</td><td>22</td><td>7.25</td><td class="ycol">0</td></tr>
+          <tr><td>1</td><td>1</td><td>38</td><td>71.28</td><td class="ycol">1</td></tr>
+          <tr><td>3</td><td>1</td><td>26</td><td>7.92</td><td class="ycol">1</td></tr>
+          <tr><td>1</td><td>1</td><td>35</td><td>53.10</td><td class="ycol">1</td></tr>
+        </table>
+        <div style="font-size: 14px;">
+          <div><b style="background:#c8e6ff;padding:2px 8px;">X</b> — features matrix, shape <code>(n_rows, n_features)</code></div>
+          <div style="margin-top: 8px;"><b style="background:#ffe3a8;padding:2px 8px;">y</b> — label vector, shape <code>(n_rows,)</code></div>
+        </div>
+      </div>
+      <pre class="code" style="margin-top: 16px;">X = df.drop(<span class="str">'Survived'</span>, axis=<span class="num">1</span>)   <span class="cmt"># everything except target</span>
+y = df[<span class="str">'Survived'</span>]                <span class="cmt"># the target column</span></pre>
+      <p class="callout fragment"><b class="tk-red">Convention</b>: capital <code>X</code> (matrix), lowercase <code>y</code> (vector). Universal in ML code.</p>
+    </section>
+
+    <!-- 5. Why split -->
+    <section class="slide">
+      <h2>Why split?</h2>
+      <ul>
+        <li class="fragment">Train on 100% $\Rightarrow$ score 100%. Useless. Model memorized.</li>
+        <li class="fragment">Need to estimate how it does on <b class="tk-red">unseen data</b>.</li>
+        <li class="fragment">Hide some rows during training. Score on those rows.</li>
+      </ul>
+      <div class="split-bar">
+        <div class="split-train">TRAIN — 80%</div>
+        <div class="split-test">TEST — 20%</div>
+      </div>
+      <p style="font-size: 14px; color: var(--ink-soft);">Whole dataset, sliced once. Model sees blue, scored on red.</p>
+      <p class="callout fragment"><b class="tk-blue">Analogy</b>: studying for exam. Train = practice problems. Test = real exam. Don't peek.</p>
+    </section>
+
+    <!-- 6. train_test_split -->
+    <section class="slide">
+      <h2><code>train_test_split</code> — the cut</h2>
+      <pre class="code"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=<span class="num">0.2</span>,         <span class="cmt"># 20% held out</span>
+    random_state=<span class="num">42</span>,       <span class="cmt"># reproducible — same split every run</span>
+    stratify=y             <span class="cmt"># keep class ratio in both — for imbalanced data</span>
+)</pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment">Returns <b class="tk-blue">4 things</b> in order: X_train, X_test, y_train, y_test. Memorize.</li>
+        <li class="fragment"><b class="tk-purple">random_state=42</b> $\Rightarrow$ same shuffle each run. Reproducible.</li>
+        <li class="fragment"><b class="tk-green">stratify=y</b> $\Rightarrow$ if 38% survived, 38% in train AND test. Critical for imbalanced.</li>
+      </ul>
+    </section>
+
+    <!-- 7. Universal API -->
+    <section class="slide">
+      <h2>Universal sklearn API</h2>
+      <p>Every model in sklearn has the same 2 methods:</p>
+      <pre class="code">model.fit(X_train, y_train)           <span class="cmt"># 1. learn from data</span>
+preds = model.predict(X_test)         <span class="cmt"># 2. predict new data</span>
+probs = model.predict_proba(X_test)   <span class="cmt"># optional: prediction probabilities</span></pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">fit</b> — model adjusts internal weights to data. Slow.</li>
+        <li class="fragment"><b class="tk-green">predict</b> — apply learned weights to new rows. Fast.</li>
+        <li class="fragment">Same API for LogReg, SVM, RandomForest, KNN, GradientBoost, …</li>
+      </ul>
+      <p class="callout fragment">Once you know <code>.fit() / .predict()</code>, you know <i>every</i> sklearn model.</p>
+    </section>
+
+    <!-- 8. Full Titanic example -->
+    <section class="slide dense">
+      <h2>Full Titanic example — every step</h2>
+      <pre class="code"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LogisticRegression
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, confusion_matrix
+
+<span class="cmt"># 1. LOAD</span>
+df = pd.read_csv(<span class="str">'titanic.csv'</span>)
+df[<span class="str">'Sex'</span>] = df[<span class="str">'Sex'</span>].map({<span class="str">'male'</span>:<span class="num">0</span>, <span class="str">'female'</span>:<span class="num">1</span>})
+df[<span class="str">'Age'</span>] = df[<span class="str">'Age'</span>].fillna(df[<span class="str">'Age'</span>].mean())
+X = df[[<span class="str">'Pclass'</span>, <span class="str">'Sex'</span>, <span class="str">'Age'</span>, <span class="str">'Fare'</span>]]
+y = df[<span class="str">'Survived'</span>]
+
+<span class="cmt"># 2. SPLIT</span>
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+
+<span class="cmt"># 3. FIT</span>
+model = LogisticRegression(max_iter=<span class="num">1000</span>)
+model.fit(X_train, y_train)
+
+<span class="cmt"># 4. PREDICT</span>
+preds = model.predict(X_test)
+
+<span class="cmt"># 5. EVALUATE</span>
+<span class="kw">print</span>(<span class="str">"Accuracy:"</span>, accuracy_score(y_test, preds))
+<span class="kw">print</span>(confusion_matrix(y_test, preds))</pre>
+      <p class="callout fragment" style="margin-top: 10px;">~20 lines. Working baseline. Camp Day 1 looks like this.</p>
+    </section>
+
+    <!-- 9. Swap models -->
+    <section class="slide dense">
+      <h2>Swap models — change ONE line</h2>
+      <p>Same X_train, y_train, X_test, y_test. Just import + class name change.</p>
+      <div class="model-grid">
+        <div class="model-card">
+          <h4>LogisticRegression</h4>
+          <pre class="code"><span class="kw">from</span> sklearn.linear_model
+  <span class="kw">import</span> LogisticRegression
+model = LogisticRegression()</pre>
+          <div class="when">fast baseline; works for binary &amp; multi-class</div>
+        </div>
+        <div class="model-card">
+          <h4>RandomForestClassifier</h4>
+          <pre class="code"><span class="kw">from</span> sklearn.ensemble
+  <span class="kw">import</span> RandomForestClassifier
+model = RandomForestClassifier(
+    n_estimators=<span class="num">100</span>)</pre>
+          <div class="when">usually beats LogReg on tabular data</div>
+        </div>
+        <div class="model-card">
+          <h4>KNeighborsClassifier</h4>
+          <pre class="code"><span class="kw">from</span> sklearn.neighbors
+  <span class="kw">import</span> KNeighborsClassifier
+model = KNeighborsClassifier(n_neighbors=<span class="num">5</span>)</pre>
+          <div class="when">small data; needs feature scaling</div>
+        </div>
+        <div class="model-card">
+          <h4>GradientBoostingClassifier</h4>
+          <pre class="code"><span class="kw">from</span> sklearn.ensemble
+  <span class="kw">import</span> GradientBoostingClassifier
+model = GradientBoostingClassifier()</pre>
+          <div class="when">strong on tabular; slower training</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 12px;">Rest of the pipeline (<code>.fit / .predict / accuracy_score</code>) <b>does not change</b>.</p>
+    </section>
+
+    <!-- 10. Confusion matrix -->
+    <section class="slide">
+      <h2>Confusion matrix — beyond accuracy</h2>
+      <div class="tight-split">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> confusion_matrix
+
+confusion_matrix(y_test, preds)
+<span class="cmt"># [[TN  FP]</span>
+<span class="cmt">#  [FN  TP]]</span></pre>
+          <ul style="margin-top: 12px; font-size: 14px;">
+            <li class="fragment"><b class="tk-green">TP</b> — predicted survived, actually survived.</li>
+            <li class="fragment"><b class="tk-green">TN</b> — predicted died, actually died.</li>
+            <li class="fragment"><b class="tk-red">FP</b> — false alarm. Predicted survived, didn't.</li>
+            <li class="fragment"><b class="tk-red">FN</b> — missed. Predicted died, actually survived.</li>
+            <li class="fragment">Accuracy = (TP+TN) / total. Hides which class fails.</li>
+          </ul>
+        </div>
+        <div>
+          <table class="cm">
+            <tr>
+              <th></th>
+              <th>pred 0 (died)</th>
+              <th>pred 1 (survived)</th>
+            </tr>
+            <tr>
+              <th>actual 0</th>
+              <td class="tn"><span class="lbl">TN</span><span class="num-big">98</span></td>
+              <td class="fp"><span class="lbl">FP</span><span class="num-big">12</span></td>
+            </tr>
+            <tr>
+              <th>actual 1</th>
+              <td class="fn"><span class="lbl">FN</span><span class="num-big">18</span></td>
+              <td class="tp"><span class="lbl">TP</span><span class="num-big">51</span></td>
+            </tr>
+          </table>
+          <div style="font-size: 12px; color: var(--ink-soft); margin-top: 6px;">accuracy = (98+51)/179 = <b>0.83</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. Accuracy trap -->
+    <section class="slide">
+      <h2>Accuracy ≠ truth</h2>
+      <ul>
+        <li class="fragment">Cancer dataset: 99% healthy, 1% sick.</li>
+        <li class="fragment">Model: <b class="tk-red">"always predict healthy"</b> $\Rightarrow$ accuracy 99%.</li>
+        <li class="fragment">Useless. Catches zero patients.</li>
+      </ul>
+
+      <pre class="code" style="margin-top: 12px;"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> precision_score, recall_score, f1_score
+
+precision_score(y_test, preds)   <span class="cmt"># of those flagged sick, how many really sick</span>
+recall_score(y_test, preds)      <span class="cmt"># of all sick, how many we caught</span>
+f1_score(y_test, preds)          <span class="cmt"># harmonic mean — single number</span></pre>
+
+      <p class="callout fragment" style="margin-top: 12px;"><b class="tk-blue">Rule</b>: imbalanced data $\Rightarrow$ check <b>F1, recall, ROC-AUC</b>, not just accuracy.</p>
+    </section>
+
+    <!-- 12. Widget — pipeline stepper -->
+    <section class="slide">
+      <h2>Try it — step through the pipeline</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Click a step. Code highlights. State panel shows what exists in memory.</p>
+
+      <div class="pipe-shell">
+        <div class="pipe-controls">
+          <button class="pipe-btn" data-step="0">▶ start</button>
+          <button class="pipe-btn" data-step="1">1. LOAD</button>
+          <button class="pipe-btn" data-step="2">2. SPLIT</button>
+          <button class="pipe-btn" data-step="3">3. FIT</button>
+          <button class="pipe-btn" data-step="4">4. PREDICT</button>
+          <button class="pipe-btn" data-step="5">5. EVALUATE</button>
+          <span style="flex:1;"></span>
+          <label style="font-size:12px; color:var(--ink-soft); font-weight:700; align-self:center;">model:</label>
+          <select id="pipe-model" style="font-family:var(--font-mono);font-size:12px;border:2px solid var(--ink);padding:3px 8px;">
+            <option value="logreg">LogisticRegression</option>
+            <option value="rf">RandomForestClassifier</option>
+            <option value="knn">KNeighborsClassifier</option>
+          </select>
+        </div>
+
+        <div class="pipe-grid">
+          <div class="pipe-code" id="pipe-code"></div>
+          <div class="pipe-state" id="pipe-state"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. Pitfalls -->
+    <section class="slide dense">
+      <h2>Pipeline pitfalls</h2>
+      <table class="param-tbl">
+        <tr><th>mistake</th><th>symptom / fix</th></tr>
+        <tr><td>train on full data, no split</td><td>score 99%, real-world ~60%. Always <code>train_test_split</code>.</td></tr>
+        <tr><td>target column in X</td><td>data leak — model "learns" to copy. <code>X = df.drop('target', axis=1)</code>.</td></tr>
+        <tr><td>fit on test data</td><td>cheating. Only <code>fit(X_train, y_train)</code>. Test stays untouched.</td></tr>
+        <tr><td>forgot to encode strings</td><td><code>ValueError: could not convert string to float</code>. Use <code>.map()</code> or <code>get_dummies()</code>.</td></tr>
+        <tr><td>NaN in features</td><td><code>Input contains NaN</code>. <code>fillna()</code> first.</td></tr>
+        <tr><td>imbalanced data, only check accuracy</td><td>"always predict majority" hits 95%. Use F1 / recall.</td></tr>
+        <tr><td>different scaling for KNN/SVM</td><td>distance-based models need <code>StandardScaler</code> first.</td></tr>
+        <tr><td>random_state missing</td><td>different score every run. Always set <code>random_state=42</code>.</td></tr>
+      </table>
+    </section>
+
+    <!-- 14. Recap -->
+    <section class="slide">
+      <h2>Recap — the 5-step mantra</h2>
+      <div class="cheat-strip">
+        <div><code>pd.read_csv</code><span>1. LOAD</span></div>
+        <div><code>train_test_split</code><span>2. SPLIT</span></div>
+        <div><code>model.fit</code><span>3. FIT</span></div>
+        <div><code>model.predict</code><span>4. PREDICT</span></div>
+        <div><code>accuracy_score</code><span>5. EVALUATE</span></div>
+      </div>
+      <ul style="margin-top: 22px;">
+        <li class="fragment"><b class="tk-blue">Same shape</b> for every sklearn model — swap one import line.</li>
+        <li class="fragment"><b class="tk-red">Never fit on test</b>. <b class="tk-red">Never put target in X</b>.</li>
+        <li class="fragment"><b class="tk-purple">Imbalanced</b> $\Rightarrow$ F1 / recall, not accuracy.</li>
+      </ul>
+      <p class="callout fragment">Next: classification hands-on with Random Forest on Titanic.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 12 — pipeline stepper widget */
+
+  const codeEl  = document.getElementById('pipe-code');
+  const stateEl = document.getElementById('pipe-state');
+  const modelEl = document.getElementById('pipe-model');
+  const btns    = document.querySelectorAll('.pipe-btn');
+
+  const MODELS = {
+    logreg: {
+      imp: 'from sklearn.linear_model import LogisticRegression',
+      ctor: 'LogisticRegression(max_iter=1000)',
+      acc: 0.81,
+      cm: [[97, 13], [21, 48]],
+    },
+    rf: {
+      imp: 'from sklearn.ensemble import RandomForestClassifier',
+      ctor: 'RandomForestClassifier(n_estimators=100, random_state=42)',
+      acc: 0.84,
+      cm: [[100, 10], [19, 50]],
+    },
+    knn: {
+      imp: 'from sklearn.neighbors import KNeighborsClassifier',
+      ctor: 'KNeighborsClassifier(n_neighbors=5)',
+      acc: 0.76,
+      cm: [[91, 19], [24, 45]],
+    },
+  };
+
+  // step 0 = no step active; render full code dim
+  function lines(stepActive, model) {
+    const M = MODELS[model];
+    return [
+      ['1', 'import pandas as pd'],
+      ['1', "df = pd.read_csv('titanic.csv')"],
+      ['1', "df['Sex'] = df['Sex'].map({'male':0,'female':1})"],
+      ['1', "df['Age'] = df['Age'].fillna(df['Age'].mean())"],
+      ['1', "X = df[['Pclass','Sex','Age','Fare']]"],
+      ['1', "y = df['Survived']"],
+      ['',  ''],
+      ['2', 'from sklearn.model_selection import train_test_split'],
+      ['2', 'X_train, X_test, y_train, y_test = train_test_split('],
+      ['2', '    X, y, test_size=0.2, random_state=42)'],
+      ['',  ''],
+      ['3', M.imp],
+      ['3', `model = ${M.ctor}`],
+      ['3', 'model.fit(X_train, y_train)'],
+      ['',  ''],
+      ['4', 'preds = model.predict(X_test)'],
+      ['',  ''],
+      ['5', 'from sklearn.metrics import accuracy_score, confusion_matrix'],
+      ['5', "print('Accuracy:', accuracy_score(y_test, preds))"],
+      ['5', 'print(confusion_matrix(y_test, preds))'],
+    ];
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderCode(active, model) {
+    const ls = lines(active, model);
+    codeEl.innerHTML = ls.map(([step, txt]) => {
+      if (txt === '') return '';
+      const isActive = String(active) === step;
+      const isPast = step !== '' && parseInt(step, 10) < parseInt(active, 10);
+      const cls = isActive ? 'hl' : (isPast ? '' : 'dim');
+      return `<span class="${cls}">${escHtml(txt)}</span>`;
+    }).join('\n');
+  }
+
+  function renderState(active, model) {
+    const M = MODELS[model];
+    let html = '';
+    if (active === 0) {
+      html = '<h4>memory</h4><div style="color:var(--ink-mute);">— nothing yet —</div><div style="margin-top:10px;color:var(--ink-soft);font-size:11px;">click <b>1. LOAD</b> to start</div>';
+    } else if (active === 1) {
+      html = `<h4>after step 1: LOAD</h4>
+        <ul>
+          <li><b>df</b> = DataFrame, shape (891, 12)</li>
+          <li><b>X</b> = features, shape (891, 4)</li>
+          <li><b>y</b> = labels, shape (891,)</li>
+        </ul>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">Sex encoded 0/1, Age NaN filled with mean.</div>`;
+    } else if (active === 2) {
+      html = `<h4>after step 2: SPLIT</h4>
+        <ul>
+          <li><b>X_train</b> shape (712, 4)</li>
+          <li><b>X_test</b>  shape (179, 4)</li>
+          <li><b>y_train</b> shape (712,)</li>
+          <li><b>y_test</b>  shape (179,)</li>
+        </ul>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">80/20 split, random_state=42.</div>`;
+    } else if (active === 3) {
+      html = `<h4>after step 3: FIT</h4>
+        <ul>
+          <li><b>model</b> = ${escHtml(M.ctor)}</li>
+          <li>state: <b>trained</b> on X_train, y_train</li>
+        </ul>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">Internal weights set. <b>Test data not seen.</b></div>`;
+    } else if (active === 4) {
+      const correct = M.cm[0][0] + M.cm[1][1];
+      html = `<h4>after step 4: PREDICT</h4>
+        <ul>
+          <li><b>preds</b> = array of 179 predictions (0 or 1)</li>
+          <li>e.g. <b>preds[:5]</b> = [0, 1, 0, 1, 0]</li>
+          <li>matches y_test on ~${correct}/179 rows</li>
+        </ul>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">Apply learned weights to held-out X_test.</div>`;
+    } else if (active === 5) {
+      const cm = M.cm;
+      html = `<h4>after step 5: EVALUATE</h4>
+        <div>Accuracy: <b>${M.acc.toFixed(2)}</b></div>
+        <div style="margin-top:8px;">Confusion matrix:</div>
+        <table style="border-collapse:collapse;font-size:11px;margin-top:4px;">
+          <tr><td style="border:1.5px solid var(--ink);padding:4px 8px;background:#d6f5dd;">TN ${cm[0][0]}</td>
+              <td style="border:1.5px solid var(--ink);padding:4px 8px;background:#ffd6cc;">FP ${cm[0][1]}</td></tr>
+          <tr><td style="border:1.5px solid var(--ink);padding:4px 8px;background:#ffd6cc;">FN ${cm[1][0]}</td>
+              <td style="border:1.5px solid var(--ink);padding:4px 8px;background:#d6f5dd;">TP ${cm[1][1]}</td></tr>
+        </table>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">Pipeline complete. Try a different model →</div>`;
+    }
+    stateEl.innerHTML = html;
+  }
+
+  let active = 0;
+  function update() {
+    btns.forEach(b => b.classList.toggle('active', String(active) === b.dataset.step));
+    renderCode(active, modelEl.value);
+    renderState(active, modelEl.value);
+  }
+
+  btns.forEach(b => b.addEventListener('click', () => {
+    active = parseInt(b.dataset.step, 10);
+    update();
+  }));
+  modelEl.addEventListener('change', update);
+  update();
+})();
+</script>
+
+</body>
+</html>

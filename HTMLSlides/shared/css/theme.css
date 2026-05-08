@@ -1,0 +1,879 @@
+/* ==========================================================================
+   MyCPslide Theme — typewriter + cream blobs + interactive
+   Variables, frame chrome, typography, KaTeX overrides, animations.
+   ========================================================================== */
+
+:root {
+  /* Palette — sampled from user PDFs */
+  --bg: #ffffff;
+  --ink: #111111;
+  --ink-soft: #444;
+  --ink-mute: #999;
+  --cream: #fde9a3;
+  --cream-soft: #fff3c2;
+  --yellow-bar: #fde9a3;
+  --accent-red: #d62828;
+  --accent-blue: #1d3fb6;
+  --accent-green: #2f9e44;
+  --accent-purple: #7048e8;
+  --accent-pink: #e64980;
+  --accent-cyan: #b8eef0;
+  --code-bg: #ffffff;
+  --code-ink: #1a1a1a;
+  --code-orange: #c95a00;
+  --code-blue: #1d3fb6;
+  --code-red: #d62828;
+  --code-green: #2f7a3a;
+
+  /* Type scale */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-math: 'Latin Modern Math', 'KaTeX_Main', serif;
+
+  /* Geometry */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --pad: 64px;
+  --pad-top: 72px;
+  --pad-bottom: 56px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 180ms;
+  --t-med: 380ms;
+  --t-slow: 720ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-feature-settings: 'liga' 0, 'calt' 0;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Stage — fixed-aspect slide canvas, scaled to viewport
+   ========================================================================== */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(253, 233, 163, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 100%, rgba(253, 233, 163, 0.12), transparent 40%),
+    #fafaf6;
+}
+
+.deck {
+  position: relative;
+  width: var(--slide-w);
+  height: var(--slide-h);
+  background: var(--bg);
+  overflow: hidden;
+  transform-origin: center;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: var(--pad-top) var(--pad) var(--pad-bottom);
+  display: none;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity var(--t-med) var(--ease);
+  z-index: 5;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.slide.active {
+  display: flex;
+  opacity: 1;
+}
+
+.slide.exit-left  { animation: exitLeft  var(--t-med) var(--ease) forwards; }
+.slide.exit-right { animation: exitRight var(--t-med) var(--ease) forwards; }
+.slide.enter-right { animation: enterRight var(--t-med) var(--ease) forwards; }
+.slide.enter-left  { animation: enterLeft  var(--t-med) var(--ease) forwards; }
+
+@keyframes enterRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes enterLeft {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes exitLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-48px); }
+}
+@keyframes exitRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(48px); }
+}
+
+/* ==========================================================================
+   Decorative chrome — cream blobs + black brackets + yellow footer
+   These are the "MyCPslide" identity tokens.
+   ========================================================================== */
+
+.deck::before,
+.deck::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Top-left cream pill */
+.deck::before {
+  top: -100px;
+  left: 70px;
+  width: 60px;
+  height: 160px;
+  background: var(--cream);
+  border-radius: 60px;
+}
+
+/* Top-right cream pill */
+.deck::after {
+  top: -80px;
+  right: 90px;
+  width: 75px;
+  height: 140px;
+  background: var(--cream);
+  border-radius: 70px;
+}
+
+/* Black hand-drawn corner brackets via pseudo on .frame */
+.frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.frame .bracket {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 3px solid var(--ink);
+}
+.frame .bracket { width: 40px; height: 40px; }
+.frame .bracket.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+.frame .bracket.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+.frame .bracket.bl { bottom: 28px; left: 0; border-right: none; border-top: none; }
+.frame .bracket.br { bottom: 28px; right: 0; border-left: none; border-top: none; }
+
+/* Yellow footer strip */
+.footer-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: var(--yellow-bar);
+  border-top: 3px solid var(--ink);
+  z-index: 6;
+}
+
+/* Page label inside footer area */
+.page-label {
+  position: absolute;
+  bottom: 36px;
+  right: 48px;
+  font-size: 13px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  z-index: 6;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+h1, h2, h3, .display { font-family: var(--font-mono); font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+
+.slide h1 { font-size: 56px; line-height: 1.1; }
+.slide h2 { font-size: 32px; line-height: 1.15; margin-bottom: 16px; }
+.slide h3 { font-size: 22px; line-height: 1.2; margin-bottom: 20px; margin-top: 18px; }
+.slide h3:first-child { margin-top: 0; }
+
+.slide p, .slide li { font-size: 22px; line-height: 1.55; color: var(--ink); }
+.slide [data-widget] { margin: 14px 0 12px; }
+.slide.dense p, .slide.dense li { font-size: 19px; line-height: 1.5; }
+.slide ul { list-style: none; }
+.slide ul li { position: relative; padding-left: 28px; margin-bottom: 12px; }
+.slide ul li::before {
+  content: '●';
+  position: absolute;
+  left: 0;
+  color: var(--ink);
+  font-size: 14px;
+  top: 8px;
+}
+
+.subtitle { font-style: italic; font-size: 22px; color: var(--ink-soft); }
+.tag-line { font-size: 16px; color: var(--ink-mute); }
+
+/* Inline emphasis colors */
+.tk-blue   { color: var(--accent-blue); font-weight: 700; }
+.tk-red    { color: var(--accent-red); font-weight: 700; }
+.tk-green  { color: var(--accent-green); font-weight: 700; }
+.tk-purple { color: var(--accent-purple); font-weight: 700; }
+.tk-pink   { color: var(--accent-pink); font-weight: 700; }
+
+.kbd {
+  font-family: var(--font-mono);
+  background: #f0efe8;
+  border: 1px solid #d8d6c5;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.85em;
+}
+
+/* ==========================================================================
+   Title slide variant
+   ========================================================================== */
+
+.slide.title {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.slide.title h1 { font-size: 76px; }
+.slide.title .subtitle { margin-top: 18px; max-width: 800px; }
+.slide.title .author {
+  position: absolute;
+  bottom: 80px;
+  right: 80px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ==========================================================================
+   Code blocks — match dark style from PDFs
+   ========================================================================== */
+
+pre.code, .code-block {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 18px 22px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  position: relative;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+.slide h2 + pre.code,
+.slide h3 + pre.code,
+.slide h2 + .code-block,
+.slide h3 + .code-block { margin-top: 22px; }
+pre.code .kw { color: var(--code-blue); font-weight: 700; }
+pre.code .num { color: var(--code-orange); }
+pre.code .fn { color: #7048e8; font-weight: 700; }
+pre.code .str { color: var(--code-green); }
+pre.code .cmt { color: #777; font-style: italic; }
+pre.code .ret { color: var(--code-red); font-weight: 700; }
+
+/* ==========================================================================
+   Layout helpers
+   ========================================================================== */
+
+.row { display: flex; gap: 32px; align-items: center; }
+.col { display: flex; flex-direction: column; gap: 16px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.center { display: grid; place-items: center; }
+.spacer { flex: 1; }
+
+.callout {
+  background: var(--cream-soft);
+  border-left: 4px solid var(--ink);
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+  font-size: 19px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--cream);
+}
+
+/* ==========================================================================
+   Fragments — stepped reveal
+   ========================================================================== */
+
+.fragment {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease);
+}
+.fragment.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fragment.fade-only.visible { transform: none; }
+.fragment.scale-in {
+  transform: scale(0.94);
+  transform-origin: left center;
+}
+.fragment.scale-in.visible { transform: scale(1); }
+
+/* ==========================================================================
+   Progress + nav UI
+   ========================================================================== */
+
+.progress {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--ink);
+  width: 0%;
+  z-index: 50;
+  transition: width var(--t-med) var(--ease);
+}
+
+.controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  z-index: 50;
+  opacity: 0.4;
+  transition: opacity var(--t-fast);
+}
+.controls:hover { opacity: 1; }
+.controls button {
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.controls button:hover { background: var(--cream); }
+.controls .counter { padding: 0 6px; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   KaTeX tweaks — match mono surroundings
+   ========================================================================== */
+
+.katex { font-size: 1.1em; }
+.katex-display { margin: 16px 0; }
+
+/* ==========================================================================
+   Print / export hints
+   ========================================================================== */
+
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  .stage {
+    position: static !important; display: block !important;
+    background: none !important; inset: auto !important;
+  }
+  .deck {
+    position: static !important;
+    width: 1280px !important; height: auto !important;
+    transform: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .deck::before, .deck::after { display: none !important; }
+  .slide {
+    position: relative !important;
+    inset: auto !important;
+    width: 1280px !important; height: 720px !important;
+    display: flex !important;
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+  }
+  .slide:last-child { page-break-after: auto !important; break-after: auto !important; }
+  .fragment { opacity: 1 !important; transform: none !important; }
+  .controls, .progress, .home-btn, .draw-toolbar, .draw-overlay, .side-nav, .wb-controls { display: none !important; }
+  .frame, .footer-strip, .page-label { display: block !important; }
+}
+
+/* ==========================================================================
+   Home button — floating top-left, returns to deck index
+   ========================================================================== */
+
+/* ==========================================================================
+   Side nav — slide thumbnails / titles, left edge
+   ========================================================================== */
+
+.side-nav {
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 80vh;
+  padding: 6px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  z-index: 55;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,0.18);
+  font-family: var(--font-mono);
+  width: 140px;
+  opacity: 0.5;
+  transition: opacity var(--t-fast), width var(--t-fast);
+}
+.side-nav:hover { opacity: 1; }
+body.wb-mode .side-nav { display: none; }
+
+.side-nav-toggle {
+  align-self: flex-end;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+.side-nav-toggle:hover { background: var(--cream); }
+.side-nav.collapsed { width: 38px; }
+.side-nav.collapsed .side-nav-toggle svg { transform: scaleX(-1); }
+
+.side-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.side-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.side-nav-item:hover { background: var(--cream-soft); }
+.side-nav-item.active {
+  border-color: var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 700;
+}
+.side-nav-item .sn-num {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  min-width: 16px;
+}
+.side-nav-item.active .sn-num { color: var(--ink); }
+.side-nav-item .sn-lab {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.side-nav.collapsed .sn-lab { display: none; }
+.side-nav.collapsed .side-nav-item { justify-content: center; padding: 4px; }
+.side-nav.collapsed .side-nav-item .sn-num { min-width: 0; }
+
+.home-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--cream);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  text-decoration: none;
+  z-index: 60;
+  opacity: 0.55;
+  transition: opacity var(--t-fast), transform var(--t-fast);
+  box-shadow: 0 4px 12px -4px rgba(0,0,0,0.2);
+}
+.home-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  background: var(--cream-soft);
+}
+
+/* ==========================================================================
+   Draw tool — GoodNotes-style ink overlay
+   ========================================================================== */
+
+.draw-overlay {
+  position: absolute;
+  inset: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 40;
+  pointer-events: none;
+}
+.draw-overlay.active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.draw-canvas, .draw-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.draw-svg text { user-select: none; -webkit-user-select: none; pointer-events: none; }
+
+.draw-toolbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1100px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  overflow: visible;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.1);
+  padding: 4px 8px;
+  border-radius: 16px;
+  z-index: 70;
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.18);
+  font-family: var(--font-mono);
+}
+.draw-toolbar .dt-tray {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  padding-left: 4px;
+  border-left: 1px solid rgba(0,0,0,0.1);
+  margin-left: 2px;
+}
+
+.dt-btn {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.dt-btn:hover { background: var(--cream); }
+.dt-btn.active { border-color: var(--ink); background: var(--cream); }
+.dt-btn.dt-toggle.on {
+  background: var(--accent-red);
+  color: #fff;
+}
+.dt-btn.dt-toggle.on:hover { background: #b81f1f; }
+
+.dt-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  outline: 1px solid rgba(0,0,0,0.2);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--t-fast);
+}
+.dt-color:hover { transform: scale(1.12); }
+.dt-color.active {
+  outline: 2px solid var(--ink);
+  transform: scale(1.15);
+}
+
+.dt-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(0,0,0,0.12);
+}
+
+.dt-size {
+  width: 46px;
+  accent-color: var(--ink);
+}
+.dt-stabilize, .dt-sharpness, .dt-taperv {
+  width: 42px;
+  accent-color: var(--ink);
+}
+
+.dt-slider {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+.dt-lab {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 700;
+}
+
+.dt-size-val,
+.dt-stab-val,
+.dt-sharp-val,
+.dt-taper-val {
+  min-width: 22px;
+  text-align: right;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.dt-colors {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dt-erase-modes {
+  display: none;
+  align-items: center;
+  gap: 4px;
+}
+.dt-erase-modes .dt-emode {
+  width: auto;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  gap: 3px;
+}
+.dt-erase-modes .dt-emode span {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* fixed-slot stacking — same physical position across tools */
+.dt-slot {
+  position: relative;
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+.dt-colors, .dt-erase-modes {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.draw-toolbar:not(.eraser-mode) .dt-erase-modes { visibility: hidden; pointer-events: none; }
+.draw-toolbar.eraser-mode .dt-colors { visibility: hidden; pointer-events: none; }
+/* color/erase slot reserves enough width for max content (6 swatches) */
+.dt-slot.dt-color-slot { width: 150px; }
+
+.dt-pstyle-slot { width: 180px; height: 26px; position: relative; flex: 0 0 auto; }
+.dt-pen-styles, .dt-shape-opts, .dt-select-opts {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.draw-toolbar:not(.pen-mode) .dt-pen-styles { visibility: hidden; pointer-events: none; }
+.draw-toolbar:not(.shape-mode) .dt-shape-opts { visibility: hidden; pointer-events: none; }
+.draw-toolbar:not(.select-mode) .dt-select-opts { visibility: hidden; pointer-events: none; }
+.dt-select-opts .dt-btn {
+  width: auto;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.dt-shape-kind {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1.5px solid var(--ink);
+  border-radius: 11px;
+  padding: 2px 6px;
+  background: #fff;
+  cursor: pointer;
+  height: 22px;
+}
+.dt-shape-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.dt-shape-num input[type=number] {
+  width: 32px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 5px;
+  padding: 1px 3px;
+  text-align: center;
+  height: 20px;
+}
+.dt-shape-filled.active,
+.dt-shape-arrow.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* tree-builder live pull-edge layer (visual only) */
+.dt-hint-layer { pointer-events: none; }
+
+/* whiteboard mode — separate page system, hides ALL slide chrome and content */
+body.wb-mode .slide.active > *,
+body.wb-mode .slide.title { visibility: hidden; }
+body.wb-mode .frame,
+body.wb-mode .footer-bar,
+body.wb-mode .page-label,
+body.wb-mode .deck::before,
+body.wb-mode .deck::after,
+body.wb-mode .controls { display: none !important; }
+body.wb-mode .deck {
+  background:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px) 0 0 / 40px 40px,
+    #ffffff;
+}
+
+.dt-wb.on { background: var(--ink); color: #fff; }
+.dt-wb.on:hover { background: #333; }
+
+/* WB pagination bar — bottom-center, mirrors deck .controls style */
+.wb-controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  gap: 8px;
+  align-items: center;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  z-index: 50;
+  opacity: 0.5;
+  transition: opacity var(--t-fast);
+}
+.wb-controls:hover { opacity: 1; }
+body.wb-mode .wb-controls { display: flex; }
+.wb-controls button {
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.wb-controls button:hover { background: var(--cream); }
+.wb-controls .counter { padding: 0 6px; font-variant-numeric: tabular-nums; }
+.wb-controls .wb-sep {
+  width: 1px; height: 18px; background: rgba(0,0,0,0.12);
+}
+
+/* Hide but keep slot — layout-stable */
+.dt-hidden { visibility: hidden !important; pointer-events: none !important; }
+
+/* Disabled — visible but greyed out */
+.dt-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  filter: saturate(0.4);
+}
+
+.dt-pstyle {
+  width: auto;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
