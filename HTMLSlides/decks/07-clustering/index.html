@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clustering &amp; Dimensionality</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* sup vs unsup boxes */
+  .sup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 12px;
+  }
+  .sup-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .sup-card h4 {
+    background: var(--cream);
+    padding: 2px 8px;
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .sup-card.sup h4 { background: #c8e6ff; }
+  .sup-card.unsup h4 { background: #ffd6cc; }
+  .sup-card .ex { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+
+  /* SVG chart shell */
+  .plot-frame {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 8px;
+    display: inline-block;
+  }
+  .plot-cap {
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+  .ax-line { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+  .ax-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--ink-soft);
+  }
+  .ax-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    fill: var(--ink);
+  }
+
+  /* cluster dots */
+  .cd { stroke: var(--ink); stroke-width: 1; }
+  .cd.c0 { fill: var(--accent-blue); }
+  .cd.c1 { fill: var(--accent-red); }
+  .cd.c2 { fill: var(--accent-green); }
+  .cd.c3 { fill: var(--accent-purple); }
+  .cd.c4 { fill: var(--cream); }
+
+  /* centroid */
+  .ctd { fill: #fff; stroke-width: 2.5; }
+  .ctd.c0 { stroke: var(--accent-blue); }
+  .ctd.c1 { stroke: var(--accent-red); }
+  .ctd.c2 { stroke: var(--accent-green); }
+  .ctd.c3 { stroke: var(--accent-purple); }
+  .ctd.c4 { stroke: #888; }
+
+  /* algorithm stepper */
+  .alg-stage {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .alg-step {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  .alg-step h5 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .alg-step .label {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* elbow / silhouette plot — line chart */
+  .elbow-line { stroke: var(--accent-blue); stroke-width: 2.5; fill: none; }
+  .elbow-dot  { fill: var(--accent-blue); stroke: var(--ink); stroke-width: 1; }
+  .sil-line { stroke: var(--accent-green); stroke-width: 2.5; fill: none; }
+  .sil-dot  { fill: var(--accent-green); stroke: var(--ink); stroke-width: 1; }
+  .sil-pick { fill: var(--accent-red); stroke: var(--ink); stroke-width: 2; }
+
+  /* pca panel */
+  .pca-row {
+    display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .pca-row > div { font-size: 12px; }
+
+  /* crosstab table */
+  .ct-tbl {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: #fff;
+  }
+  .ct-tbl th, .ct-tbl td {
+    border: 2px solid var(--ink);
+    padding: 6px 14px;
+    text-align: center;
+  }
+  .ct-tbl th { background: var(--cream); font-weight: 800; }
+  .ct-tbl td.pure { background: #d6f5dd; font-weight: 700; }
+  .ct-tbl td.dim { color: var(--ink-mute); }
+
+  /* widget */
+  .cw-shell {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .cw-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .cw-controls label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 8px 0 4px;
+  }
+  .cw-controls select,
+  .cw-controls input[type="range"] {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 4px 8px;
+    width: 100%;
+  }
+  .cw-controls input[type="range"] { padding: 0; height: 24px; }
+  .cw-toggle {
+    display: flex; gap: 4px; margin-top: 4px;
+  }
+  .cw-toggle button {
+    border: 2px solid var(--ink);
+    background: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    flex: 1;
+    transition: background 160ms var(--ease);
+  }
+  .cw-toggle button:hover { background: var(--cream-soft); }
+  .cw-toggle button.on { background: var(--cream); }
+  .cw-code {
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+  }
+  .cw-canvas {
+    border: 2px dashed var(--ink-mute);
+    background: #fff;
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+  }
+  .cw-stats {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .cw-stats b { color: var(--ink); background: var(--cream); padding: 1px 5px; }
+
+  /* param/pitfall table */
+  .param-tbl {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .param-tbl th, .param-tbl td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    text-align: left;
+    background: #fff;
+  }
+  .param-tbl th { background: var(--cream); font-weight: 800; }
+  .param-tbl code { font-weight: 700; }
+
+  /* cheat strip */
+  .cheat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: var(--cream-soft);
+    border: 2px solid var(--ink);
+    padding: 14px 18px;
+    font-size: 12px;
+  }
+  .cheat-strip code { font-weight: 700; display: block; margin-bottom: 4px; }
+  .cheat-strip span { color: var(--ink-soft); font-size: 11px; }
+
+  .slide.dense pre.code { font-size: 13px; line-height: 1.45; }
+  .tight-split { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title">
+      <h1>Clustering<br/>+ Dimensionality</h1>
+      <p class="subtitle">No labels. Find the groups.<br/>KMeans + PCA — survival pair.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 2. Hook -->
+    <section class="slide">
+      <h2>Supervised vs unsupervised</h2>
+      <div class="sup-grid">
+        <div class="sup-card sup">
+          <h4>SUPERVISED</h4>
+          <div>You have <b class="tk-blue">y</b>. Train on it. Predict on new rows.</div>
+          <div class="ex"><b>Examples</b>: classify Survived (deck 05/06), predict Fare (regression).</div>
+        </div>
+        <div class="sup-card unsup">
+          <h4>UNSUPERVISED</h4>
+          <div>You only have <b class="tk-red">X</b>. <b>No y.</b> Find structure on your own.</div>
+          <div class="ex"><b>Examples</b>: group similar players (Kazakhstan TST 2025), customer segments, image compression.</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 18px;"><b>Real NOAI task</b>: cluster basketball players by stats — without knowing positions in advance. KMeans solves this.</p>
+    </section>
+
+    <!-- 3. KMeans intuition -->
+    <section class="slide">
+      <h2>KMeans intuition — pick k, find centers</h2>
+      <p>Goal: split N points into <b class="tk-blue">k groups</b> so each point is close to its group's center (centroid).</p>
+
+      <div class="tight-split">
+        <div>
+          <ul style="margin-top: 10px;">
+            <li class="fragment"><b class="tk-blue">k</b> = number of clusters. <b>You pick it.</b></li>
+            <li class="fragment">Each cluster has a <b class="tk-purple">centroid</b> (its mean point).</li>
+            <li class="fragment">Each point joins its <b class="tk-green">nearest centroid</b>.</li>
+            <li class="fragment">Distance = Euclidean (straight line in feature space).</li>
+            <li class="fragment">Final centroids reveal the structure.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="plot-frame">
+            <svg width="280" height="240" viewBox="0 0 280 240">
+              <!-- 3 clusters of dots + 3 centroids -->
+              <g>
+                <!-- cluster 0 (blue) top-left -->
+                <circle class="cd c0" cx="60" cy="60" r="5"/>
+                <circle class="cd c0" cx="80" cy="50" r="5"/>
+                <circle class="cd c0" cx="55" cy="80" r="5"/>
+                <circle class="cd c0" cx="90" cy="70" r="5"/>
+                <circle class="cd c0" cx="70" cy="90" r="5"/>
+                <circle class="ctd c0" cx="71" cy="70" r="9"/>
+                <text class="ax-text" x="71" y="74" text-anchor="middle" font-weight="700" fill="var(--accent-blue)">+</text>
+              </g>
+              <g>
+                <!-- cluster 1 (red) top-right -->
+                <circle class="cd c1" cx="200" cy="55" r="5"/>
+                <circle class="cd c1" cx="220" cy="70" r="5"/>
+                <circle class="cd c1" cx="210" cy="90" r="5"/>
+                <circle class="cd c1" cx="230" cy="55" r="5"/>
+                <circle class="cd c1" cx="190" cy="80" r="5"/>
+                <circle class="ctd c1" cx="210" cy="70" r="9"/>
+                <text class="ax-text" x="210" y="74" text-anchor="middle" font-weight="700" fill="var(--accent-red)">+</text>
+              </g>
+              <g>
+                <!-- cluster 2 (green) bottom -->
+                <circle class="cd c2" cx="120" cy="170" r="5"/>
+                <circle class="cd c2" cx="140" cy="180" r="5"/>
+                <circle class="cd c2" cx="130" cy="195" r="5"/>
+                <circle class="cd c2" cx="150" cy="175" r="5"/>
+                <circle class="cd c2" cx="160" cy="190" r="5"/>
+                <circle class="cd c2" cx="125" cy="190" r="5"/>
+                <circle class="ctd c2" cx="138" cy="183" r="9"/>
+                <text class="ax-text" x="138" y="187" text-anchor="middle" font-weight="700" fill="var(--accent-green)">+</text>
+              </g>
+            </svg>
+            <div class="plot-cap">3 clusters, centroids = +</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. KMeans algorithm -->
+    <section class="slide">
+      <h2>Algorithm — 4 steps, repeat until stable</h2>
+      <div class="alg-stage">
+        <div class="alg-step">
+          <h5>1. INIT</h5>
+          <svg width="120" height="100" viewBox="0 0 120 100">
+            <circle class="cd c0" cx="30" cy="30" r="3"/><circle class="cd c0" cx="40" cy="50" r="3"/>
+            <circle class="cd c0" cx="55" cy="35" r="3"/><circle class="cd c0" cx="80" cy="60" r="3"/>
+            <circle class="cd c0" cx="90" cy="40" r="3"/><circle class="cd c0" cx="70" cy="80" r="3"/>
+            <circle class="ctd c1" cx="40" cy="40" r="6"/>
+            <circle class="ctd c2" cx="80" cy="65" r="6"/>
+          </svg>
+          <div class="label">place k centroids randomly</div>
+        </div>
+        <div class="alg-step">
+          <h5>2. ASSIGN</h5>
+          <svg width="120" height="100" viewBox="0 0 120 100">
+            <circle class="cd c1" cx="30" cy="30" r="3"/><circle class="cd c1" cx="40" cy="50" r="3"/>
+            <circle class="cd c1" cx="55" cy="35" r="3"/><circle class="cd c2" cx="80" cy="60" r="3"/>
+            <circle class="cd c2" cx="90" cy="40" r="3"/><circle class="cd c2" cx="70" cy="80" r="3"/>
+            <circle class="ctd c1" cx="40" cy="40" r="6"/>
+            <circle class="ctd c2" cx="80" cy="65" r="6"/>
+          </svg>
+          <div class="label">each point → nearest centroid</div>
+        </div>
+        <div class="alg-step">
+          <h5>3. UPDATE</h5>
+          <svg width="120" height="100" viewBox="0 0 120 100">
+            <circle class="cd c1" cx="30" cy="30" r="3"/><circle class="cd c1" cx="40" cy="50" r="3"/>
+            <circle class="cd c1" cx="55" cy="35" r="3"/><circle class="cd c2" cx="80" cy="60" r="3"/>
+            <circle class="cd c2" cx="90" cy="40" r="3"/><circle class="cd c2" cx="70" cy="80" r="3"/>
+            <circle class="ctd c1" cx="42" cy="38" r="6"/>
+            <circle class="ctd c2" cx="80" cy="60" r="6"/>
+          </svg>
+          <div class="label">centroid = mean of its points</div>
+        </div>
+        <div class="alg-step">
+          <h5>4. REPEAT</h5>
+          <svg width="120" height="100" viewBox="0 0 120 100">
+            <circle class="cd c1" cx="30" cy="30" r="3"/><circle class="cd c1" cx="40" cy="50" r="3"/>
+            <circle class="cd c1" cx="55" cy="35" r="3"/><circle class="cd c2" cx="80" cy="60" r="3"/>
+            <circle class="cd c2" cx="90" cy="40" r="3"/><circle class="cd c2" cx="70" cy="80" r="3"/>
+            <circle class="ctd c1" cx="42" cy="38" r="6"/>
+            <circle class="ctd c2" cx="80" cy="60" r="6"/>
+            <text class="ax-text" x="60" y="98" text-anchor="middle">until centroids stop moving</text>
+          </svg>
+          <div class="label">converged — done</div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top: 14px;"><b class="tk-red">Stuck local minima</b>: bad initial centroids → bad clusters. <code>n_init=10</code> retries 10 times, keeps best.</p>
+    </section>
+
+    <!-- 5. Code -->
+    <section class="slide">
+      <h2>Code — fit + predict in one line</h2>
+      <pre class="code"><span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans
+
+km = KMeans(n_clusters=<span class="num">3</span>, random_state=<span class="num">42</span>, n_init=<span class="num">10</span>)
+labels = km.fit_predict(X)             <span class="cmt"># labels: array of cluster ids 0..k-1</span>
+
+km.cluster_centers_                     <span class="cmt"># the centroids (k × n_features)</span>
+km.inertia_                             <span class="cmt"># sum of squared distances to nearest centroid</span></pre>
+
+      <table class="param-tbl" style="margin-top: 14px;">
+        <tr><th>param</th><th>what</th></tr>
+        <tr><td><code>n_clusters=k</code></td><td>how many groups (you pick)</td></tr>
+        <tr><td><code>random_state=42</code></td><td>seed for reproducibility</td></tr>
+        <tr><td><code>n_init=10</code></td><td>retries to dodge bad init</td></tr>
+        <tr><td><code>max_iter=300</code></td><td>cap on assign-update loops</td></tr>
+      </table>
+
+      <p class="callout fragment" style="margin-top: 12px;">Same shape as classifier API: <code>.fit(X)</code> + <code>.predict(X)</code>. <b>No y</b> — that's the whole point.</p>
+    </section>
+
+    <!-- 6. Scaling matters -->
+    <section class="slide">
+      <h2>Scaling matters — same trap as KNN</h2>
+      <p>KMeans uses Euclidean distance. If <code>Fare</code> ranges 0-500 and <code>Age</code> ranges 0-80, Fare dominates. Clusters become "high-fare vs low-fare" — Age is invisible.</p>
+
+      <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+labels = KMeans(n_clusters=<span class="num">3</span>, random_state=<span class="num">42</span>, n_init=<span class="num">10</span>).fit_predict(X_scaled)</pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-red">Always scale</b> before KMeans on real data with mixed-range features.</li>
+        <li class="fragment"><b class="tk-blue">Exception</b>: when all features are already on the same scale (pixel intensities, normalized counts).</li>
+        <li class="fragment">After scaling, every column has mean 0, std 1. No feature dominates.</li>
+      </ul>
+    </section>
+
+    <!-- 7. Choose k — elbow -->
+    <section class="slide">
+      <h2>Choose k — elbow plot</h2>
+      <p>Don't know how many clusters? Try several. Plot <b class="tk-blue">inertia</b> (sum of squared distances) vs k. Look for the bend.</p>
+
+      <div class="tight-split">
+        <div>
+          <pre class="code">inertias = []
+<span class="kw">for</span> k <span class="kw">in</span> range(<span class="num">1</span>, <span class="num">9</span>):
+    km = KMeans(n_clusters=k,
+                random_state=<span class="num">42</span>,
+                n_init=<span class="num">10</span>).fit(X_scaled)
+    inertias.append(km.inertia_)
+
+plt.plot(range(<span class="num">1</span>, <span class="num">9</span>), inertias, <span class="str">'o-'</span>)
+plt.xlabel(<span class="str">'k'</span>); plt.ylabel(<span class="str">'inertia'</span>)
+plt.show()</pre>
+
+          <ul style="margin-top: 10px; font-size: 14px;">
+            <li class="fragment"><b class="tk-red">Trap</b>: inertia ALWAYS decreases as k grows. Maximum k always "wins" — useless.</li>
+            <li class="fragment"><b class="tk-blue">Pick the bend</b> — where extra k stops helping much.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="plot-frame">
+            <svg width="300" height="220" viewBox="0 0 300 220">
+              <path class="ax-line" d="M 40 180 L 280 180"/>
+              <path class="ax-line" d="M 40 20 L 40 180"/>
+              <text class="ax-label" x="160" y="205" text-anchor="middle">k</text>
+              <text class="ax-label" x="14" y="100" text-anchor="middle" transform="rotate(-90 14 100)">inertia</text>
+
+              <polyline class="elbow-line" points="60,40 90,75 120,130 150,155 180,165 210,170 240,173 270,175"/>
+              <circle class="elbow-dot" cx="60" cy="40" r="4"/>
+              <circle class="elbow-dot" cx="90" cy="75" r="4"/>
+              <circle class="elbow-dot" cx="120" cy="130" r="6" stroke="var(--accent-red)" stroke-width="2"/>
+              <circle class="elbow-dot" cx="150" cy="155" r="4"/>
+              <circle class="elbow-dot" cx="180" cy="165" r="4"/>
+              <circle class="elbow-dot" cx="210" cy="170" r="4"/>
+              <circle class="elbow-dot" cx="240" cy="173" r="4"/>
+              <circle class="elbow-dot" cx="270" cy="175" r="4"/>
+
+              <text class="ax-text" x="60" y="195" text-anchor="middle">1</text>
+              <text class="ax-text" x="120" y="195" text-anchor="middle">3</text>
+              <text class="ax-text" x="180" y="195" text-anchor="middle">5</text>
+              <text class="ax-text" x="270" y="195" text-anchor="middle">8</text>
+
+              <text class="ax-label" x="125" y="115" font-size="10" fill="var(--accent-red)">↑ elbow at k=3</text>
+            </svg>
+            <div class="plot-cap">elbow plot — bend at k=3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Choose k — silhouette -->
+    <section class="slide">
+      <h2>Choose k — silhouette score (numeric)</h2>
+      <p>Higher silhouette = clusters are <b class="tk-green">tight inside</b> AND <b class="tk-blue">far apart</b>. Pick k with the highest score.</p>
+
+      <div class="tight-split">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> silhouette_score
+
+sils = []
+<span class="kw">for</span> k <span class="kw">in</span> range(<span class="num">2</span>, <span class="num">9</span>):
+    km = KMeans(n_clusters=k,
+                random_state=<span class="num">42</span>, n_init=<span class="num">10</span>).fit(X_scaled)
+    sils.append(silhouette_score(X_scaled, km.labels_))
+
+best_k = <span class="num">2</span> + np.argmax(sils)</pre>
+
+          <ul style="margin-top: 10px; font-size: 14px;">
+            <li class="fragment">Range: <code>[-1, 1]</code>. Higher = cleaner separation.</li>
+            <li class="fragment">Silhouette won't compute for k=1. Start at 2.</li>
+            <li class="fragment">Use silhouette + elbow together — they should agree.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="plot-frame">
+            <svg width="300" height="220" viewBox="0 0 300 220">
+              <path class="ax-line" d="M 40 180 L 280 180"/>
+              <path class="ax-line" d="M 40 20 L 40 180"/>
+              <text class="ax-label" x="160" y="205" text-anchor="middle">k</text>
+              <text class="ax-label" x="14" y="100" text-anchor="middle" transform="rotate(-90 14 100)">silhouette</text>
+
+              <polyline class="sil-line" points="80,90 120,55 160,75 200,100 240,120 280,140"/>
+              <circle class="sil-dot" cx="80" cy="90" r="4"/>
+              <circle class="sil-pick" cx="120" cy="55" r="6"/>
+              <circle class="sil-dot" cx="160" cy="75" r="4"/>
+              <circle class="sil-dot" cx="200" cy="100" r="4"/>
+              <circle class="sil-dot" cx="240" cy="120" r="4"/>
+              <circle class="sil-dot" cx="280" cy="140" r="4"/>
+
+              <text class="ax-text" x="80" y="195" text-anchor="middle">2</text>
+              <text class="ax-text" x="120" y="195" text-anchor="middle">3</text>
+              <text class="ax-text" x="160" y="195" text-anchor="middle">4</text>
+              <text class="ax-text" x="200" y="195" text-anchor="middle">5</text>
+              <text class="ax-text" x="240" y="195" text-anchor="middle">6</text>
+              <text class="ax-text" x="280" y="195" text-anchor="middle">7</text>
+
+              <text class="ax-label" x="135" y="48" font-size="10" fill="var(--accent-red)">best k=3</text>
+            </svg>
+            <div class="plot-cap">silhouette peaks at k=3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. PCA -->
+    <section class="slide">
+      <h2>PCA — project to 2D so you can plot</h2>
+      <p>Iris has 4 features. Titanic has 6+. Can't plot 4D. <b class="tk-blue">PCA</b> finds the 2 directions where data spreads most, projects everything onto them.</p>
+
+      <pre class="code"><span class="kw">from</span> sklearn.decomposition <span class="kw">import</span> PCA
+
+pca = PCA(n_components=<span class="num">2</span>)
+X_pca = pca.fit_transform(X_scaled)    <span class="cmt"># shape: (n_rows, 2)</span>
+
+plt.scatter(X_pca[:, <span class="num">0</span>], X_pca[:, <span class="num">1</span>], c=labels, cmap=<span class="str">'viridis'</span>)
+plt.xlabel(<span class="str">'PC 1'</span>); plt.ylabel(<span class="str">'PC 2'</span>)
+plt.show()</pre>
+
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">PC 1</b> = direction of maximum variance.</li>
+        <li class="fragment"><b class="tk-purple">PC 2</b> = next direction, perpendicular to PC 1.</li>
+        <li class="fragment">Color by cluster label $\Rightarrow$ visual sanity check.</li>
+        <li class="fragment"><code>pca.explained_variance_ratio_</code> tells how much info each PC captures.</li>
+      </ul>
+      <p class="callout fragment" style="margin-top: 10px;"><b>Use PCA to visualize</b>, not as your main feature reduction. KMeans + PCA is the classic visualization combo.</p>
+    </section>
+
+    <!-- 10. Sanity check vs ground truth -->
+    <section class="slide">
+      <h2>Sanity check — vs hidden truth</h2>
+      <p>If you secretly have labels (like iris species), check whether clusters match. <b>Cluster ids are arbitrary</b> — cluster 0 isn't necessarily species 0. Use a crosstab.</p>
+
+      <pre class="code">ct = pd.crosstab(y_true, labels)
+purity = ct.max(axis=<span class="num">1</span>).sum() / len(y_true)</pre>
+
+      <div style="margin-top: 14px;">
+        <table class="ct-tbl">
+          <tr><th></th><th>cluster 0</th><th>cluster 1</th><th>cluster 2</th></tr>
+          <tr><th>setosa</th><td class="pure">50</td><td class="dim">0</td><td class="dim">0</td></tr>
+          <tr><th>versicolor</th><td class="dim">0</td><td class="pure">39</td><td>11</td></tr>
+          <tr><th>virginica</th><td class="dim">0</td><td>14</td><td class="pure">36</td></tr>
+        </table>
+        <p style="margin-top: 8px; font-size: 13px;">purity = (50 + 39 + 36) / 150 = <b>0.83</b></p>
+      </div>
+
+      <ul style="margin-top: 12px;">
+        <li class="fragment">Each row should be <b class="tk-green">dominated by ONE column</b>.</li>
+        <li class="fragment">Purity &gt; 0.7 = clustering recovered structure well.</li>
+        <li class="fragment">In real NOAI tasks <b>you don't have y</b> — sanity check only works in toy / validation data.</li>
+      </ul>
+    </section>
+
+    <!-- 11. Widget — interactive cluster -->
+    <section class="slide">
+      <h2>Try it — KMeans live</h2>
+      <p style="font-size: 13px; margin-bottom: 6px;">Pick k. Toggle scaling. Pick dataset. Watch clusters and silhouette update.</p>
+
+      <div class="cw-shell">
+        <div class="cw-grid">
+          <div class="cw-controls">
+            <label>dataset</label>
+            <select id="cw-data">
+              <option value="blobs" selected>3 blobs (easy)</option>
+              <option value="moons">2 moons (KMeans struggles)</option>
+              <option value="stretched">stretched (scaling matters)</option>
+            </select>
+
+            <label>k = <span id="cw-k-val">3</span></label>
+            <input type="range" id="cw-k" min="2" max="6" step="1" value="3">
+
+            <label>scale features</label>
+            <div class="cw-toggle">
+              <button id="cw-scale-on" class="on">on</button>
+              <button id="cw-scale-off">off</button>
+            </div>
+
+            <div class="cw-code" id="cw-code"></div>
+          </div>
+
+          <div>
+            <div class="cw-canvas" id="cw-canvas"></div>
+            <div class="cw-stats" id="cw-stats"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. Pitfalls -->
+    <section class="slide dense">
+      <h2>Pitfalls</h2>
+      <table class="param-tbl">
+        <tr><th>mistake</th><th>symptom / fix</th></tr>
+        <tr><td>cluster on un-scaled features</td><td>one big-range feature dominates. <code>StandardScaler.fit_transform(X)</code> first.</td></tr>
+        <tr><td>pick k from inertia alone</td><td>inertia always falls — biggest k always "wins." Use silhouette OR look for the bend.</td></tr>
+        <tr><td>missing <code>n_init</code></td><td>random seed bad → stuck local minimum. Always <code>n_init=10</code>.</td></tr>
+        <tr><td>missing <code>random_state</code></td><td>different clusters every run. Set <code>random_state=42</code>.</td></tr>
+        <tr><td>KMeans on non-globular shapes</td><td>moons, rings, irregular blobs → KMeans fails. Try DBSCAN or spectral clustering.</td></tr>
+        <tr><td>compare cluster ids to ground truth directly</td><td>cluster 0 ≠ species 0. Use <code>pd.crosstab</code>, not <code>(labels == y_true).mean()</code>.</td></tr>
+      </table>
+    </section>
+
+    <!-- 13. Recap -->
+    <section class="slide">
+      <h2>Recap — clustering workflow</h2>
+      <div class="cheat-strip">
+        <div><code>StandardScaler</code><span>1. scale</span></div>
+        <div><code>elbow + silhouette</code><span>2. choose k</span></div>
+        <div><code>KMeans(n_clusters=k).fit_predict(X)</code><span>3. cluster</span></div>
+        <div><code>PCA(n_components=2)</code><span>4. project to 2D</span></div>
+        <div><code>plt.scatter(c=labels)</code><span>5. visualize</span></div>
+        <div><code>pd.crosstab(y_true, labels)</code><span>6. sanity check (if truth known)</span></div>
+      </div>
+      <ul style="margin-top: 18px;">
+        <li class="fragment"><b class="tk-blue">Same API</b> as classifiers — <code>.fit / .predict / .fit_predict</code>. No y.</li>
+        <li class="fragment"><b class="tk-red">Always scale</b>, always <code>n_init=10</code>, always <code>random_state</code>.</li>
+        <li class="fragment"><b class="tk-purple">Pick k</b> with silhouette + elbow, never just inertia.</li>
+      </ul>
+      <p class="callout fragment">Companion notebook: <code>colab_exercises/06_clustering.ipynb</code> — 7 problems on iris.</p>
+    </section>
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+(function(){
+  /* slide 11 — interactive KMeans widget */
+
+  const kEl     = document.getElementById('cw-k');
+  const kVal    = document.getElementById('cw-k-val');
+  const dataEl  = document.getElementById('cw-data');
+  const onBtn   = document.getElementById('cw-scale-on');
+  const offBtn  = document.getElementById('cw-scale-off');
+  const codeEl  = document.getElementById('cw-code');
+  const canvas  = document.getElementById('cw-canvas');
+  const statsEl = document.getElementById('cw-stats');
+
+  let scaleOn = true;
+
+  /* ---- synthetic datasets ---- */
+  function rand(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+  }
+
+  function makeBlobs() {
+    const r = rand(7);
+    const centers = [[0.25, 0.25], [0.75, 0.30], [0.50, 0.78]];
+    const pts = [];
+    centers.forEach(([cx, cy], gi) => {
+      for (let i = 0; i < 30; i++) {
+        const dx = (r() - 0.5) * 0.18;
+        const dy = (r() - 0.5) * 0.18;
+        pts.push({ x: cx + dx, y: cy + dy, true_g: gi });
+      }
+    });
+    return pts;
+  }
+
+  function makeMoons() {
+    const r = rand(11);
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const t = (i / 40) * Math.PI;
+      pts.push({ x: 0.30 + 0.30 * Math.cos(t) + (r() - 0.5) * 0.05,
+                 y: 0.50 - 0.20 * Math.sin(t) + (r() - 0.5) * 0.05, true_g: 0 });
+    }
+    for (let i = 0; i < 40; i++) {
+      const t = (i / 40) * Math.PI;
+      pts.push({ x: 0.55 + 0.30 * Math.cos(t) + (r() - 0.5) * 0.05,
+                 y: 0.55 + 0.20 * Math.sin(t) + (r() - 0.5) * 0.05, true_g: 1 });
+    }
+    return pts;
+  }
+
+  function makeStretched() {
+    // y axis has 100x larger range than x — un-scaled KMeans will only split by y
+    const r = rand(13);
+    const pts = [];
+    const groups = [
+      { cx: 0.30, cy: 30 },
+      { cx: 0.50, cy: 50 },
+      { cx: 0.70, cy: 70 },
+    ];
+    groups.forEach((g, gi) => {
+      for (let i = 0; i < 30; i++) {
+        pts.push({
+          x: g.cx + (r() - 0.5) * 0.10,
+          y: g.cy + (r() - 0.5) * 6,
+          true_g: gi,
+        });
+      }
+    });
+    return pts;
+  }
+
+  /* ---- KMeans (toy implementation) ---- */
+  function kmeans(pts, k, seed) {
+    const r = rand(seed);
+    // init: pick k random points as centroids
+    const idx = [];
+    while (idx.length < k) {
+      const i = Math.floor(r() * pts.length);
+      if (!idx.includes(i)) idx.push(i);
+    }
+    let centroids = idx.map(i => ({ x: pts[i].x, y: pts[i].y }));
+    let labels = new Array(pts.length).fill(0);
+
+    for (let iter = 0; iter < 30; iter++) {
+      // assign
+      for (let i = 0; i < pts.length; i++) {
+        let best = 0, bestD = Infinity;
+        for (let c = 0; c < k; c++) {
+          const dx = pts[i].x - centroids[c].x;
+          const dy = pts[i].y - centroids[c].y;
+          const d = dx * dx + dy * dy;
+          if (d < bestD) { bestD = d; best = c; }
+        }
+        labels[i] = best;
+      }
+      // update
+      const newC = Array.from({ length: k }, () => ({ sx: 0, sy: 0, n: 0 }));
+      for (let i = 0; i < pts.length; i++) {
+        const l = labels[i];
+        newC[l].sx += pts[i].x;
+        newC[l].sy += pts[i].y;
+        newC[l].n++;
+      }
+      let moved = 0;
+      for (let c = 0; c < k; c++) {
+        if (newC[c].n === 0) continue;
+        const nx = newC[c].sx / newC[c].n;
+        const ny = newC[c].sy / newC[c].n;
+        moved += Math.abs(nx - centroids[c].x) + Math.abs(ny - centroids[c].y);
+        centroids[c] = { x: nx, y: ny };
+      }
+      if (moved < 1e-6) break;
+    }
+
+    // inertia
+    let inertia = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const c = centroids[labels[i]];
+      const dx = pts[i].x - c.x;
+      const dy = pts[i].y - c.y;
+      inertia += dx * dx + dy * dy;
+    }
+    return { labels, centroids, inertia };
+  }
+
+  /* ---- silhouette (cheap) ---- */
+  function silhouette(pts, labels) {
+    const k = Math.max(...labels) + 1;
+    if (k < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < pts.length; i++) {
+      let aSum = 0, aN = 0;
+      const bestB = new Array(k).fill(0);
+      const bN = new Array(k).fill(0);
+      for (let j = 0; j < pts.length; j++) {
+        if (i === j) continue;
+        const dx = pts[i].x - pts[j].x;
+        const dy = pts[i].y - pts[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (labels[j] === labels[i]) { aSum += d; aN++; }
+        else { bestB[labels[j]] += d; bN[labels[j]]++; }
+      }
+      const a = aN > 0 ? aSum / aN : 0;
+      let bMin = Infinity;
+      for (let c = 0; c < k; c++) {
+        if (c === labels[i]) continue;
+        if (bN[c] === 0) continue;
+        const bAvg = bestB[c] / bN[c];
+        if (bAvg < bMin) bMin = bAvg;
+      }
+      const s = (bMin - a) / Math.max(a, bMin);
+      total += s;
+    }
+    return total / pts.length;
+  }
+
+  /* ---- standardize (scaling on Y to bring it into 0..1) ---- */
+  function scale(pts) {
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const xMean = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const yMean = ys.reduce((a, b) => a + b, 0) / ys.length;
+    const xStd = Math.sqrt(xs.reduce((a, b) => a + (b - xMean) ** 2, 0) / xs.length) || 1;
+    const yStd = Math.sqrt(ys.reduce((a, b) => a + (b - yMean) ** 2, 0) / ys.length) || 1;
+    return pts.map(p => ({
+      x: (p.x - xMean) / xStd,
+      y: (p.y - yMean) / yStd,
+      true_g: p.true_g,
+    }));
+  }
+
+  /* ---- render ---- */
+  function render() {
+    const k = parseInt(kEl.value, 10);
+    kVal.textContent = k;
+    const datasetKey = dataEl.value;
+
+    const raw = datasetKey === 'blobs' ? makeBlobs()
+              : datasetKey === 'moons' ? makeMoons()
+              : makeStretched();
+
+    const pts = scaleOn ? scale(raw) : raw;
+    const result = kmeans(pts, k, 42);
+    const sil = silhouette(pts, result.labels);
+
+    // bounds for plotting
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+    for (const p of pts) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      if (p.y < yMin) yMin = p.y;
+      if (p.y > yMax) yMax = p.y;
+    }
+    const xPad = (xMax - xMin) * 0.05;
+    const yPad = (yMax - yMin) * 0.05;
+    xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+
+    const W = 420, H = 280;
+    const sx = v => 30 + ((v - xMin) / (xMax - xMin || 1)) * (W - 50);
+    const sy = v => H - 30 - ((v - yMin) / (yMax - yMin || 1)) * (H - 50);
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    // axes
+    const ax1 = document.createElementNS(SVG_NS, 'path');
+    ax1.setAttribute('d', `M 30 ${H-30} L ${W-20} ${H-30}`);
+    ax1.setAttribute('class', 'ax-line');
+    svg.appendChild(ax1);
+    const ax2 = document.createElementNS(SVG_NS, 'path');
+    ax2.setAttribute('d', `M 30 20 L 30 ${H-30}`);
+    ax2.setAttribute('class', 'ax-line');
+    svg.appendChild(ax2);
+
+    // points
+    pts.forEach((p, i) => {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('cx', sx(p.x));
+      c.setAttribute('cy', sy(p.y));
+      c.setAttribute('r', 4);
+      c.setAttribute('class', 'cd c' + (result.labels[i] % 5));
+      svg.appendChild(c);
+    });
+
+    // centroids
+    result.centroids.forEach((c, i) => {
+      const ring = document.createElementNS(SVG_NS, 'circle');
+      ring.setAttribute('cx', sx(c.x));
+      ring.setAttribute('cy', sy(c.y));
+      ring.setAttribute('r', 9);
+      ring.setAttribute('class', 'ctd c' + (i % 5));
+      svg.appendChild(ring);
+      const t = document.createElementNS(SVG_NS, 'text');
+      t.setAttribute('x', sx(c.x));
+      t.setAttribute('y', sy(c.y) + 3);
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('class', 'ax-text');
+      t.setAttribute('font-weight', 700);
+      t.textContent = '+';
+      svg.appendChild(t);
+    });
+
+    canvas.innerHTML = '';
+    canvas.appendChild(svg);
+
+    // code line
+    const codeStr = scaleOn
+      ? `X_scaled = StandardScaler().fit_transform(X)
+labels = KMeans(n_clusters=${k}, random_state=42, n_init=10).fit_predict(X_scaled)`
+      : `labels = KMeans(n_clusters=${k}, random_state=42, n_init=10).fit_predict(X)`;
+    codeEl.textContent = codeStr;
+
+    // stats
+    let warning = '';
+    if (datasetKey === 'stretched' && !scaleOn) {
+      warning = ' <span style="color:var(--accent-red);">⚠ y-axis dominates — clusters split only by Y</span>';
+    } else if (datasetKey === 'moons' && k === 2) {
+      warning = ' <span style="color:var(--accent-red);">⚠ KMeans cuts moons in half — wrong shape for this algo</span>';
+    }
+    statsEl.innerHTML = `inertia: <b>${result.inertia.toFixed(3)}</b> &nbsp;·&nbsp; silhouette: <b>${sil.toFixed(3)}</b> &nbsp;·&nbsp; n=${pts.length}${warning}`;
+  }
+
+  function setScale(on) {
+    scaleOn = on;
+    onBtn.classList.toggle('on', on);
+    offBtn.classList.toggle('on', !on);
+    render();
+  }
+
+  kEl.addEventListener('input', render);
+  dataEl.addEventListener('change', render);
+  onBtn.addEventListener('click', () => setScale(true));
+  offBtn.addEventListener('click', () => setScale(false));
+  render();
+})();
+</script>
+
+</body>
+</html>
