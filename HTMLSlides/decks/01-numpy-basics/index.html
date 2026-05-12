@@ -394,18 +394,23 @@ m + a                <span class="cmt"># row broadcasts</span></pre>
     </section>
 
     <!-- 10. Aggregations — VISUALIZED -->
-    <section class="slide">
+    <section class="slide dense">
       <h2>Aggregations & axes</h2>
       <p>Click an arrow direction to see which cells collapse.</p>
 
       <div class="split">
         <div class="col">
-          <pre class="code">a = np.array([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],
+          <pre class="code" style="font-size:13px; padding:10px 14px;">a = np.array([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],
               [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])
 
-a.sum()         <span class="cmt"># 21</span>
-a.sum(axis=<span class="num">0</span>)   <span class="cmt"># [5 7 9]</span>
-a.sum(axis=<span class="num">1</span>)   <span class="cmt"># [6 15]</span></pre>
+a.sum()              <span class="cmt"># 21</span>
+a.sum(axis=<span class="num">0</span>)        <span class="cmt"># [5 7 9]  (3,)</span>
+a.sum(axis=<span class="num">1</span>)        <span class="cmt"># [6 15]   (2,)</span>
+a.min(axis=<span class="num">1</span>)        <span class="cmt"># [1 4]    same family</span>
+
+<span class="cmt"># keepdims=True → keep axis as size 1</span>
+a.sum(axis=<span class="num">1</span>, keepdims=<span class="kw">True</span>)
+<span class="cmt"># [[6] [15]]  shape (2,1) → broadcasts back</span></pre>
           <div class="idx-bar">
             <button class="idx-btn agg-btn" data-axis="all">all</button>
             <button class="idx-btn agg-btn" data-axis="0">axis=0</button>
@@ -423,7 +428,7 @@ a.sum(axis=<span class="num">1</span>)   <span class="cmt"># [6 15]</span></pre>
           </div>
         </div>
       </div>
-      <p class="callout fragment"><b class="tk-purple">axis=0</b> = collapse rows, keep columns.<br/><b class="tk-pink">axis=1</b> = collapse columns, keep rows.</p>
+      <p class="callout fragment" style="margin-top:8px; font-size:15px;"><b class="tk-purple">axis=0</b> collapse rows. <b class="tk-pink">axis=1</b> collapse cols. <b class="tk-blue">keepdims=True</b> → keep shape for broadcast back (per-row normalize).</p>
     </section>
 
     <!-- 11. Boolean masks — ANIMATED FILTER -->
