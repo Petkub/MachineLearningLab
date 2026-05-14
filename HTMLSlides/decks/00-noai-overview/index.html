@@ -2364,8 +2364,7 @@ plt.show()</pre>
       </div>
       <div class="prob-sol fragment">
         <div class="label">SOLUTION SKELETON</div>
-        <pre class="code">df[<span class="str">"Age"</span>] = df.groupby([<span class="str">"Pclass"</span>, <span class="str">"Sex"</span>])[<span class="str">"Age"</span>] \
-              .transform(<span class="kw">lambda</span> g: g.fillna(g.median()))
+        <pre class="code">df[<span class="str">"Age"</span>] = df[<span class="str">"Age"</span>].fillna(df[<span class="str">"Age"</span>].median())
 df[<span class="str">"AgeGroup"</span>] = np.where(df[<span class="str">"Age"</span>] &lt; <span class="num">15</span>, <span class="str">"child"</span>, <span class="str">"adult"</span>)
 
 df.groupby([<span class="str">"Sex"</span>, <span class="str">"Pclass"</span>, <span class="str">"AgeGroup"</span>])[<span class="str">"Survived"</span>].mean()
@@ -3990,8 +3989,7 @@ df[<span class="str">"target"</span>].value_counts()
 
 <span class="cmt"># clean</span>
 df = df.dropna(subset=[<span class="str">"target"</span>])
-df[c] = df.groupby(g)[c] \
-   .transform(<span class="kw">lambda</span> x: x.fillna(x.median()))
+df[c] = df[c].fillna(df[c].median())
 df = pd.get_dummies(df, columns=cats)
 
 <span class="cmt"># split</span>
