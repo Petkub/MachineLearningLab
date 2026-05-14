@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOAI Day 3 — scikit-learn</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* keep slide content from being hidden behind draw-toolbar at top */
+  .deck .slide:not(.title):not(.divider) {
+    padding-top: 64px !important;
+  }
+  /* shrink h2 margin so dense slides reclaim vertical space */
+  .deck .slide h2 { margin-bottom: 10px !important; }
+  /* tighten dense slide spacing */
+  .deck .slide.dense ul li,
+  .deck .slide.dense p,
+  .deck .slide.dense pre.code { margin-bottom: 6px; }
+
+  /* FORCE interactive widgets ABOVE draw-overlay (z:40) AND inside slide stacking ctx.
+     Slide is z:5, overlay z:40. Buttons need higher than 40 PLUS slide must establish
+     stacking context. Give slide.active z:9999 so children stack on top. */
+  .deck .slide.active { z-index: 9999 !important; }
+  .deck .draw-overlay:not(.active) {
+    z-index: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+  .deck .draw-overlay:not(.active) .draw-svg {
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ===== day-section divider ===== */
+  .slide.divider {
+    background:
+      radial-gradient(circle at 15% 15%, rgba(253,233,163,0.55), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(184,238,240,0.4),  transparent 50%),
+      var(--bg);
+    display: grid; place-items: center;
+    text-align: center;
+  }
+  .divider .day-tag {
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    padding: 6px 18px;
+    font-family: var(--font-mono); font-weight: 800; font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .divider h1 {
+    font-size: 96px; line-height: 1.05; margin-top: 14px; letter-spacing: -0.03em;
+  }
+  .divider h1 em {
+    font-style: normal; background: var(--cream); padding: 0 14px;
+  }
+  .divider p.sub {
+    font-size: 22px; color: var(--ink-soft); margin-top: 16px;
+  }
+  .divider .roman {
+    font-size: 160px; color: var(--cream); font-weight: 800;
+    position: absolute; top: 40px; right: 60px; line-height: 1;
+  }
+
+  /* ===== numpy cell grids (Day 1) ===== */
+  .np-grid { display: inline-grid; gap: 4px; font-family: var(--font-mono); }
+  .np-cell {
+    width: 42px; height: 42px;
+    display: grid; place-items: center;
+    background: #fff; border: 2px solid var(--ink);
+    font-weight: 700; font-size: 15px;
+    transition: background 280ms var(--ease), transform 280ms var(--ease);
+  }
+  .np-cell.hi    { background: var(--cream); }
+  .np-cell.pick  { background: #b8eef0; transform: scale(1.08); }
+  .np-cell.row   { background: #ffd6cc; }
+  .np-cell.col   { background: #e6d2ff; }
+  .np-cell.mask  { background: #d6f5dd; border-color: var(--accent-green); }
+  .np-cell.maskF { background: #fff; opacity: 0.35; }
+  .np-cell.dim   { opacity: 0.25; }
+  .np-cell.small { width: 32px; height: 32px; font-size: 13px; }
+  .np-cell.tiny  { width: 26px; height: 26px; font-size: 11px; }
+
+  /* indexing playground */
+  .idx-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px; }
+  .idx-btn {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 10px; cursor: pointer;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .idx-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .idx-btn.active { background: var(--cream); }
+  .idx-result { margin-top: 8px; font-size: 15px; color: var(--ink-soft); font-family: var(--font-mono); }
+  .idx-result b { color: var(--ink); background: var(--cream); padding: 1px 6px; }
+
+  /* reshape stage */
+  .reshape-stage { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .reshape-arrow { font-size: 26px; color: var(--accent-blue); font-weight: 700; }
+
+  /* axis aggregation */
+  .agg-wrap { display: inline-grid; grid-template-columns: auto auto; gap: 6px; align-items: start; }
+  .agg-sums { display: grid; gap: 4px; font-family: var(--font-mono); font-weight: 700; }
+  .agg-sum-cell {
+    display: grid; place-items: center;
+    width: 42px; height: 42px;
+    background: var(--cream); border: 2px dashed var(--ink);
+    font-size: 14px;
+  }
+  .agg-btn {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 12px; cursor: pointer; margin-right: 6px;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .agg-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .agg-btn.active { background: var(--cream); }
+
+  /* broadcast pulse */
+  @keyframes bcPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .bc-pulse rect { animation: bcPulse 1.6s var(--ease) infinite; transform-origin: center; transform-box: fill-box; }
+
+  /* mask filter animation */
+  @keyframes maskDrop {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(50px); opacity: 0; }
+  }
+  .mask-out { animation: maskDrop 600ms var(--ease) forwards; }
+
+  /* ===== pandas table styling (Day 2) ===== */
+  .pd-table {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .pd-table th, .pd-table td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    background: #fff;
+  }
+  .pd-table th {
+    background: var(--cream);
+    font-weight: 800;
+  }
+  .pd-table td.idx {
+    background: var(--cream-soft);
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .pd-table tr.hi td:not(.idx) { background: #b8eef0; }
+  .pd-table td.hi-cell { background: #ffd6cc !important; font-weight: 800; }
+  .pd-table td.nan { color: var(--accent-red); font-style: italic; }
+
+  /* groupby viz */
+  .gb-stage {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 14px; align-items: center; margin-top: 12px;
+  }
+  .gb-stage .gb-arrow { font-size: 22px; color: var(--accent-blue); font-weight: 800; text-align: center; }
+  .gb-stage h4 { font-size: 14px; margin-bottom: 6px; color: var(--ink-soft); text-align: center; }
+
+  /* seaborn mini plots — pure CSS */
+  .plot-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 12px; min-height: 160px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .plot-card .plot-title {
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+  }
+  .plot-card .plot-body { flex: 1; display: grid; place-items: center; }
+
+  .heat-grid {
+    display: grid; grid-template-columns: repeat(4, 26px); gap: 2px;
+  }
+  .heat-cell {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    font-size: 10px; font-family: var(--font-mono); font-weight: 700;
+    border: 1px solid var(--ink);
+  }
+
+  .box-stage {
+    display: flex; gap: 14px; align-items: flex-end; height: 110px;
+  }
+  .box-col { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-family: var(--font-mono); }
+  .box-rect {
+    width: 36px; background: var(--cream); border: 2px solid var(--ink);
+    position: relative;
+  }
+  .box-median {
+    position: absolute; left: -3px; right: -3px;
+    height: 2px; background: var(--ink);
+  }
+
+  /* ===== sklearn flow (Day 3) ===== */
+  .flow {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin: 14px 0;
+  }
+  .flow-box {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 10px 14px; font-family: var(--font-mono);
+    font-weight: 700; font-size: 14px;
+    min-width: 110px; text-align: center;
+  }
+  .flow-box.hi    { background: var(--cream); }
+  .flow-box.split { background: #c8e6ff; }
+  .flow-box.fit   { background: #d6f5dd; }
+  .flow-box.eval  { background: #e6d2ff; }
+  .flow-arrow { font-size: 22px; color: var(--accent-blue); font-weight: 800; }
+
+  /* confusion matrix */
+  .cm-grid {
+    display: grid;
+    grid-template-columns: auto 80px 80px;
+    grid-template-rows: auto 80px 80px;
+    font-family: var(--font-mono); font-size: 14px;
+  }
+  .cm-grid > div { display: grid; place-items: center; }
+  .cm-grid .cm-axis { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+  .cm-grid .cm-cell { border: 2px solid var(--ink); font-weight: 800; font-size: 18px; }
+  .cm-grid .cm-tp { background: #d6f5dd; }
+  .cm-grid .cm-tn { background: #d6f5dd; }
+  .cm-grid .cm-fp { background: #ffd6cc; }
+  .cm-grid .cm-fn { background: #ffd6cc; }
+
+  /* split viz (train/test) */
+  .split-bar {
+    display: grid; grid-template-columns: 4fr 1fr;
+    height: 40px; border: 2px solid var(--ink);
+    margin-top: 10px; font-family: var(--font-mono); font-weight: 700;
+  }
+  .split-bar > div { display: grid; place-items: center; font-size: 14px; }
+  .split-bar .train { background: #d6f5dd; }
+  .split-bar .test  { background: var(--cream); }
+
+  /* ===== day-card grid (overview) ===== */
+  .day-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .day-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: background 240ms var(--ease), transform 240ms var(--ease), box-shadow 240ms var(--ease);
+    font-family: var(--font-mono);
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 180px;
+  }
+  .day-card:hover { background: var(--cream-soft); transform: translateY(-3px); }
+  .day-card.active {
+    background: var(--cream);
+    box-shadow: 6px 6px 0 var(--ink);
+    transform: translateY(-3px);
+  }
+  .day-card .badge {
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    padding: 2px 10px; font-size: 11px; font-weight: 700;
+    align-self: flex-start;
+  }
+  .day-card h3 { font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .day-card .hrs { font-size: 12px; color: var(--ink-soft); }
+  .day-card ul { margin: 6px 0 0 18px; }
+  .day-card li { font-size: 12px; line-height: 1.45; }
+
+  .timeline {
+    margin: 18px 0 6px;
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 2fr;
+    gap: 4px; height: 32px;
+    border: 2px solid var(--ink);
+  }
+  .timeline > div {
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    font-family: var(--font-mono);
+  }
+  .tl-d1 { background: #c8e6ff; }
+  .tl-d2 { background: #d6f5dd; }
+  .tl-d3 { background: var(--cream); }
+
+  .day-detail {
+    margin-top: 14px;
+    border: 2px dashed var(--ink);
+    padding: 12px 16px;
+    background: var(--cream-soft);
+    min-height: 70px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .day-detail.empty { color: var(--ink-mute); font-style: italic; }
+  .day-detail b { background: var(--cream); padding: 1px 6px; }
+
+  /* lib pills */
+  .lib-strip { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .lib-pill {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 12px; font-family: var(--font-mono);
+    font-weight: 700; font-size: 13px;
+  }
+  .lib-pill.on { background: var(--cream); }
+
+  /* checklist */
+  .checklist { font-size: 15px; }
+  .checklist li { margin-bottom: 6px; }
+  .checklist code { background: var(--cream-soft); padding: 1px 5px; border: 1px solid var(--ink); }
+
+  /* compact two-col code+notes */
+  .split-2 {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .split-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* pitfall callout */
+  .pitfall {
+    border: 2px solid var(--accent-red);
+    background: #fff5f3;
+    padding: 10px 14px; margin-top: 12px;
+    font-size: 14px;
+  }
+  .pitfall b { color: var(--accent-red); }
+
+  /* tight pre */
+  .slide.dense pre.code { font-size: 13.5px; line-height: 1.45; }
+  .slide.tighter pre.code { font-size: 13px; line-height: 1.42; }
+
+  /* ===== PROBLEM SLIDE THEME ===== */
+  .slide.problem h2::before {
+    content: "▸ PROBLEM";
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    font-size: 12px; font-weight: 800;
+    padding: 3px 10px; margin-right: 12px;
+    vertical-align: middle; letter-spacing: 1px;
+  }
+  .prob-q {
+    border-left: 6px solid var(--accent-purple);
+    background: #f5efff;
+    padding: 12px 16px;
+    margin: 10px 0 14px;
+    font-size: 15px; line-height: 1.55;
+  }
+  .prob-q b { background: var(--cream); padding: 1px 5px; }
+  .prob-given {
+    border: 2px dashed var(--ink);
+    background: #fff;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .prob-given .label {
+    font-size: 11px; color: var(--ink-soft);
+    font-weight: 800; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .prob-think {
+    border: 2px solid var(--accent-blue);
+    background: #eef1ff;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 14px; line-height: 1.55;
+  }
+  .prob-think b { color: var(--accent-blue); }
+  .prob-sol {
+    border-left: 6px solid var(--accent-green);
+    background: #effbef;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  .prob-sol .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1px;
+    color: var(--accent-green); margin-bottom: 6px;
+  }
+  .prob-twist {
+    border: 2px solid var(--accent-red);
+    background: #fff5f3;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  .prob-twist b { color: var(--accent-red); }
+  .slide.problem pre.code { font-size: 13px; line-height: 1.4; }
+
+  /* ===== Day 3 SKLEARN VIZ ===== */
+  .sk-stage {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+  }
+  .sk-canvas {
+    background: #fff;
+    border: 2px solid var(--ink);
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.6 / 1;
+    max-height: 360px;
+  }
+  .sk-canvas svg { display: block; width: 100%; height: 100%; }
+  .sk-controls {
+    display: flex; flex-direction: column; gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .sk-toggle {
+    display: flex; gap: 0;
+    border: 2px solid var(--ink);
+  }
+  .sk-toggle button {
+    flex: 1;
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+    background: #fff; border: none; padding: 8px 10px;
+    cursor: pointer;
+    border-right: 2px solid var(--ink);
+    transition: background 200ms var(--ease);
+  }
+  .sk-toggle button:last-child { border-right: none; }
+  .sk-toggle button:hover { background: var(--cream-soft); }
+  .sk-toggle button.active { background: var(--cream); }
+  .sk-slider {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px;
+  }
+  .sk-slider input[type=range] {
+    width: 100%;
+    accent-color: var(--accent-purple);
+  }
+  .sk-stat {
+    border: 2px solid var(--ink);
+    background: var(--cream-soft);
+    padding: 8px 12px;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .sk-stat b { background: var(--cream); padding: 1px 5px; }
+
+  /* mini confusion matrix for threshold viz */
+  .cm-mini {
+    display: grid;
+    grid-template-columns: 60px 60px;
+    grid-template-rows: 60px 60px;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-weight: 800;
+  }
+  .cm-mini > div {
+    display: grid; place-items: center;
+    border: 2px solid var(--ink);
+    font-size: 16px;
+    transition: background 200ms var(--ease);
+  }
+  .cm-mini .cm-tp { background: #d6f5dd; }
+  .cm-mini .cm-tn { background: #d6f5dd; }
+  .cm-mini .cm-fp { background: #ffd6cc; }
+  .cm-mini .cm-fn { background: #ffd6cc; }
+
+  /* tree viz */
+  .tree-svg .node {
+    fill: #fff; stroke: var(--ink); stroke-width: 2;
+  }
+  .tree-svg .node.leaf-a { fill: #c8e6ff; }
+  .tree-svg .node.leaf-b { fill: #ffd6cc; }
+  .tree-svg .edge { stroke: var(--ink); stroke-width: 2; fill: none; }
+  .tree-svg .lbl {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  }
+
+  /* bias-variance triple */
+  .bv-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .bv-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 10px;
+  }
+  .bv-card svg { display: block; width: 100%; height: 130px; }
+  .bv-card h4 {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 800;
+    text-align: center; margin-bottom: 4px;
+  }
+  .bv-card .verdict {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+    text-align: center; margin-top: 4px;
+  }
+
+  /* "what is learning" diagram */
+  .learn-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .learn-box {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 14px; text-align: center;
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+  }
+  .learn-box.params { background: var(--cream); }
+  .learn-arrow {
+    font-size: 26px; color: var(--accent-blue); font-weight: 800;
+    text-align: center;
+  }
+  .learn-loop {
+    margin-top: 12px;
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--ink-soft); text-align: center;
+  }
+  .learn-loop b { color: var(--accent-purple); }
+
+  /* ===== misc additions ===== */
+  /* memory layout cells */
+  .mem-strip {
+    display: inline-flex; gap: 0;
+    border: 2px solid var(--ink); background: #fff;
+    font-family: var(--font-mono);
+  }
+  .mem-strip > div {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-right: 2px solid var(--ink);
+    font-size: 13px; font-weight: 700;
+  }
+  .mem-strip > div:last-child { border-right: none; }
+  .mem-strip > div.row0 { background: #c8e6ff; }
+  .mem-strip > div.row1 { background: #d6f5dd; }
+  .mem-strip > div.row2 { background: var(--cream); }
+
+  /* image-as-array */
+  .img-grid {
+    display: grid; gap: 1px;
+    background: var(--ink);
+    border: 2px solid var(--ink);
+    width: max-content;
+  }
+  .img-cell {
+    width: 24px; height: 24px;
+  }
+
+  /* roc curve / perf bars */
+  .perf-bar {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 13px;
+    margin: 3px 0;
+  }
+  .perf-bar .name { width: 110px; }
+  .perf-bar .bar {
+    height: 18px; background: var(--cream);
+    border: 2px solid var(--ink);
+    position: relative;
+  }
+  .perf-bar .bar-fill {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    background: var(--accent-blue);
+  }
+  .perf-bar .val { width: 60px; font-weight: 800; }
+
+  /* model comparison cards */
+  .model-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+  }
+  .model-card h4 {
+    font-size: 15px; font-weight: 800; margin-bottom: 4px;
+  }
+  .model-card .tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 6px; margin-bottom: 6px;
+    background: var(--cream);
+  }
+  .model-card .pros, .model-card .cons {
+    font-size: 12px; line-height: 1.5; margin-top: 4px;
+  }
+  .model-card .pros { color: var(--accent-green); }
+  .model-card .cons { color: var(--accent-red); }
+
+  /* roc canvas */
+  .roc-stage { display: flex; gap: 18px; align-items: flex-start; }
+  .roc-stage svg { border: 2px solid var(--ink); background: #fff; }
+
+  /* gridsearch grid */
+  .gs-grid {
+    display: grid;
+    gap: 3px;
+    margin: 10px 0;
+  }
+  .gs-cell {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    border: 1.5px solid var(--ink);
+    transition: transform 200ms var(--ease);
+  }
+  .gs-cell.best { background: var(--accent-green); color: #fff; transform: scale(1.05); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <section class="slide title">
+      <h1>NOAI · Day 3<br/>scikit-learn</h1>
+      <p class="subtitle">split → fit → predict → score.<br/>2.0 hours</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 40. Day 3 divider -->
+    <section class="slide divider">
+      <div class="roman">III</div>
+      <div>
+        <span class="day-tag">DAY THREE · 2.0 HOURS</span>
+        <h1><em>scikit-learn</em></h1>
+        <p class="sub">split → fit → predict → score.<br/>The one pattern that fits every model.</p>
+      </div>
+    </section>
+
+    <!-- 41. What is ML -->
+    <section class="slide">
+      <h2>What is supervised ML?</h2>
+      <ul>
+        <li class="fragment">You have <b class="tk-blue">X</b> (features) and <b class="tk-green">y</b> (labels).</li>
+        <li class="fragment">Model learns the mapping <b class="tk-purple">f(X) ≈ y</b> from examples.</li>
+        <li class="fragment">Then predicts <b>y</b> for new <b>X</b> it never saw.</li>
+      </ul>
+      <p>Math view:</p>
+      <p style="margin: 8px 0; font-size: 18px;">$$\hat{y} = f_\theta(X) \quad \text{learn } \theta \text{ to minimize loss}(y, \hat{y})$$</p>
+      <p class="callout fragment"><b>Classification</b> = y is a category (survived / didn't). <b>Regression</b> = y is a number (house price).</p>
+    </section>
+
+    <!-- 41b: what "learning" actually does -->
+    <section class="slide">
+      <h2>What "learning" actually does</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Model = formula with <b style="color:var(--accent-purple);">unknown parameters</b>. Training = adjust parameters until predictions match labels.</p>
+      <div class="learn-flow">
+        <div class="learn-box">Input <b style="color:var(--accent-blue);">X</b><div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">(age, fare, sex…)</div></div>
+        <div class="learn-arrow">→</div>
+        <div class="learn-box params">Parameters <b>θ</b><div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">weights, splits, …</div></div>
+        <div class="learn-arrow">→</div>
+        <div class="learn-box">Output <b style="color:var(--accent-green);">ŷ</b><div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">prediction</div></div>
+      </div>
+      <p style="font-size:15px; margin-top:14px;">$$\text{loss} = \text{distance}(y, \hat{y}) \quad \Rightarrow \quad \theta \leftarrow \theta - \nabla_\theta \text{loss}$$</p>
+      <div class="learn-loop fragment">
+        For 1000s of examples: <b>predict → measure error → nudge parameters → repeat.</b><br/>
+        That loop <b>is</b> training. Every model does this — just different shapes of <b>θ</b>.
+      </div>
+      <p class="callout fragment">LogReg θ = weights vector. Tree θ = split rules. Neural net θ = millions of weights. Same idea.</p>
+    </section>
+
+    <!-- D3-P1: classification vs regression -->
+    <section class="slide problem tighter">
+      <h2>Classify the problem itself</h2>
+      <div class="prob-q" style="padding: 8px 14px; margin: 6px 0 8px; font-size: 14px;">
+        Decide: <b>classification</b>, <b>regression</b>, or <b>unsupervised</b>?
+      </div>
+      <div class="split-2">
+        <div>
+          <ul style="list-style:none; padding:0; margin:0; font-size: 13.5px; line-height: 1.7;">
+            <li>① Predict tomorrow's stock price.</li>
+            <li>② Detect spam email vs not-spam.</li>
+            <li>③ Group customers into similar segments.</li>
+            <li>④ Predict house price.</li>
+            <li>⑤ Recognize digit (0–9) in image.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="prob-sol fragment" style="margin: 0; padding: 8px 12px;">
+            <div class="label">ANSWERS</div>
+            <ul style="list-style:none; padding:0; margin: 4px 0 0; font-size: 13px; line-height: 1.7;">
+              <li>① regression (continuous)</li>
+              <li>② classification (2-class)</li>
+              <li>③ unsupervised — no labels</li>
+              <li>④ regression</li>
+              <li>⑤ classification (10-class)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="prob-twist fragment" style="padding: 8px 12px; margin: 8px 0 0; font-size: 13px;">
+        <b>Critical:</b> Wrong problem type = wrong metric, wrong model. Target column dtype usually tells you the type.
+      </div>
+    </section>
+
+    <!-- 42. sklearn philosophy -->
+    <section class="slide">
+      <h2>sklearn — one API for every model</h2>
+      <pre class="code"><span class="kw">from</span> sklearn.&lt;family&gt; <span class="kw">import</span> &lt;Model&gt;
+
+model = Model(...)            <span class="cmt"># configure</span>
+model.fit(X_train, y_train)   <span class="cmt"># learn</span>
+y_pred = model.predict(X_test)<span class="cmt"># use</span>
+model.score(X_test, y_test)   <span class="cmt"># evaluate</span></pre>
+      <ul>
+        <li class="fragment">Swap the import → same 4 lines work for <b class="tk-blue">LogisticRegression</b>, <b class="tk-green">RandomForest</b>, <b class="tk-purple">SVM</b>, <b class="tk-pink">KNN</b>…</li>
+        <li class="fragment">This consistency is why sklearn won.</li>
+      </ul>
+      <p class="callout fragment"><b>fit / predict / score.</b> The mantra.</p>
+    </section>
+
+    <!-- D3-P2: identify the bug -->
+    <section class="slide problem tighter">
+      <h2>Spot the bug</h2>
+      <div class="prob-q" style="padding: 8px 14px; margin: 6px 0 8px; font-size: 14px;">
+        Code claims <b>99% accuracy</b>. Find <b>two bugs</b> that make number meaningless.
+      </div>
+      <div class="split-2">
+        <div>
+          <div class="prob-given" style="margin: 4px 0; padding: 8px 12px;">
+            <div class="label">BUGGY</div>
+            <pre class="code" style="font-size:12px;line-height:1.35;">model = RandomForestClassifier()
+model.fit(X, y)
+y_pred = model.predict(X)
+acc = accuracy_score(y, y_pred)
+<span class="cmt"># 0.99 ✨</span></pre>
+          </div>
+          <div class="prob-think fragment" style="margin: 6px 0 0; padding: 8px 12px; font-size: 13px;">
+            <b>Think:</b> Did model see unseen data? What is it really evaluating?
+          </div>
+        </div>
+        <div>
+          <div class="prob-sol fragment" style="margin: 4px 0; padding: 8px 12px;">
+            <div class="label">BUGS + FIX</div>
+            <ul style="margin: 4px 0 6px 16px; font-size: 12.5px; line-height: 1.45;">
+              <li><b>1:</b> Predicting on training data → memorized.</li>
+              <li><b>2:</b> No <code>random_state</code> → unreproducible.</li>
+            </ul>
+            <pre class="code" style="font-size:11.5px;line-height:1.35;">X_tr,X_te,y_tr,y_te = train_test_split(
+  X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+model = RandomForestClassifier(random_state=<span class="num">42</span>)
+model.fit(X_tr, y_tr)
+acc = accuracy_score(
+  y_te, model.predict(X_te))</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 43. The full flow -->
+    <section class="slide">
+      <h2>The full flow</h2>
+      <div class="flow">
+        <div class="flow-box split">split</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fit">fit</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fit">predict</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box eval">score</div>
+      </div>
+      <pre class="code"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> RandomForestClassifier
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, classification_report
+
+X = df.drop(columns=[<span class="str">"Survived"</span>])
+y = df[<span class="str">"Survived"</span>]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+
+model = RandomForestClassifier(n_estimators=<span class="num">100</span>, random_state=<span class="num">42</span>)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+<span class="kw">print</span>(accuracy_score(y_test, y_pred))
+<span class="kw">print</span>(classification_report(y_test, y_pred))</pre>
+    </section>
+
+    <!-- D3-P3: minimal pipeline -->
+    <section class="slide problem">
+      <h2>Iris in 5 minutes</h2>
+      <div class="prob-q">
+        From sklearn's built-in Iris dataset, train a model and report test accuracy. <b>Constraint:</b> 6 lines or fewer (imports excluded).
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code"><span class="kw">from</span> sklearn.datasets        <span class="kw">import</span> load_iris
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble        <span class="kw">import</span> RandomForestClassifier
+
+X, y = load_iris(return_X_y=<span class="kw">True</span>)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=<span class="num">42</span>)
+model = RandomForestClassifier(random_state=<span class="num">42</span>).fit(X_tr, y_tr)
+<span class="kw">print</span>(model.score(X_te, y_te))   <span class="cmt"># ~0.97</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> This is the <i>entire pipeline</i>. If you can write these 5 lines from memory, you can model any tabular Stage 2 problem.
+      </div>
+    </section>
+
+    <!-- 44. train_test_split deep -->
+    <section class="slide">
+      <h2>Why split?</h2>
+      <p style="font-size:14px;">Score on training data = the model memorized it. Useless. Score on data it never saw = the real number.</p>
+      <div class="split-bar">
+        <div class="train">TRAIN — 80%</div>
+        <div class="test">TEST 20%</div>
+      </div>
+      <pre class="code" style="margin-top: 12px;">X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=<span class="num">0.2</span>,        <span class="cmt"># 20% to test</span>
+    random_state=<span class="num">42</span>,      <span class="cmt"># reproducible</span>
+    stratify=y           <span class="cmt"># preserve class balance!</span>
+)</pre>
+      <ul style="margin-top: 8px;">
+        <li class="fragment"><b class="tk-blue">test_size</b> — 0.2 typical. 0.3 if dataset large.</li>
+        <li class="fragment"><b class="tk-purple">random_state</b> — always set. Reproducibility.</li>
+        <li class="fragment"><b class="tk-green">stratify=y</b> — for classification with imbalanced classes.</li>
+      </ul>
+    </section>
+
+    <!-- D3-P4: stratify problem -->
+    <section class="slide problem">
+      <h2>The imbalanced split</h2>
+      <div class="prob-q">
+        Fraud dataset: <b>10,000 transactions</b>, only <b>50 fraud</b> (0.5%). You <code>train_test_split(test_size=0.2)</code> with no <code>stratify</code>. What's the worst-case test set composition? How does <code>stratify=y</code> fix this?
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> 50 frauds in 10000. Test = 2000 rows. By chance, test could end up with 0 frauds. Then "accuracy = 100%" by predicting "not fraud" for everyone.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=<span class="num">0.2</span>,
+    stratify=y,           <span class="cmt"># preserve 0.5% fraud in both</span>
+    random_state=<span class="num">42</span>
+)
+
+y_te.mean()   <span class="cmt"># ≈ 0.005 — matches overall ratio</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> For imbalanced classification — <code>stratify=y</code> is not optional. And accuracy alone still lies. Switch to F1 / recall.
+      </div>
+    </section>
+
+    <!-- 45. Feature preparation -->
+    <section class="slide dense">
+      <h2>Getting X and y ready</h2>
+      <pre class="code"><span class="cmt"># 1. drop the target from features</span>
+X = df.drop(columns=[<span class="str">"Survived"</span>])
+y = df[<span class="str">"Survived"</span>]
+
+<span class="cmt"># 2. kill the NaN — sklearn refuses them</span>
+X = X.fillna(X.median(numeric_only=<span class="kw">True</span>))
+
+<span class="cmt"># 3. drop or encode string columns</span>
+X = X.drop(columns=[<span class="str">"Name"</span>, <span class="str">"Ticket"</span>, <span class="str">"Cabin"</span>])
+X = pd.get_dummies(X, columns=[<span class="str">"Sex"</span>, <span class="str">"Embarked"</span>])
+
+X.shape, y.shape</pre>
+      <ul>
+        <li class="fragment"><b class="tk-red">Garbage in = garbage score.</b> Half of ML is here.</li>
+        <li class="fragment"><b class="tk-blue">pd.get_dummies</b> — one-hot encode categoricals. Quick &amp; dirty, works.</li>
+        <li class="fragment">RandomForest survives unscaled numeric features. LogReg prefers them scaled.</li>
+      </ul>
+    </section>
+
+    <!-- D3-P5: feature prep failure -->
+    <section class="slide problem">
+      <h2>Why sklearn screams</h2>
+      <div class="prob-q">
+        You run <code>model.fit(X, y)</code> on a Titanic DataFrame and get: <code>ValueError: could not convert string to float: 'female'</code>. <b>Three</b> different fixes — pick the right one and say when each is wrong.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">FIXES</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.55;">
+          <li><b>Drop string cols</b> — fastest, loses info. OK if column is junk (Name, Ticket).</li>
+          <li><b>Map manually</b> <code>{"male": 0, "female": 1}</code> — fine for 2-value cols.</li>
+          <li><b>One-hot</b> <code>pd.get_dummies(X, columns=["Sex","Embarked"])</code> — right for unordered categories with 3+ values.</li>
+        </ul>
+        <pre class="code" style="margin-top: 8px;">X = X.drop(columns=[<span class="str">"Name"</span>, <span class="str">"Ticket"</span>, <span class="str">"Cabin"</span>])
+X = pd.get_dummies(X, columns=[<span class="str">"Sex"</span>, <span class="str">"Embarked"</span>])
+X = X.fillna(X.median(numeric_only=<span class="kw">True</span>))</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> "Encoding city names as 1, 2, 3, 4" implies Bangkok &lt; Chiang Mai. Models believe you. Use one-hot.
+      </div>
+    </section>
+
+    <!-- 46. LogisticRegression -->
+    <section class="slide">
+      <h2>Model 1 — Logistic Regression</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LogisticRegression
+
+model = LogisticRegression(
+    max_iter=<span class="num">1000</span>
+)
+model.fit(X_train, y_train)
+model.score(X_test, y_test)
+
+model.coef_         <span class="cmt"># feature weights</span>
+model.intercept_</pre>
+        </div>
+        <div>
+          <ul>
+            <li class="fragment">Linear boundary. Output = probability via sigmoid $\sigma(z) = \frac{1}{1+e^{-z}}$.</li>
+            <li class="fragment">Fast baseline. Run first to set the floor.</li>
+            <li class="fragment">Interpretable — <code>coef_</code> tells you feature importance.</li>
+            <li class="fragment">If LogReg already strong → problem is easy / linear.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pitfall fragment"><b>Default max_iter is low.</b> Bump to 1000 to silence convergence warnings.</div>
+    </section>
+
+    <!-- D3-P6: LogReg coefficient reading -->
+    <section class="slide problem">
+      <h2>Read the model's mind</h2>
+      <div class="prob-q">
+        After fitting LogReg on Titanic, <code>model.coef_</code> shows: <b>Sex_female = +2.5, Pclass = −0.9, Age = −0.03, Fare = +0.002</b>. What does each tell you? Which feature does the model think matters least?
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Positive coef = increases survival probability. Negative = decreases. Magnitude only comparable if features scaled the same.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">INTERPRETATION</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.55;">
+          <li><b>Sex_female +2.5</b> — being female greatly boosts survival.</li>
+          <li><b>Pclass −0.9</b> — higher class number (3rd class) hurts.</li>
+          <li><b>Age −0.03</b> — slight: older = slight drop.</li>
+          <li><b>Fare +0.002</b> — looks weak, but Fare range is 0–512, so total contribution is real.</li>
+        </ul>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> <b>Don't compare raw coefs across features with different scales.</b> Scale your X first, or compare <code>coef × std(feature)</code>.
+      </div>
+    </section>
+
+    <!-- 47. RandomForest -->
+    <section class="slide">
+      <h2>Model 2 — Random Forest</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.ensemble <span class="kw">import</span> RandomForestClassifier
+
+model = RandomForestClassifier(
+    n_estimators=<span class="num">100</span>,
+    max_depth=<span class="kw">None</span>,
+    random_state=<span class="num">42</span>,
+    n_jobs=-<span class="num">1</span>
+)
+model.fit(X_train, y_train)
+model.feature_importances_</pre>
+        </div>
+        <div>
+          <ul>
+            <li class="fragment">Many decision trees vote. Reduces overfitting.</li>
+            <li class="fragment"><b class="tk-blue">Non-linear</b>. Handles feature interactions automatically.</li>
+            <li class="fragment">No scaling needed. Robust to outliers.</li>
+            <li class="fragment"><b class="tk-green">feature_importances_</b> — which columns mattered most.</li>
+            <li class="fragment">Sensible default for tabular data — start here.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- D3-P7: feature importance -->
+    <section class="slide problem">
+      <h2>Which features actually mattered?</h2>
+      <div class="prob-q">
+        After fitting RandomForest, <code>model.feature_importances_</code> returns 12 numbers. How do you pair them with their column names and rank? Why is the top feature being "PassengerId" a <b>huge red flag</b>?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">imp = pd.Series(
+    model.feature_importances_,
+    index=X.columns
+).sort_values(ascending=<span class="kw">False</span>)
+
+imp.head(<span class="num">5</span>)
+<span class="cmt"># Sex_female    0.31</span>
+<span class="cmt"># Fare          0.21</span>
+<span class="cmt"># Age           0.18</span>
+<span class="cmt"># ...</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> If <code>PassengerId</code> ranks high → leakage. The ID has no business predicting survival. Drop and retrain. Always sanity-check the top features.
+      </div>
+    </section>
+
+    <!-- 47b: how a decision tree thinks -->
+    <section class="slide">
+      <h2>How a decision tree thinks</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Each node asks one yes/no question. Path from root to leaf = a rule.</p>
+      <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:center;margin-top:12px;">
+        <div>
+          <svg class="tree-svg" viewBox="0 0 320 240" style="width:100%;height:auto;">
+            <path class="edge" d="M160 30 L80 90"/>
+            <path class="edge" d="M160 30 L240 90"/>
+            <path class="edge" d="M80 110 L40 180"/>
+            <path class="edge" d="M80 110 L120 180"/>
+            <path class="edge" d="M240 110 L200 180"/>
+            <path class="edge" d="M240 110 L280 180"/>
+            <rect class="node" x="100" y="10" width="120" height="40" rx="4"/>
+            <text class="lbl" x="160" y="34" text-anchor="middle">Sex == female ?</text>
+            <rect class="node" x="30" y="78" width="100" height="32" rx="4"/>
+            <text class="lbl" x="80" y="98" text-anchor="middle">Pclass &lt; 3 ?</text>
+            <rect class="node" x="190" y="78" width="100" height="32" rx="4"/>
+            <text class="lbl" x="240" y="98" text-anchor="middle">Age &lt; 10 ?</text>
+            <rect class="node leaf-a" x="10" y="172" width="60" height="32" rx="4"/>
+            <text class="lbl" x="40" y="192" text-anchor="middle">survived</text>
+            <rect class="node leaf-b" x="90" y="172" width="60" height="32" rx="4"/>
+            <text class="lbl" x="120" y="192" text-anchor="middle">died</text>
+            <rect class="node leaf-a" x="170" y="172" width="60" height="32" rx="4"/>
+            <text class="lbl" x="200" y="192" text-anchor="middle">survived</text>
+            <rect class="node leaf-b" x="250" y="172" width="60" height="32" rx="4"/>
+            <text class="lbl" x="280" y="192" text-anchor="middle">died</text>
+            <text class="lbl" x="98" y="56" fill="#1d3fb6" font-weight="700">yes</text>
+            <text class="lbl" x="222" y="56" fill="#d62828" font-weight="700">no</text>
+          </svg>
+        </div>
+        <div>
+          <ul style="font-size:13.5px; line-height:1.6;">
+            <li class="fragment">Tree <b class="tk-blue">picks splits that separate classes best</b> — Gini / entropy.</li>
+            <li class="fragment">Deeper tree = more rules = can memorize training set.</li>
+            <li class="fragment"><b class="tk-red">Overfit prone</b> — one tree often too greedy.</li>
+            <li class="fragment">Solution: many trees vote → <b class="tk-green">Random Forest</b>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 47c: Random Forest = vote -->
+    <section class="slide">
+      <h2>Random Forest = many trees vote</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Each tree trained on a random subset. Final prediction = majority vote.</p>
+      <div style="display:flex; justify-content:space-around; align-items:flex-end; margin: 20px 0; gap: 8px;">
+        <div style="text-align:center;">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <path class="edge" stroke="#111" stroke-width="2" fill="none" d="M60 10 L30 50 M60 10 L90 50 M30 50 L15 90 M30 50 L45 90 M90 50 L75 90 M90 50 L105 90"/>
+            <circle cx="60" cy="10" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="30" cy="50" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="90" cy="50" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="15" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+            <circle cx="45" cy="90" r="10" fill="#ffd6cc" stroke="#111" stroke-width="2"/>
+            <circle cx="75" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+            <circle cx="105" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+          </svg>
+          <div style="font-family:var(--font-mono);font-size:12px;margin-top:4px;">Tree 1 → <b style="color:#1d3fb6;">A</b></div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <path class="edge" stroke="#111" stroke-width="2" fill="none" d="M60 10 L30 50 M60 10 L90 50 M30 50 L15 90 M30 50 L45 90"/>
+            <circle cx="60" cy="10" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="30" cy="50" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="15" cy="90" r="10" fill="#ffd6cc" stroke="#111" stroke-width="2"/>
+            <circle cx="45" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+            <circle cx="90" cy="50" r="10" fill="#ffd6cc" stroke="#111" stroke-width="2"/>
+          </svg>
+          <div style="font-family:var(--font-mono);font-size:12px;margin-top:4px;">Tree 2 → <b style="color:#d62828;">B</b></div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <path class="edge" stroke="#111" stroke-width="2" fill="none" d="M60 10 L30 50 M60 10 L90 50 M90 50 L75 90 M90 50 L105 90 M30 50 L30 90"/>
+            <circle cx="60" cy="10" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="30" cy="50" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="90" cy="50" r="8" fill="#fff" stroke="#111" stroke-width="2"/>
+            <circle cx="30" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+            <circle cx="75" cy="90" r="10" fill="#c8e6ff" stroke="#111" stroke-width="2"/>
+            <circle cx="105" cy="90" r="10" fill="#ffd6cc" stroke="#111" stroke-width="2"/>
+          </svg>
+          <div style="font-family:var(--font-mono);font-size:12px;margin-top:4px;">Tree 3 → <b style="color:#1d3fb6;">A</b></div>
+        </div>
+        <div style="font-size:32px;color:var(--accent-blue);font-weight:800;">→</div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-mono);font-weight:800;font-size:14px;margin-bottom:8px;">Vote</div>
+          <div style="background:#c8e6ff; border:3px solid #111; padding:14px 18px; font-family:var(--font-mono); font-weight:800; font-size:22px;">A · 2/3</div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">final prediction</div>
+        </div>
+      </div>
+      <p class="callout fragment">One tree = opinion. Many trees = wisdom of crowd. Errors cancel.</p>
+    </section>
+
+    <!-- 47d: decision boundary explorer — INTERACTIVE -->
+    <section class="slide">
+      <h2>Decision boundaries — interactive</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Same data. Different model. Different shape of decision region.</p>
+      <div class="sk-stage" style="margin-top:10px;">
+        <div>
+          <div class="sk-canvas" id="db-canvas">
+            <svg viewBox="0 0 400 320" id="db-svg" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+        <div class="sk-controls">
+          <div style="font-weight:800;">Choose model:</div>
+          <div class="sk-toggle" data-toggle="db-model">
+            <button data-model="logreg" class="active">LogReg</button>
+            <button data-model="rf">RandomForest</button>
+            <button data-model="knn">KNN</button>
+          </div>
+          <div class="sk-stat" id="db-explain">
+            <b>LogReg</b> — straight line. Splits plane into 2 half-planes. Fast, interpretable, fails on curves.
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);">
+            <b>Blue dots</b> = class A · <b>Red dots</b> = class B<br/>
+            Shaded area = where model predicts each class.
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment">Pick model to match shape of your data — not by complexity.</p>
+    </section>
+
+    <!-- D3+: model zoo overview -->
+    <section class="slide">
+      <h2>The sklearn model zoo</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Same <code>fit/predict</code> API. Different intuition. Pick by data shape, not vibes.</p>
+      <div class="split-3" style="margin-top:12px;">
+        <div class="model-card">
+          <div class="tag" style="background:#c8e6ff;">LINEAR</div>
+          <h4>LogisticRegression</h4>
+          <div class="pros">✓ fast, interpretable, baseline</div>
+          <div class="cons">✗ needs scaled features, linear only</div>
+        </div>
+        <div class="model-card">
+          <div class="tag" style="background:#d6f5dd;">TREE</div>
+          <h4>RandomForest</h4>
+          <div class="pros">✓ no scaling, non-linear, robust</div>
+          <div class="cons">✗ slow predict, big memory</div>
+        </div>
+        <div class="model-card">
+          <div class="tag" style="background:var(--cream);">BOOST</div>
+          <h4>GradientBoosting</h4>
+          <div class="pros">✓ usually best on tabular</div>
+          <div class="cons">✗ slow to train, careful tuning</div>
+        </div>
+        <div class="model-card">
+          <div class="tag" style="background:#e6d2ff;">KERNEL</div>
+          <h4>SVM (SVC)</h4>
+          <div class="pros">✓ powerful for medium data</div>
+          <div class="cons">✗ slow on &gt;10k rows, scale needed</div>
+        </div>
+        <div class="model-card">
+          <div class="tag" style="background:#ffd6cc;">LAZY</div>
+          <h4>KNeighbors</h4>
+          <div class="pros">✓ no training, intuitive</div>
+          <div class="cons">✗ slow predict, needs scaling, curse of dim</div>
+        </div>
+        <div class="model-card">
+          <div class="tag" style="background:#fff3c2;">PROB</div>
+          <h4>NaiveBayes</h4>
+          <div class="pros">✓ tiny + fast, great for text</div>
+          <div class="cons">✗ strong independence assumption</div>
+        </div>
+      </div>
+      <p class="callout fragment">NOAI = LogReg + RF. <i>Beyond NOAI</i> = these. Add one to your toolkit per week.</p>
+    </section>
+
+    <!-- D3+: KNN intuition — interactive -->
+    <section class="slide">
+      <h2>KNN — ask your neighbors</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:6px;">Click anywhere on the plot to move the <b>?</b> query. Slider changes <b>k</b>.</p>
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start;">
+        <div>
+          <svg id="knn-svg" viewBox="0 0 320 240" style="width:100%;max-height:330px;border:2px solid var(--ink);background:#fff;cursor:crosshair;"></svg>
+        </div>
+        <div class="sk-controls">
+          <div class="sk-slider">
+            <div style="display:flex;justify-content:space-between;">
+              <span>k =</span>
+              <span id="knn-k" style="font-weight:800;">5</span>
+            </div>
+            <input id="knn-slider" type="range" min="1" max="9" step="2" value="5"/>
+          </div>
+          <div class="sk-stat" id="knn-out">
+            click plot → <b>?</b>
+          </div>
+          <ul style="font-size:12px;line-height:1.5;list-style:none;padding:0;margin:0;">
+            <li>Lazy: no training.</li>
+            <li>Distance dominates → scale features.</li>
+            <li>tiny k = overfit · huge k = underfit.</li>
+          </ul>
+          <pre class="code" style="font-size:11px;margin:0;"><span class="kw">from</span> sklearn.neighbors <span class="kw">import</span> KNeighborsClassifier
+KNeighborsClassifier(n_neighbors=<span class="num">5</span>).fit(X, y)</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- D3+: feature scaling -->
+    <section class="slide">
+      <h2>Feature scaling — when it matters</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler, MinMaxScaler
+
+scaler = StandardScaler()
+X_tr_scaled = scaler.fit_transform(X_tr)
+X_te_scaled = scaler.transform(X_te)
+<span class="cmt"># mean ≈ 0, std ≈ 1</span>
+
+<span class="cmt"># or MinMax to [0, 1]</span>
+mm = MinMaxScaler()
+X_tr_mm = mm.fit_transform(X_tr)</pre>
+        </div>
+        <div>
+          <ul style="font-size:13.5px;line-height:1.55;">
+            <li class="fragment"><b class="tk-blue">Needs scaling:</b> LogReg, SVM, KNN, neural nets.</li>
+            <li class="fragment"><b class="tk-green">Doesn't care:</b> trees, RandomForest, GBM.</li>
+            <li class="fragment"><b class="tk-red">Critical:</b> <code>fit</code> ONLY on train. Then <code>transform</code> test. Otherwise = data leak.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pitfall fragment"><b>Common bug:</b> <code>scaler.fit_transform(X)</code> before splitting. Test set then influences scaler statistics. Always: split → fit on train → transform both.</div>
+    </section>
+
+    <!-- D3+ PROBLEM: scaling -->
+    <section class="slide problem">
+      <h2>Why my KNN crashed</h2>
+      <div class="prob-q">
+        Features: <b>Age</b> (0–80), <b>Fare</b> (0–500), <b>FamilySize</b> (0–10). You train KNN with k=5, get <b>0.62</b>. After scaling features, accuracy jumps to <b>0.81</b>. Explain why in one sentence.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">EXPLANATION</div>
+        <pre class="code"><span class="cmt"># KNN uses Euclidean distance:</span>
+<span class="cmt"># d² = (ΔAge)² + (ΔFare)² + (ΔFam)²</span>
+<span class="cmt">#</span>
+<span class="cmt"># Fare's range (500) dominates the sum.</span>
+<span class="cmt"># Effectively only Fare decides neighbors. Age + FamilySize ignored.</span>
+
+scaler = StandardScaler()
+X_tr_s = scaler.fit_transform(X_tr)
+X_te_s = scaler.transform(X_te)
+KNeighborsClassifier(<span class="num">5</span>).fit(X_tr_s, y_tr).score(X_te_s, y_te)</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Same problem with neural nets, gradient descent, SVM. Whenever distance / dot products appear → scale or regret.
+      </div>
+    </section>
+
+    <!-- 48. Metrics — accuracy -->
+    <section class="slide">
+      <h2>Metric 1 — accuracy</h2>
+      <p style="margin-top: 8px;">$$\text{accuracy} = \frac{\text{correct}}{\text{total}}$$</p>
+      <pre class="code">accuracy_score(y_test, y_pred)
+<span class="cmt"># 0.82  → 82% correct</span></pre>
+      <ul>
+        <li class="fragment">Easy. Intuitive.</li>
+        <li class="fragment class="tk-red""><b class="tk-red">Lies when classes are imbalanced.</b></li>
+        <li class="fragment">99% of emails not spam. Predict "not spam" always → 99% accuracy, useless model.</li>
+      </ul>
+      <p class="callout fragment">Accuracy is fine when classes are balanced (Titanic-ish). Else demand more.</p>
+    </section>
+
+    <!-- D3-P8: accuracy trap -->
+    <section class="slide problem">
+      <h2>The 99% trap</h2>
+      <div class="prob-q">
+        Disease test: 990 healthy, 10 sick. Model predicts "healthy" for everyone. <b>Accuracy = 99%.</b> Why is this model useless? What metric exposes it?
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Accuracy weights all correct predictions equally. It doesn't care which class you got right.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">y_pred = np.zeros(<span class="num">1000</span>)               <span class="cmt"># predict all healthy</span>
+
+accuracy_score(y_true, y_pred)     <span class="cmt"># 0.99 — fake win</span>
+
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> recall_score, f1_score
+recall_score(y_true, y_pred)       <span class="cmt"># 0.0 — caught no sick people!</span>
+f1_score(y_true, y_pred)           <span class="cmt"># 0.0</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> For imbalanced classes — recall on the rare class is what matters. A doctor who diagnoses "you're fine" 1000 times in a row will be 99% accurate and 0% useful.
+      </div>
+    </section>
+
+    <!-- 49. Metric 2 — confusion matrix -->
+    <section class="slide">
+      <h2>Metric 2 — confusion matrix</h2>
+      <div class="split-2">
+        <div>
+          <div class="cm-grid">
+            <div></div>
+            <div class="cm-axis">pred 0</div>
+            <div class="cm-axis">pred 1</div>
+            <div class="cm-axis">actual 0</div>
+            <div class="cm-cell cm-tn">TN<br/><span style="font-size:14px;">90</span></div>
+            <div class="cm-cell cm-fp">FP<br/><span style="font-size:14px;">10</span></div>
+            <div class="cm-axis">actual 1</div>
+            <div class="cm-cell cm-fn">FN<br/><span style="font-size:14px;">15</span></div>
+            <div class="cm-cell cm-tp">TP<br/><span style="font-size:14px;">85</span></div>
+          </div>
+        </div>
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> confusion_matrix
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=<span class="kw">True</span>, fmt=<span class="str">"d"</span>)</pre>
+          <ul style="margin-top: 12px;">
+            <li class="fragment"><b class="tk-green">TP / TN</b> — got it right.</li>
+            <li class="fragment"><b class="tk-red">FP</b> — said yes, was no (false alarm).</li>
+            <li class="fragment"><b class="tk-red">FN</b> — said no, was yes (missed).</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout fragment"><b>Look where you fail.</b> Diagonal = correct. Off-diagonal = where to fix.</p>
+    </section>
+
+    <!-- 49b: threshold slider — INTERACTIVE -->
+    <section class="slide">
+      <h2>Threshold slider — precision vs recall</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:6px;">Slide threshold left/right. Watch confusion matrix shift live.</p>
+      <div class="sk-stage" style="margin-top:6px; grid-template-columns: 1fr 250px;">
+        <div>
+          <svg id="thr-svg" viewBox="0 0 400 180" preserveAspectRatio="none" style="width:100%;height:200px;background:#fff;border:2px solid var(--ink);"></svg>
+          <div class="sk-slider" style="margin-top: 6px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span>threshold</span>
+              <span id="thr-val" style="font-weight:800;">0.50</span>
+            </div>
+            <input id="thr-slider" type="range" min="0" max="100" value="50" />
+            <div style="display:flex;justify-content:space-between;color:var(--ink-soft);font-size:11px;">
+              <span>strict ↓recall</span>
+              <span>lenient ↓prec</span>
+            </div>
+          </div>
+        </div>
+        <div class="sk-controls" style="gap:6px;">
+          <div style="font-weight:800;font-size:12px;">Confusion matrix</div>
+          <div class="cm-mini" style="grid-template-columns:50px 50px;grid-template-rows:50px 50px;">
+            <div class="cm-tn" id="thr-tn">90</div>
+            <div class="cm-fp" id="thr-fp">10</div>
+            <div class="cm-fn" id="thr-fn">15</div>
+            <div class="cm-tp" id="thr-tp">85</div>
+          </div>
+          <div class="sk-stat" style="font-size:12px;padding:6px 10px;">
+            precision: <b id="thr-prec">0.89</b><br/>
+            recall:    <b id="thr-rec">0.85</b><br/>
+            F1:        <b id="thr-f1">0.87</b>
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top:8px;font-size:13px;">Spam: high precision. Cancer screen: high recall. Can't get both — slider exposes tradeoff.</p>
+    </section>
+
+    <!-- D3-P9: confusion matrix reading -->
+    <section class="slide problem">
+      <h2>Diagnose from the matrix</h2>
+      <div class="prob-q">
+        Spam classifier. Confusion matrix:
+        <pre style="font-family:var(--font-mono);font-size:13px;background:#fff;border:1px solid var(--ink);padding:6px 10px;margin:8px 0;">              pred ham  pred spam
+actual ham      900        50
+actual spam      80       120</pre>
+        Compute: <b>precision</b>, <b>recall</b> for spam class. Which kind of error matters more, and why might users disagree?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">TP = <span class="num">120</span>; FP = <span class="num">50</span>; FN = <span class="num">80</span>; TN = <span class="num">900</span>
+
+precision = TP / (TP + FP) = <span class="num">120</span>/<span class="num">170</span> = <span class="num">0.71</span>
+recall    = TP / (TP + FN) = <span class="num">120</span>/<span class="num">200</span> = <span class="num">0.60</span>
+F1        = <span class="num">2</span>·P·R / (P+R)  = <span class="num">0.65</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> FP = real email in spam folder (loses your job). FN = spam in inbox (annoying). Different users want different tradeoffs. Always ask: <b>which error costs more?</b>
+      </div>
+    </section>
+
+    <!-- 50. Metric 3 — precision/recall/F1 -->
+    <section class="slide">
+      <h2>Metric 3 — precision, recall, F1</h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size: 15px; margin-bottom: 6px;">$$\text{precision} = \frac{TP}{TP+FP}$$</p>
+          <p style="font-size: 13px;color:var(--ink-soft);">of what you flagged, how much was real.</p>
+          <p style="font-size: 15px; margin: 10px 0 6px;">$$\text{recall} = \frac{TP}{TP+FN}$$</p>
+          <p style="font-size: 13px;color:var(--ink-soft);">of real positives, how many you caught.</p>
+          <p style="font-size: 15px; margin: 10px 0 6px;">$$F_1 = 2 \cdot \frac{P \cdot R}{P + R}$$</p>
+          <p style="font-size: 13px;color:var(--ink-soft);">harmonic mean. Balanced single number.</p>
+        </div>
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> classification_report
+
+<span class="kw">print</span>(classification_report(y_test, y_pred))
+
+<span class="cmt">#               precision  recall  f1   support</span>
+<span class="cmt">#       0          0.86     0.90  0.88     100</span>
+<span class="cmt">#       1          0.89     0.85  0.87     100</span>
+<span class="cmt">#</span>
+<span class="cmt">#  accuracy                       0.88     200</span></pre>
+        </div>
+      </div>
+      <p class="callout fragment">When in doubt, report F1. Single number. Tells you both sides.</p>
+    </section>
+
+    <!-- D3-P10: F1 vs accuracy -->
+    <section class="slide problem">
+      <h2>Two models, which wins?</h2>
+      <div class="prob-q">
+        Same test set. Model A: accuracy <b>0.88</b>, F1 <b>0.45</b>. Model B: accuracy <b>0.82</b>, F1 <b>0.71</b>. Which would you ship for fraud detection? For predicting customer satisfaction (mostly happy)?
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> High accuracy + low F1 = model trivially predicts majority class. F1 reflects minority-class performance.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">DECISION</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 14px; line-height: 1.55;">
+          <li><b>Fraud (imbalanced):</b> ship <b>Model B</b>. Higher F1 = better at catching real fraud, even with lower accuracy.</li>
+          <li><b>Satisfaction (balanced-ish):</b> Model A is fine; accuracy is honest here.</li>
+        </ul>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Metric depends on cost of errors and class balance. Pick the metric <i>before</i> you train, not after.
+      </div>
+    </section>
+
+    <!-- 51. Cross-validation teaser -->
+    <section class="slide">
+      <h2>Cross-validation — trust the number</h2>
+      <p style="font-size:14px;">One train/test split is noisy. Different split → different score. K-fold CV averages over k splits.</p>
+      <div style="display:flex;gap:8px;margin: 12px 0;">
+        <div style="flex:1; height: 28px; background:#ffd6cc; border:2px solid var(--ink); display:grid; place-items:center; font-size:12px; font-weight:700;">test</div>
+        <div style="flex:4; height: 28px; background:#d6f5dd; border:2px solid var(--ink); display:grid; place-items:center; font-size:12px;font-weight:700;">train · train · train · train</div>
+      </div>
+      <div style="display:flex;gap:8px;margin: 8px 0;">
+        <div style="flex:1; height: 28px; background:#d6f5dd; border:2px solid var(--ink); display:grid; place-items:center; font-size:12px;font-weight:700;">train</div>
+        <div style="flex:1; height: 28px; background:#ffd6cc; border:2px solid var(--ink); display:grid; place-items:center; font-size:12px;font-weight:700;">test</div>
+        <div style="flex:3; height: 28px; background:#d6f5dd; border:2px solid var(--ink); display:grid; place-items:center; font-size:12px;font-weight:700;">train · train · train</div>
+      </div>
+      <div style="font-size:11px; color:var(--ink-soft); margin-bottom: 10px;">… 5 folds total, each row used as test exactly once.</div>
+      <pre class="code"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score
+
+scores = cross_val_score(model, X, y, cv=<span class="num">5</span>, scoring=<span class="str">"f1"</span>)
+scores.mean(), scores.std()</pre>
+      <p class="callout fragment">5 folds = 5 numbers. Mean ± std = honest estimate.</p>
+    </section>
+
+    <!-- D3-P11: CV problem -->
+    <section class="slide problem">
+      <h2>Can I trust 0.85?</h2>
+      <div class="prob-q">
+        One <code>train_test_split</code> gives accuracy <b>0.85</b>. Your friend claims <b>0.91</b> using a different <code>random_state</code>. Who is right? How does 5-fold CV settle the argument?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">scores = cross_val_score(model, X, y, cv=<span class="num">5</span>, scoring=<span class="str">"accuracy"</span>)
+
+scores.mean(), scores.std()
+<span class="cmt"># e.g. 0.87 ± 0.03</span>
+<span class="cmt"># Both single-split numbers (0.85, 0.91) are inside ± 1 std. Noise.</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Single split = lottery ticket. CV mean ± std = the real number. If two models differ by less than the std, the gap is probably noise.
+      </div>
+    </section>
+
+    <!-- KAGGLE: Iris full pipeline -->
+    <section class="slide problem">
+      <h2>Kaggle — Iris classifier</h2>
+      <div class="prob-q">
+        Train a model on Iris. Print accuracy. <b>Basic commands only:</b> <code>load_iris</code>, <code>train_test_split</code>, <code>fit</code>, <code>predict</code>, <code>accuracy_score</code>.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code"><span class="kw">from</span> sklearn.datasets         <span class="kw">import</span> load_iris
+<span class="kw">from</span> sklearn.model_selection  <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble         <span class="kw">import</span> RandomForestClassifier
+<span class="kw">from</span> sklearn.metrics          <span class="kw">import</span> accuracy_score
+
+X, y = load_iris(return_X_y=<span class="kw">True</span>)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=<span class="num">42</span>)
+
+model = RandomForestClassifier(random_state=<span class="num">42</span>)
+model.fit(X_tr, y_tr)
+y_pred = model.predict(X_te)
+
+<span class="kw">print</span>(accuracy_score(y_te, y_pred))   <span class="cmt"># ~0.97</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> 10 lines. No fancy tricks. This is the working core of every Stage 2 classification problem.
+      </div>
+    </section>
+
+    <!-- KAGGLE: Penguins classifier -->
+    <section class="slide problem">
+      <h2>Kaggle — Penguins species</h2>
+      <div class="prob-q">
+        Predict <b>species</b> (3 classes) of penguins from body measurements. Use seaborn's Penguins. Drop NaN. Print accuracy.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code"><span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.model_selection  <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble         <span class="kw">import</span> RandomForestClassifier
+<span class="kw">from</span> sklearn.metrics          <span class="kw">import</span> classification_report
+
+df = sns.load_dataset(<span class="str">"penguins"</span>).dropna()
+
+X = pd.get_dummies(df.drop(columns=[<span class="str">"species"</span>]))
+y = df[<span class="str">"species"</span>]
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=<span class="num">42</span>)
+model = RandomForestClassifier(random_state=<span class="num">42</span>).fit(X_tr, y_tr)
+<span class="kw">print</span>(classification_report(y_te, model.predict(X_te)))
+<span class="cmt"># accuracy ~0.99</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> 3-class problem. Same code. <code>classification_report</code> shows precision/recall <i>per species</i>.
+      </div>
+    </section>
+
+    <!-- KAGGLE: Spaceship Titanic baseline -->
+    <section class="slide problem tighter">
+      <h2>Kaggle — Spaceship Titanic</h2>
+      <div class="prob-q" style="padding:6px 12px;margin:4px 0 6px;font-size:13px;">
+        Predict <b>Transported</b> (T/F). 8,693 rows. Same shape as Titanic. Build baseline.
+      </div>
+      <div class="prob-sol fragment" style="padding:8px 12px;margin:4px 0;">
+        <div class="label">SOLUTION</div>
+        <pre class="code" style="font-size:11.5px;line-height:1.35;"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble        <span class="kw">import</span> RandomForestClassifier
+<span class="kw">from</span> sklearn.metrics         <span class="kw">import</span> accuracy_score
+
+df = pd.read_csv(<span class="str">"spaceship_titanic.csv"</span>)
+df = df.drop(columns=[<span class="str">"PassengerId"</span>, <span class="str">"Name"</span>, <span class="str">"Cabin"</span>])
+
+<span class="cmt"># numeric NaN → median, others → "Unknown"</span>
+<span class="kw">for</span> col <span class="kw">in</span> df.columns:
+    <span class="kw">if</span> df[col].dtype == <span class="str">"object"</span> <span class="kw">or</span> df[col].dtype == <span class="str">"bool"</span>:
+        df[col] = df[col].fillna(<span class="str">"Unknown"</span>)
+    <span class="kw">else</span>:
+        df[col] = df[col].fillna(df[col].median())
+
+X = pd.get_dummies(df.drop(columns=[<span class="str">"Transported"</span>]))
+y = df[<span class="str">"Transported"</span>].astype(int)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, stratify=y, random_state=<span class="num">42</span>)
+model = RandomForestClassifier(n_estimators=<span class="num">200</span>, random_state=<span class="num">42</span>).fit(X_tr, y_tr)
+<span class="kw">print</span>(accuracy_score(y_te, model.predict(X_te)))   <span class="cmt"># ~0.79</span></pre>
+      </div>
+      <div class="prob-twist fragment" style="padding:6px 12px;margin:6px 0 0;font-size:12.5px;">
+        <b>Critical:</b> 0.79 = Stage 2 ready. Engineer 1-2 features → 0.81. Already beats half of leaderboard.
+      </div>
+    </section>
+
+    <!-- KAGGLE: House Prices regression -->
+    <section class="slide problem tighter">
+      <h2>Kaggle — House Prices regression</h2>
+      <div class="prob-q" style="padding:6px 12px;margin:4px 0 6px;font-size:13px;">
+        Predict <b>SalePrice</b> ($). 1460 houses · 80 features · many NaN. Numeric-only baseline.
+      </div>
+      <div class="prob-sol fragment" style="padding:8px 12px;margin:4px 0;">
+        <div class="label">SOLUTION</div>
+        <pre class="code" style="font-size:11.5px;line-height:1.35;"><span class="kw">import</span> pandas <span class="kw">as</span> pd, numpy <span class="kw">as</span> np
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.ensemble        <span class="kw">import</span> RandomForestRegressor
+<span class="kw">from</span> sklearn.metrics         <span class="kw">import</span> mean_squared_error, r2_score
+
+df = pd.read_csv(<span class="str">"train.csv"</span>)
+
+<span class="cmt"># numeric columns only for the baseline</span>
+X = df.select_dtypes(include=<span class="str">"number"</span>).drop(columns=[<span class="str">"SalePrice"</span>, <span class="str">"Id"</span>])
+X = X.fillna(X.median())
+y = df[<span class="str">"SalePrice"</span>]
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=<span class="num">42</span>)
+model = RandomForestRegressor(n_estimators=<span class="num">200</span>, random_state=<span class="num">42</span>).fit(X_tr, y_tr)
+y_pred = model.predict(X_te)
+
+<span class="kw">print</span>(<span class="str">"RMSE:"</span>, np.sqrt(mean_squared_error(y_te, y_pred)))
+<span class="kw">print</span>(<span class="str">"R^2: "</span>, r2_score(y_te, y_pred))
+<span class="cmt"># RMSE ~28k · R² ~0.87</span></pre>
+      </div>
+      <div class="prob-twist fragment" style="padding:6px 12px;margin:6px 0 0;font-size:12.5px;">
+        <b>Critical:</b> Same skeleton. Regression metric instead. Numeric-only baseline explains 87% variance.
+      </div>
+    </section>
+
+    <!-- 52. Overfitting -->
+    <section class="slide">
+      <h2>Overfitting — the boss enemy</h2>
+      <ul style="font-size:16px;line-height:1.5;">
+        <li class="fragment">Train 99%. Test 70%. → <b class="tk-red">Overfitting.</b></li>
+        <li class="fragment">Model memorized noise instead of pattern.</li>
+      </ul>
+      <div style="margin-top:14px;font-size:15px;font-weight:700;">Fixes:</div>
+      <div class="split-2" style="margin-top:6px;">
+        <ul style="font-size:14px;line-height:1.5;">
+          <li class="fragment">More data.</li>
+          <li class="fragment">Simpler model (lower <code>max_depth</code>).</li>
+        </ul>
+        <ul style="font-size:14px;line-height:1.5;">
+          <li class="fragment">Regularization (LogReg <code>C</code> smaller).</li>
+          <li class="fragment">Cross-validate to detect.</li>
+        </ul>
+      </div>
+      <p class="callout fragment" style="margin-top:14px;">Big train/test gap = warning siren.</p>
+    </section>
+
+    <!-- D3-P12: overfitting diagnosis -->
+    <section class="slide problem">
+      <h2>Diagnose: overfit, underfit, or fine?</h2>
+      <div class="prob-q">
+        Three scenarios. Decide each:
+        <ul style="margin: 8px 0 0 20px;">
+          <li>① train 0.99, test 0.62</li>
+          <li>② train 0.71, test 0.69</li>
+          <li>③ train 0.62, test 0.61</li>
+        </ul>
+        For each, recommend one concrete fix.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWERS</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.55;">
+          <li>① <b>Overfit.</b> Big gap. Fix: reduce <code>max_depth</code>, add data, regularize.</li>
+          <li>② <b>Fine.</b> Small gap, decent score. Maybe tune to push higher.</li>
+          <li>③ <b>Underfit.</b> Even train is low → model too simple. Fix: stronger model, better features.</li>
+        </ul>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Always print <i>both</i> train and test scores. The number you see (test) only tells half the story.
+      </div>
+    </section>
+
+    <!-- D3-P13: regression sibling -->
+    <section class="slide problem">
+      <h2>What if target is a number?</h2>
+      <div class="prob-q">
+        Stage 2 might hand you a regression problem (predict house price, age, score). What changes in your pipeline? Name the 3 swaps.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SWAPS</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.55;">
+          <li>Model: <code>RandomForestClassifier</code> → <code>RandomForestRegressor</code> · <code>LogisticRegression</code> → <code>LinearRegression</code> / <code>Ridge</code>.</li>
+          <li>Metric: accuracy/F1 → <code>mean_squared_error</code>, <code>r2_score</code>, <code>mean_absolute_error</code>.</li>
+          <li><code>stratify=y</code> doesn't apply (no classes).</li>
+        </ul>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Same <code>fit / predict / score</code> mantra. sklearn API consistent — only the imports and the metric change.
+      </div>
+    </section>
+
+    <!-- D3-P14: multiclass -->
+    <section class="slide problem">
+      <h2>Multiclass — what's different?</h2>
+      <div class="prob-q">
+        Target has <b>10 classes</b> (digit recognition 0–9). Does <code>RandomForestClassifier</code> still work? What about <code>LogisticRegression</code>? Does <code>classification_report</code> need anything new?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWERS</div>
+        <ul style="margin: 6px 0 0 18px; font-size: 13.5px; line-height: 1.55;">
+          <li>RF: yes, unchanged.</li>
+          <li>LogReg: yes — sklearn auto-handles via one-vs-rest.</li>
+          <li>Confusion matrix becomes <b>10 × 10</b>. <code>classification_report</code> shows precision/recall/F1 <i>per class</i>.</li>
+          <li>F1 reported as <code>macro</code> (average) or <code>weighted</code> (by support). Pick one explicitly: <code>f1_score(y_te, y_pred, average="macro")</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 52b: bias-variance triple -->
+    <section class="slide">
+      <h2>Under / Just-right / Overfit</h2>
+      <p style="font-size:14px;color:var(--ink-soft);">Same data. Three different model complexities. Spot which one will fail on new points.</p>
+      <div class="bv-grid" style="margin-top:12px;">
+        <div class="bv-card">
+          <h4 style="color:var(--accent-red);">Underfit</h4>
+          <svg viewBox="0 0 200 130">
+            <line x1="10" y1="120" x2="190" y2="120" stroke="#111" stroke-width="1"/>
+            <line x1="10" y1="10" x2="10" y2="120" stroke="#111" stroke-width="1"/>
+            <line x1="10" y1="80" x2="190" y2="50" stroke="#1d3fb6" stroke-width="3"/>
+            <circle cx="30" cy="100" r="4" fill="#d62828"/><circle cx="55" cy="85" r="4" fill="#d62828"/>
+            <circle cx="80" cy="75" r="4" fill="#d62828"/><circle cx="105" cy="55" r="4" fill="#d62828"/>
+            <circle cx="130" cy="80" r="4" fill="#d62828"/><circle cx="155" cy="40" r="4" fill="#d62828"/>
+            <circle cx="180" cy="20" r="4" fill="#d62828"/>
+          </svg>
+          <div class="verdict">Line too simple. Misses pattern.</div>
+        </div>
+        <div class="bv-card">
+          <h4 style="color:var(--accent-green);">Just right</h4>
+          <svg viewBox="0 0 200 130">
+            <line x1="10" y1="120" x2="190" y2="120" stroke="#111" stroke-width="1"/>
+            <line x1="10" y1="10" x2="10" y2="120" stroke="#111" stroke-width="1"/>
+            <path d="M10 110 Q 60 50 105 70 T 190 20" stroke="#2f9e44" stroke-width="3" fill="none"/>
+            <circle cx="30" cy="100" r="4" fill="#d62828"/><circle cx="55" cy="85" r="4" fill="#d62828"/>
+            <circle cx="80" cy="75" r="4" fill="#d62828"/><circle cx="105" cy="55" r="4" fill="#d62828"/>
+            <circle cx="130" cy="80" r="4" fill="#d62828"/><circle cx="155" cy="40" r="4" fill="#d62828"/>
+            <circle cx="180" cy="20" r="4" fill="#d62828"/>
+          </svg>
+          <div class="verdict">Captures shape, ignores noise.</div>
+        </div>
+        <div class="bv-card">
+          <h4 style="color:var(--accent-red);">Overfit</h4>
+          <svg viewBox="0 0 200 130">
+            <line x1="10" y1="120" x2="190" y2="120" stroke="#111" stroke-width="1"/>
+            <line x1="10" y1="10" x2="10" y2="120" stroke="#111" stroke-width="1"/>
+            <path d="M10 110 L30 100 L40 60 L55 85 L70 40 L80 75 L95 30 L105 55 L120 90 L130 80 L145 25 L155 40 L170 60 L180 20" stroke="#7048e8" stroke-width="2.5" fill="none"/>
+            <circle cx="30" cy="100" r="4" fill="#d62828"/><circle cx="55" cy="85" r="4" fill="#d62828"/>
+            <circle cx="80" cy="75" r="4" fill="#d62828"/><circle cx="105" cy="55" r="4" fill="#d62828"/>
+            <circle cx="130" cy="80" r="4" fill="#d62828"/><circle cx="155" cy="40" r="4" fill="#d62828"/>
+            <circle cx="180" cy="20" r="4" fill="#d62828"/>
+          </svg>
+          <div class="verdict">Hits every dot. Memorized noise.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px;font-family:var(--font-mono);font-size:12px;text-align:center;">
+        <div>train <b>0.62</b> · test <b>0.61</b></div>
+        <div>train <b>0.85</b> · test <b>0.83</b></div>
+        <div>train <b>0.99</b> · test <b>0.62</b></div>
+      </div>
+      <p class="callout fragment">Big train/test gap = overfit. Both low = underfit. Both high &amp; close = ship it.</p>
+    </section>
+
+    <!-- 52c: how to fix each -->
+    <section class="slide">
+      <h2>Fix it — bias vs variance</h2>
+      <div class="split-2">
+        <div>
+          <h3 style="font-size:16px; margin-bottom:6px; color:var(--accent-red);">Underfit (high bias)</h3>
+          <ul style="font-size:13.5px;line-height:1.55;">
+            <li class="fragment">Use stronger model (RF > LogReg).</li>
+            <li class="fragment">Add features. Feature engineer.</li>
+            <li class="fragment">Reduce regularization (LogReg <code>C</code> ↑).</li>
+            <li class="fragment">Train longer / increase tree depth.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:16px; margin-bottom:6px; color:var(--accent-purple);">Overfit (high variance)</h3>
+          <ul style="font-size:13.5px;line-height:1.55;">
+            <li class="fragment">Get more data.</li>
+            <li class="fragment">Simpler model (lower <code>max_depth</code>).</li>
+            <li class="fragment">More regularization (LogReg <code>C</code> ↓).</li>
+            <li class="fragment">Remove leaky / redundant features.</li>
+            <li class="fragment">Use cross-validation to detect honestly.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pitfall fragment" style="margin-top:14px;"><b>Trap:</b> if test &gt; train — you almost certainly leaked. Test data crept into training. Re-check your split.</div>
+    </section>
+
+    <!-- 53. Day 3 pitfalls -->
+    <section class="slide">
+      <h2>Day 3 pitfalls</h2>
+      <ul>
+        <li class="fragment"><b class="tk-red">Data leakage</b> — fitting any transformer on test data. Fit on train, apply to test. Never the reverse.</li>
+        <li class="fragment"><b class="tk-red">Strings in X</b> — sklearn errors. Encode first.</li>
+        <li class="fragment"><b class="tk-red">NaN in X</b> — sklearn errors. Fill first.</li>
+        <li class="fragment"><b class="tk-red">No <code>random_state</code></b> — your "improvement" was just luck. Always seed.</li>
+        <li class="fragment"><b class="tk-red">Accuracy on imbalanced</b> — lies. Use F1.</li>
+        <li class="fragment"><b class="tk-red">Score on train</b> — meaningless. Score on test.</li>
+      </ul>
+    </section>
+
+    <!-- 54. Race-day playbook -->
+    <section class="slide">
+      <h2>Race-day playbook</h2>
+      <p>When NOAI Stage 2 problem lands:</p>
+      <ol class="checklist" style="margin-left: 22px;">
+        <li class="fragment"><code>df = pd.read_csv(...)</code> · <code>df.info()</code> · <code>df.describe()</code>.</li>
+        <li class="fragment"><code>df["target"].value_counts()</code> — balanced or not?</li>
+        <li class="fragment"><code>sns.heatmap(df.corr())</code> — what predicts target?</li>
+        <li class="fragment"><code>fillna</code> + drop strings + <code>get_dummies</code>.</li>
+        <li class="fragment"><code>train_test_split(stratify=y, random_state=42)</code>.</li>
+        <li class="fragment">Fit <code>LogisticRegression</code> → baseline number.</li>
+        <li class="fragment">Fit <code>RandomForestClassifier</code> → usually beats baseline.</li>
+        <li class="fragment">Read <code>classification_report</code>. Look at confusion matrix.</li>
+        <li class="fragment">Time left? Try <code>cross_val_score</code>, tune one hyperparameter.</li>
+      </ol>
+      <p class="callout fragment">9 steps. Same every time. Speed comes from repetition.</p>
+    </section>
+
+    <!-- D3-CAPSTONE -->
+    <section class="slide problem tighter">
+      <h2>Day 3 capstone — Titanic end-to-end</h2>
+      <div class="prob-q" style="padding:6px 12px;margin:4px 0 6px;font-size:13px;">
+        Clean → split → fit two models → compare → defend.
+      </div>
+      <div class="prob-sol fragment" style="padding:8px 12px;margin:4px 0;">
+        <div class="label">SOLUTION</div>
+        <pre class="code" style="font-size:11.5px;line-height:1.35;">df = pd.read_csv(<span class="str">"titanic.csv"</span>)
+
+<span class="cmt"># clean</span>
+df[<span class="str">"Age"</span>] = df[<span class="str">"Age"</span>].fillna(df[<span class="str">"Age"</span>].median())
+df = df.drop(columns=[<span class="str">"Name"</span>,<span class="str">"Ticket"</span>,<span class="str">"Cabin"</span>,<span class="str">"PassengerId"</span>])
+df = pd.get_dummies(df, columns=[<span class="str">"Sex"</span>,<span class="str">"Embarked"</span>])
+df = df.dropna()
+
+X, y = df.drop(columns=[<span class="str">"Survived"</span>]), df[<span class="str">"Survived"</span>]
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, stratify=y, random_state=<span class="num">42</span>)
+
+<span class="kw">for</span> name, m <span class="kw">in</span> [(<span class="str">"LogReg"</span>, LogisticRegression(max_iter=<span class="num">1000</span>)),
+                (<span class="str">"RF"</span>, RandomForestClassifier(random_state=<span class="num">42</span>))]:
+    m.fit(X_tr, y_tr)
+    <span class="kw">print</span>(name, f1_score(y_te, m.predict(X_te)))</pre>
+      </div>
+      <div class="prob-twist fragment" style="padding:6px 12px;margin:6px 0 0;font-size:12.5px;">
+        <b>Defend:</b> F1 ± CV std, top 3 features, one CM observation. That wins Stage 2.
+      </div>
+    </section>
+
+    <!-- SKLEARN BONUS PROBLEM 2: class imbalance -->
+    <section class="slide problem">
+      <h2>3 ways to handle imbalance</h2>
+      <div class="prob-q">
+        Dataset: 99% class 0, 1% class 1. Name three concrete strategies (with the sklearn knob) and the tradeoff of each.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">STRATEGIES</div>
+        <ul style="margin: 6px 0 0 18px;font-size:13.5px;line-height:1.6;">
+          <li><b>① class_weight="balanced"</b> — sklearn re-weights loss. Free. First thing to try.</li>
+          <li><b>② Threshold tuning</b> — leave training alone, adjust cut after. Cheap, controllable.</li>
+          <li><b>③ Resampling</b> (<code>imbalanced-learn</code>): SMOTE (oversample minority) or undersample majority. Bigger change, can overfit.</li>
+        </ul>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Don't combine all three blindly. Start with <code>class_weight</code> + threshold. Resample only if those don't reach target recall.
+      </div>
+    </section>
+
+    <!-- 55. Day 3 recap -->
+    <section class="slide">
+      <h2>Day 3 recap</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">Split</b> — never test on training data. <code>stratify=y</code>, <code>random_state=42</code>.</li>
+        <li class="fragment"><b class="tk-green">Fit</b> — <code>LogisticRegression</code> for baseline, <code>RandomForestClassifier</code> for strong default.</li>
+        <li class="fragment"><b class="tk-purple">Score</b> — accuracy when balanced, F1 / confusion matrix when not.</li>
+        <li class="fragment"><b class="tk-pink">Cross-validate</b> — average over folds. Trust the number.</li>
+        <li class="fragment"><b class="tk-red">Watch</b> — overfitting (train ≫ test), leakage, NaN.</li>
+      </ul>
+      <p class="callout fragment">One pattern. Two models. Three metrics. Stage 2 ready.</p>
+    </section>
+
+    <!-- ============================================== -->
+    <!--                    OUTRO                       -->
+    <!-- ============================================== -->
+
+    <!-- GRAND-CAPSTONE -->
+    <section class="slide problem">
+      <h2>Grand capstone — your Stage 2 dry run</h2>
+      <div class="prob-q">
+        You get a new CSV in <b>1 hour</b>. Target column is binary. Write the exact 9-step plan you'll execute. No code — just the steps, in order, with the decision each step answers.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">PLAN — MEMORIZE THIS</div>
+        <ol style="list-style:none; counter-reset:step; padding:0; margin:6px 0 0; font-size: 13px; line-height: 1.7;">
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">①</b><code>head/info/describe</code> · <i>what types, what NaN?</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">②</b><code>value_counts(target)</code> · <i>balanced?</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">③</b><code>heatmap(corr)</code> · <i>which features link to target?</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">④</b>Drop useless cols (IDs, free text) · <i>kill leakage and noise</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">⑤</b><code>fillna</code> by group · <i>context-aware imputation</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">⑥</b><code>get_dummies</code> · <i>strings → numbers</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">⑦</b><code>train_test_split(stratify=y, random_state=42)</code></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">⑧</b>Fit LogReg + RF · <i>baseline + strong default</i></li>
+          <li style="counter-increment:step;"><b style="display:inline-block;width:26px;color:var(--accent-green);">⑨</b><code>classification_report</code> + CV mean ± std · <i>defendable number</i></li>
+        </ol>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> If you can recite this list <i>without looking</i>, you're ready. Stage 2 = speed under pressure. Speed = repetition.
+      </div>
+    </section>
+
+    <!-- SELF-TEST -->
+    <section class="slide problem">
+      <h2>Self-test — 6 quick checks</h2>
+      <div class="prob-q">
+        Close the deck. Answer in your head:
+      </div>
+      <ol style="margin: 10px 0 0 22px; font-size: 14px; line-height: 1.7;">
+        <li class="fragment">What does <code>axis=0</code> collapse?</li>
+        <li class="fragment">Difference between <code>loc</code> and <code>iloc</code> in 5 words?</li>
+        <li class="fragment">Why parentheses around each side of <code>&amp;</code> in pandas filtering?</li>
+        <li class="fragment">What does <code>stratify=y</code> guarantee?</li>
+        <li class="fragment">When does accuracy lie?</li>
+        <li class="fragment">Train 0.95 / Test 0.62 — diagnosis + one fix?</li>
+      </ol>
+      <p class="callout fragment">Got all 6? Stage 2 ready. Missed any? Re-open that section.</p>
+    </section>
+
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<!-- deck-local interactive logic -->
+<script>
+(function(){
+  function el(tag, cls, txt){
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  }
+
+  /* ---- slide 3: day-card selector ---- */
+  const detail = document.getElementById('day-detail');
+  const dayInfo = {
+    '1': `<b>Day 1 — NumPy · 1.5h</b><br/>
+          Arrays, shape, dtype, reshape, slicing, broadcasting, masks, axis-aware reductions. Foundation under pandas + sklearn + PyTorch.`,
+    '2': `<b>Day 2 — Pandas + Seaborn · 1.5h</b><br/>
+          60 min Pandas core (<code>read_csv</code>, <code>loc</code>/<code>iloc</code>, <code>groupby</code>, <code>merge</code>, <code>fillna</code>) → 20 min Seaborn EDA (<code>pairplot</code>, <code>heatmap</code>, <code>boxplot</code>) → 10 min buffer.`,
+    '3': `<b>Day 3 — scikit-learn · 2.0h</b><br/>
+          <code>train_test_split</code>, LogisticRegression + RandomForest, accuracy / confusion matrix / classification_report, plus a cross_val_score teaser.`
+  };
+  if (detail) {
+    document.querySelectorAll('.day-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        detail.classList.remove('empty');
+        detail.innerHTML = dayInfo[card.dataset.day];
+      });
+    });
+  }
+
+  /* ---- slide 11: indexing playground ---- */
+  const grid1d = document.querySelector('[data-row="1d"]');
+  if (grid1d) {
+    for (let i = 0; i < 10; i++) {
+      const c = el('div', 'np-cell', i);
+      c.dataset.idx = i;
+      grid1d.appendChild(c);
+    }
+  }
+  const grid2d = document.querySelector('[data-row="2d"]');
+  if (grid2d) {
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        const cell = el('div', 'np-cell', r*4 + c);
+        cell.dataset.r = r; cell.dataset.c = c;
+        grid2d.appendChild(cell);
+      }
+    }
+  }
+  function clearMarks(grid){
+    grid.querySelectorAll('.np-cell').forEach(c => {
+      c.classList.remove('hi','pick','row','col','dim','mask','maskF');
+    });
+  }
+  document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid1d);
+      document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid1d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach((c, i) => {
+        let on = false;
+        if (pick === '0' && i === 0) on = true;
+        else if (pick === '-1' && i === 9) on = true;
+        else if (pick === '2:5' && i >= 2 && i < 5) on = true;
+        else if (pick === '::2' && i % 2 === 0) on = true;
+        else if (pick === ':') on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-1d');
+      out.innerHTML = `a[${pick}] → <b>[${result.join(', ')}]</b>`;
+    });
+  });
+  document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid2d);
+      document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid2d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach(c => {
+        const r = +c.dataset.r, col = +c.dataset.c;
+        let on = false;
+        if (pick === 'm[1,2]' && r === 1 && col === 2) on = true;
+        else if (pick === 'm[:,0]' && col === 0) on = true;
+        else if (pick === 'm[0,:]' && r === 0) on = true;
+        else if (pick === 'm[1:,1:]' && r >= 1 && col >= 1) on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-2d');
+      out.innerHTML = `${pick} → <b>${result.length === 1 ? result[0] : '[' + result.join(', ') + ']'}</b>`;
+    });
+  });
+
+  /* ---- slide 14: axis aggregation viz ---- */
+  const aggGrid = document.getElementById('agg-grid');
+  const aggData = [[1,2,3],[4,5,6]];
+  if (aggGrid) {
+    aggData.forEach((row, r) => {
+      row.forEach((v, c) => {
+        const cell = el('div', 'np-cell', v);
+        cell.dataset.r = r; cell.dataset.c = c;
+        aggGrid.appendChild(cell);
+      });
+    });
+  }
+  const aggRowSums = document.getElementById('agg-rowsums');
+  const aggColSums = document.getElementById('agg-colsums');
+  function clearAggSums() {
+    if (aggRowSums) aggRowSums.innerHTML = '';
+    if (aggColSums) aggColSums.innerHTML = '';
+  }
+  function showColSums() {
+    if (!aggColSums) return;
+    const sums = [0,0,0];
+    aggData.forEach(row => row.forEach((v,c) => sums[c]+=v));
+    sums.forEach((s) => {
+      const cell = el('div', 'agg-sum-cell', '↓'+s);
+      aggColSums.appendChild(cell);
+    });
+  }
+  function showRowSums() {
+    if (!aggRowSums) return;
+    const sums = aggData.map(row => row.reduce((a,b)=>a+b,0));
+    sums.forEach((s) => {
+      const cell = el('div', 'agg-sum-cell', '→'+s);
+      aggRowSums.appendChild(cell);
+    });
+  }
+  document.querySelectorAll('.agg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const axis = btn.dataset.axis;
+      const cells = aggGrid.querySelectorAll('.np-cell');
+      cells.forEach(c => c.classList.remove('hi','row','col','pick'));
+      clearAggSums();
+      document.querySelectorAll('.agg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const out = document.getElementById('agg-out');
+      if (axis === 'all') {
+        cells.forEach(c => c.classList.add('hi'));
+        out.innerHTML = 'a.sum() → <b>21</b> &nbsp;<span style="color:#888">(all collapse)</span>';
+      } else if (axis === '0') {
+        cells.forEach(c => c.classList.add('col'));
+        showColSums();
+        out.innerHTML = 'a.sum(axis=0) → <b>[5, 7, 9]</b> &nbsp;<span style="color:#888">(rows collapse ↓)</span>';
+      } else if (axis === '1') {
+        cells.forEach(c => c.classList.add('row'));
+        showRowSums();
+        out.innerHTML = 'a.sum(axis=1) → <b>[6, 15]</b> &nbsp;<span style="color:#888">(cols collapse →)</span>';
+      }
+    });
+  });
+  /* ---- DAY 3 — decision boundary explorer ---- */
+  const dbSvg = document.getElementById('db-svg');
+  if (dbSvg) {
+    const W = 400, H = 320;
+    // synthetic 2-class data (slight curve)
+    const rng = (() => { let s = 7; return () => { s = (s*9301+49297) % 233280; return s/233280; }; })();
+    const pts = [];
+    for (let i = 0; i < 30; i++) {
+      const x = 60 + rng()*120, y = 60 + rng()*200;
+      pts.push({x, y, cls: 'A'});
+    }
+    for (let i = 0; i < 30; i++) {
+      const x = 220 + rng()*120, y = 60 + rng()*200;
+      pts.push({x, y, cls: 'B'});
+    }
+    // 8 outliers crossing the line — exposes LogReg weakness
+    for (let i = 0; i < 5; i++) {
+      pts.push({x: 250 + rng()*40, y: 80 + rng()*40, cls: 'A'});
+      pts.push({x: 130 + rng()*40, y: 220 + rng()*40, cls: 'B'});
+    }
+
+    const explainText = {
+      logreg: "<b>LogReg</b> — straight line. Splits plane into 2 half-planes. Fast, interpretable. Fails on curves.",
+      rf:     "<b>RandomForest</b> — many trees vote. Region boundary is jagged blocks. Captures complex shape, can overfit.",
+      knn:    "<b>KNN</b> — \"vote of nearest 5 points\". Boundary follows local density. Smooth-ish, slow at predict time."
+    };
+
+    function classify(model, x, y) {
+      if (model === 'logreg') {
+        return x < 200 ? 'A' : 'B';                                  // linear vertical line
+      }
+      if (model === 'rf') {
+        // axis-aligned rectangles
+        if (x < 180) return 'A';
+        if (x > 220) return 'B';
+        if (y < 150) return (x < 200 ? 'A' : 'B');
+        return (x < 210 ? 'A' : 'B');
+      }
+      // knn-ish: nearest 5
+      const sorted = pts
+        .map(p => ({d: (p.x-x)**2 + (p.y-y)**2, cls: p.cls}))
+        .sort((a,b) => a.d-b.d).slice(0, 5);
+      const a = sorted.filter(p => p.cls === 'A').length;
+      return a >= 3 ? 'A' : 'B';
+    }
+
+    function render(model) {
+      let svg = '';
+      // background shading by classify on coarse grid
+      const STEP = 16;
+      for (let x = 0; x < W; x += STEP) {
+        for (let y = 0; y < H; y += STEP) {
+          const c = classify(model, x + STEP/2, y + STEP/2);
+          const fill = c === 'A' ? 'rgba(184,238,240,0.55)' : 'rgba(255,214,204,0.55)';
+          svg += `<rect x="${x}" y="${y}" width="${STEP}" height="${STEP}" fill="${fill}"/>`;
+        }
+      }
+      // points
+      pts.forEach(p => {
+        const fill = p.cls === 'A' ? '#1d3fb6' : '#d62828';
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${fill}" stroke="#111" stroke-width="1"/>`;
+      });
+      dbSvg.innerHTML = svg;
+    }
+    render('logreg');
+
+    document.querySelectorAll('[data-toggle="db-model"] button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-toggle="db-model"] button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const m = btn.dataset.model;
+        render(m);
+        document.getElementById('db-explain').innerHTML = explainText[m];
+      });
+    });
+  }
+
+  /* ---- DAY 3 — KNN interactive ---- */
+  const knnSvg = document.getElementById('knn-svg');
+  if (knnSvg) {
+    const knnPts = [
+      {x: 55, y: 60, c: 'A'},  {x: 75, y: 110, c: 'A'}, {x: 110, y: 70, c: 'A'},
+      {x: 160, y: 120, c: 'A'},{x: 95, y: 150, c: 'A'},
+      {x: 220, y: 150, c: 'B'},{x: 250, y: 110, c: 'B'},{x: 235, y: 180, c: 'B'},
+      {x: 190, y: 90, c: 'B'}, {x: 270, y: 60, c: 'B'},{x: 200, y: 200, c: 'B'},
+    ];
+    let knnQ = {x: 160, y: 140};
+    let knnK = 5;
+    function knnRender() {
+      const sorted = knnPts.map(p => ({...p, d: Math.hypot(p.x - knnQ.x, p.y - knnQ.y)}))
+        .sort((a, b) => a.d - b.d);
+      const top = sorted.slice(0, knnK);
+      const votesA = top.filter(p => p.c === 'A').length;
+      const pred = votesA > knnK / 2 ? 'A' : 'B';
+      const predColor = pred === 'A' ? '#1d3fb6' : '#d62828';
+      let svg = '';
+      // lines to top-k
+      top.forEach(p => {
+        svg += `<line x1="${knnQ.x}" y1="${knnQ.y}" x2="${p.x}" y2="${p.y}" stroke="#7048e8" stroke-width="2"/>`;
+      });
+      // all points
+      knnPts.forEach(p => {
+        const inTop = top.includes(p);
+        const fill = p.c === 'A' ? '#1d3fb6' : '#d62828';
+        const stroke = inTop ? '#7048e8' : '#111';
+        const sw = inTop ? 3 : 1;
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      });
+      // query
+      svg += `<circle cx="${knnQ.x}" cy="${knnQ.y}" r="11" fill="${predColor}" fill-opacity="0.3" stroke="${predColor}" stroke-width="3" stroke-dasharray="4 3"/>`;
+      svg += `<text x="${knnQ.x}" y="${knnQ.y + 4}" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="${predColor}">?</text>`;
+      knnSvg.innerHTML = svg;
+      document.getElementById('knn-out').innerHTML =
+        `k=${knnK} · A=${votesA} · B=${knnK - votesA} → predict <b style="color:${predColor}">${pred}</b>`;
+    }
+    knnSvg.addEventListener('click', e => {
+      const rect = knnSvg.getBoundingClientRect();
+      const vbW = 320, vbH = 240;
+      knnQ.x = ((e.clientX - rect.left) / rect.width) * vbW;
+      knnQ.y = ((e.clientY - rect.top) / rect.height) * vbH;
+      knnRender();
+    });
+    const knnSlider = document.getElementById('knn-slider');
+    knnSlider.addEventListener('input', () => {
+      knnK = +knnSlider.value;
+      document.getElementById('knn-k').textContent = knnK;
+      knnRender();
+    });
+    knnRender();
+  }
+
+  /* ---- DAY 3 — threshold slider ---- */
+  const thrSvg = document.getElementById('thr-svg');
+  if (thrSvg) {
+    // synthetic predicted probabilities + true labels
+    const samples = [];
+    for (let i = 0; i < 50; i++) {
+      // class 0 — mostly low prob
+      samples.push({p: Math.max(0, Math.min(1, 0.3 + (Math.random()-0.5)*0.6)), y: 0});
+    }
+    for (let i = 0; i < 50; i++) {
+      samples.push({p: Math.max(0, Math.min(1, 0.7 + (Math.random()-0.5)*0.6)), y: 1});
+    }
+    function drawHist(thr) {
+      const W = 400, H = 220;
+      const bins = 20;
+      const cnt0 = new Array(bins).fill(0);
+      const cnt1 = new Array(bins).fill(0);
+      samples.forEach(s => {
+        const b = Math.min(bins-1, Math.floor(s.p * bins));
+        if (s.y === 0) cnt0[b]++; else cnt1[b]++;
+      });
+      const maxC = Math.max(...cnt0, ...cnt1);
+      const bw = W / bins;
+      let svg = '';
+      // axis
+      svg += `<line x1="0" y1="${H-20}" x2="${W}" y2="${H-20}" stroke="#111" stroke-width="1"/>`;
+      // bars
+      for (let i = 0; i < bins; i++) {
+        const h0 = (cnt0[i] / maxC) * (H - 30);
+        const h1 = (cnt1[i] / maxC) * (H - 30);
+        svg += `<rect x="${i*bw}" y="${H-20-h0}" width="${bw-1}" height="${h0}" fill="#1d3fb6" opacity="0.55"/>`;
+        svg += `<rect x="${i*bw}" y="${H-20-h1}" width="${bw-1}" height="${h1}" fill="#d62828" opacity="0.55"/>`;
+      }
+      // threshold line
+      const tx = thr * W;
+      svg += `<line x1="${tx}" y1="0" x2="${tx}" y2="${H-20}" stroke="#7048e8" stroke-width="3" stroke-dasharray="6 4"/>`;
+      // flip text to left side when slider near right edge so number stays visible
+      const textX = tx > W - 80 ? tx - 6 : tx + 6;
+      const anchor = tx > W - 80 ? 'end' : 'start';
+      svg += `<text x="${textX}" y="14" text-anchor="${anchor}" font-family="JetBrains Mono" font-size="12" font-weight="800" fill="#7048e8">thr=${thr.toFixed(2)}</text>`;
+      // legend
+      svg += `<rect x="${W-110}" y="${H-18}" width="10" height="10" fill="#1d3fb6" opacity="0.55"/>`;
+      svg += `<text x="${W-95}" y="${H-9}" font-family="JetBrains Mono" font-size="11">class 0</text>`;
+      svg += `<rect x="${W-50}" y="${H-18}" width="10" height="10" fill="#d62828" opacity="0.55"/>`;
+      svg += `<text x="${W-35}" y="${H-9}" font-family="JetBrains Mono" font-size="11">class 1</text>`;
+      thrSvg.innerHTML = svg;
+    }
+    function update() {
+      const thr = +document.getElementById('thr-slider').value / 100;
+      document.getElementById('thr-val').textContent = thr.toFixed(2);
+      drawHist(thr);
+      let TP=0, FP=0, TN=0, FN=0;
+      samples.forEach(s => {
+        const pred = s.p >= thr ? 1 : 0;
+        if (pred === 1 && s.y === 1) TP++;
+        else if (pred === 1 && s.y === 0) FP++;
+        else if (pred === 0 && s.y === 0) TN++;
+        else FN++;
+      });
+      document.getElementById('thr-tp').textContent = TP;
+      document.getElementById('thr-fp').textContent = FP;
+      document.getElementById('thr-tn').textContent = TN;
+      document.getElementById('thr-fn').textContent = FN;
+      const prec = TP / (TP + FP || 1);
+      const rec  = TP / (TP + FN || 1);
+      const f1   = 2 * prec * rec / ((prec + rec) || 1);
+      document.getElementById('thr-prec').textContent = prec.toFixed(2);
+      document.getElementById('thr-rec').textContent  = rec.toFixed(2);
+      document.getElementById('thr-f1').textContent   = f1.toFixed(2);
+    }
+    document.getElementById('thr-slider').addEventListener('input', update);
+    update();
+  }
+})();
+</script>
+
+</body>
+</html>

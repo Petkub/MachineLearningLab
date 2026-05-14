@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOAI Day 1 — NumPy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* keep slide content from being hidden behind draw-toolbar at top */
+  .deck .slide:not(.title):not(.divider) {
+    padding-top: 64px !important;
+  }
+  /* shrink h2 margin so dense slides reclaim vertical space */
+  .deck .slide h2 { margin-bottom: 10px !important; }
+  /* tighten dense slide spacing */
+  .deck .slide.dense ul li,
+  .deck .slide.dense p,
+  .deck .slide.dense pre.code { margin-bottom: 6px; }
+
+  /* FORCE interactive widgets ABOVE draw-overlay (z:40) AND inside slide stacking ctx.
+     Slide is z:5, overlay z:40. Buttons need higher than 40 PLUS slide must establish
+     stacking context. Give slide.active z:9999 so children stack on top. */
+  .deck .slide.active { z-index: 9999 !important; }
+  .deck .draw-overlay:not(.active) {
+    z-index: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+  .deck .draw-overlay:not(.active) .draw-svg {
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ===== day-section divider ===== */
+  .slide.divider {
+    background:
+      radial-gradient(circle at 15% 15%, rgba(253,233,163,0.55), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(184,238,240,0.4),  transparent 50%),
+      var(--bg);
+    display: grid; place-items: center;
+    text-align: center;
+  }
+  .divider .day-tag {
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    padding: 6px 18px;
+    font-family: var(--font-mono); font-weight: 800; font-size: 16px;
+    letter-spacing: 2px;
+  }
+  .divider h1 {
+    font-size: 96px; line-height: 1.05; margin-top: 14px; letter-spacing: -0.03em;
+  }
+  .divider h1 em {
+    font-style: normal; background: var(--cream); padding: 0 14px;
+  }
+  .divider p.sub {
+    font-size: 22px; color: var(--ink-soft); margin-top: 16px;
+  }
+  .divider .roman {
+    font-size: 160px; color: var(--cream); font-weight: 800;
+    position: absolute; top: 40px; right: 60px; line-height: 1;
+  }
+
+  /* ===== numpy cell grids (Day 1) ===== */
+  .np-grid { display: inline-grid; gap: 4px; font-family: var(--font-mono); }
+  .np-cell {
+    width: 42px; height: 42px;
+    display: grid; place-items: center;
+    background: #fff; border: 2px solid var(--ink);
+    font-weight: 700; font-size: 15px;
+    transition: background 280ms var(--ease), transform 280ms var(--ease);
+  }
+  .np-cell.hi    { background: var(--cream); }
+  .np-cell.pick  { background: #b8eef0; transform: scale(1.08); }
+  .np-cell.row   { background: #ffd6cc; }
+  .np-cell.col   { background: #e6d2ff; }
+  .np-cell.mask  { background: #d6f5dd; border-color: var(--accent-green); }
+  .np-cell.maskF { background: #fff; opacity: 0.35; }
+  .np-cell.dim   { opacity: 0.25; }
+  .np-cell.small { width: 32px; height: 32px; font-size: 13px; }
+  .np-cell.tiny  { width: 26px; height: 26px; font-size: 11px; }
+
+  /* indexing playground */
+  .idx-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px; }
+  .idx-btn {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 10px; cursor: pointer;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .idx-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .idx-btn.active { background: var(--cream); }
+  .idx-result { margin-top: 8px; font-size: 15px; color: var(--ink-soft); font-family: var(--font-mono); }
+  .idx-result b { color: var(--ink); background: var(--cream); padding: 1px 6px; }
+
+  /* reshape stage */
+  .reshape-stage { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .reshape-arrow { font-size: 26px; color: var(--accent-blue); font-weight: 700; }
+
+  /* axis aggregation */
+  .agg-wrap { display: inline-grid; grid-template-columns: auto auto; gap: 6px; align-items: start; }
+  .agg-sums { display: grid; gap: 4px; font-family: var(--font-mono); font-weight: 700; }
+  .agg-sum-cell {
+    display: grid; place-items: center;
+    width: 42px; height: 42px;
+    background: var(--cream); border: 2px dashed var(--ink);
+    font-size: 14px;
+  }
+  .agg-btn {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 12px; cursor: pointer; margin-right: 6px;
+    transition: background 200ms var(--ease), transform 200ms var(--ease);
+  }
+  .agg-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
+  .agg-btn.active { background: var(--cream); }
+
+  /* broadcast pulse */
+  @keyframes bcPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .bc-pulse rect { animation: bcPulse 1.6s var(--ease) infinite; transform-origin: center; transform-box: fill-box; }
+
+  /* mask filter animation */
+  @keyframes maskDrop {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(50px); opacity: 0; }
+  }
+  .mask-out { animation: maskDrop 600ms var(--ease) forwards; }
+
+  /* ===== pandas table styling (Day 2) ===== */
+  .pd-table {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .pd-table th, .pd-table td {
+    border: 1.5px solid var(--ink);
+    padding: 5px 10px;
+    background: #fff;
+  }
+  .pd-table th {
+    background: var(--cream);
+    font-weight: 800;
+  }
+  .pd-table td.idx {
+    background: var(--cream-soft);
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .pd-table tr.hi td:not(.idx) { background: #b8eef0; }
+  .pd-table td.hi-cell { background: #ffd6cc !important; font-weight: 800; }
+  .pd-table td.nan { color: var(--accent-red); font-style: italic; }
+
+  /* groupby viz */
+  .gb-stage {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 14px; align-items: center; margin-top: 12px;
+  }
+  .gb-stage .gb-arrow { font-size: 22px; color: var(--accent-blue); font-weight: 800; text-align: center; }
+  .gb-stage h4 { font-size: 14px; margin-bottom: 6px; color: var(--ink-soft); text-align: center; }
+
+  /* seaborn mini plots — pure CSS */
+  .plot-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 12px; min-height: 160px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .plot-card .plot-title {
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+  }
+  .plot-card .plot-body { flex: 1; display: grid; place-items: center; }
+
+  .heat-grid {
+    display: grid; grid-template-columns: repeat(4, 26px); gap: 2px;
+  }
+  .heat-cell {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    font-size: 10px; font-family: var(--font-mono); font-weight: 700;
+    border: 1px solid var(--ink);
+  }
+
+  .box-stage {
+    display: flex; gap: 14px; align-items: flex-end; height: 110px;
+  }
+  .box-col { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-family: var(--font-mono); }
+  .box-rect {
+    width: 36px; background: var(--cream); border: 2px solid var(--ink);
+    position: relative;
+  }
+  .box-median {
+    position: absolute; left: -3px; right: -3px;
+    height: 2px; background: var(--ink);
+  }
+
+  /* ===== sklearn flow (Day 3) ===== */
+  .flow {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin: 14px 0;
+  }
+  .flow-box {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 10px 14px; font-family: var(--font-mono);
+    font-weight: 700; font-size: 14px;
+    min-width: 110px; text-align: center;
+  }
+  .flow-box.hi    { background: var(--cream); }
+  .flow-box.split { background: #c8e6ff; }
+  .flow-box.fit   { background: #d6f5dd; }
+  .flow-box.eval  { background: #e6d2ff; }
+  .flow-arrow { font-size: 22px; color: var(--accent-blue); font-weight: 800; }
+
+  /* confusion matrix */
+  .cm-grid {
+    display: grid;
+    grid-template-columns: auto 80px 80px;
+    grid-template-rows: auto 80px 80px;
+    font-family: var(--font-mono); font-size: 14px;
+  }
+  .cm-grid > div { display: grid; place-items: center; }
+  .cm-grid .cm-axis { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+  .cm-grid .cm-cell { border: 2px solid var(--ink); font-weight: 800; font-size: 18px; }
+  .cm-grid .cm-tp { background: #d6f5dd; }
+  .cm-grid .cm-tn { background: #d6f5dd; }
+  .cm-grid .cm-fp { background: #ffd6cc; }
+  .cm-grid .cm-fn { background: #ffd6cc; }
+
+  /* split viz (train/test) */
+  .split-bar {
+    display: grid; grid-template-columns: 4fr 1fr;
+    height: 40px; border: 2px solid var(--ink);
+    margin-top: 10px; font-family: var(--font-mono); font-weight: 700;
+  }
+  .split-bar > div { display: grid; place-items: center; font-size: 14px; }
+  .split-bar .train { background: #d6f5dd; }
+  .split-bar .test  { background: var(--cream); }
+
+  /* ===== day-card grid (overview) ===== */
+  .day-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .day-card {
+    border: 2px solid var(--ink);
+    background: #fff;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: background 240ms var(--ease), transform 240ms var(--ease), box-shadow 240ms var(--ease);
+    font-family: var(--font-mono);
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 180px;
+  }
+  .day-card:hover { background: var(--cream-soft); transform: translateY(-3px); }
+  .day-card.active {
+    background: var(--cream);
+    box-shadow: 6px 6px 0 var(--ink);
+    transform: translateY(-3px);
+  }
+  .day-card .badge {
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    padding: 2px 10px; font-size: 11px; font-weight: 700;
+    align-self: flex-start;
+  }
+  .day-card h3 { font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .day-card .hrs { font-size: 12px; color: var(--ink-soft); }
+  .day-card ul { margin: 6px 0 0 18px; }
+  .day-card li { font-size: 12px; line-height: 1.45; }
+
+  .timeline {
+    margin: 18px 0 6px;
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 2fr;
+    gap: 4px; height: 32px;
+    border: 2px solid var(--ink);
+  }
+  .timeline > div {
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    font-family: var(--font-mono);
+  }
+  .tl-d1 { background: #c8e6ff; }
+  .tl-d2 { background: #d6f5dd; }
+  .tl-d3 { background: var(--cream); }
+
+  .day-detail {
+    margin-top: 14px;
+    border: 2px dashed var(--ink);
+    padding: 12px 16px;
+    background: var(--cream-soft);
+    min-height: 70px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .day-detail.empty { color: var(--ink-mute); font-style: italic; }
+  .day-detail b { background: var(--cream); padding: 1px 6px; }
+
+  /* lib pills */
+  .lib-strip { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .lib-pill {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 5px 12px; font-family: var(--font-mono);
+    font-weight: 700; font-size: 13px;
+  }
+  .lib-pill.on { background: var(--cream); }
+
+  /* checklist */
+  .checklist { font-size: 15px; }
+  .checklist li { margin-bottom: 6px; }
+  .checklist code { background: var(--cream-soft); padding: 1px 5px; border: 1px solid var(--ink); }
+
+  /* compact two-col code+notes */
+  .split-2 {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .split-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* pitfall callout */
+  .pitfall {
+    border: 2px solid var(--accent-red);
+    background: #fff5f3;
+    padding: 10px 14px; margin-top: 12px;
+    font-size: 14px;
+  }
+  .pitfall b { color: var(--accent-red); }
+
+  /* tight pre */
+  .slide.dense pre.code { font-size: 13.5px; line-height: 1.45; }
+  .slide.tighter pre.code { font-size: 13px; line-height: 1.42; }
+
+  /* ===== PROBLEM SLIDE THEME ===== */
+  .slide.problem h2::before {
+    content: "▸ PROBLEM";
+    display: inline-block;
+    background: var(--ink); color: #fff;
+    font-size: 12px; font-weight: 800;
+    padding: 3px 10px; margin-right: 12px;
+    vertical-align: middle; letter-spacing: 1px;
+  }
+  .prob-q {
+    border-left: 6px solid var(--accent-purple);
+    background: #f5efff;
+    padding: 12px 16px;
+    margin: 10px 0 14px;
+    font-size: 15px; line-height: 1.55;
+  }
+  .prob-q b { background: var(--cream); padding: 1px 5px; }
+  .prob-given {
+    border: 2px dashed var(--ink);
+    background: #fff;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .prob-given .label {
+    font-size: 11px; color: var(--ink-soft);
+    font-weight: 800; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .prob-think {
+    border: 2px solid var(--accent-blue);
+    background: #eef1ff;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 14px; line-height: 1.55;
+  }
+  .prob-think b { color: var(--accent-blue); }
+  .prob-sol {
+    border-left: 6px solid var(--accent-green);
+    background: #effbef;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  .prob-sol .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1px;
+    color: var(--accent-green); margin-bottom: 6px;
+  }
+  .prob-twist {
+    border: 2px solid var(--accent-red);
+    background: #fff5f3;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  .prob-twist b { color: var(--accent-red); }
+  .slide.problem pre.code { font-size: 13px; line-height: 1.4; }
+
+  /* ===== Day 3 SKLEARN VIZ ===== */
+  .sk-stage {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+  }
+  .sk-canvas {
+    background: #fff;
+    border: 2px solid var(--ink);
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.6 / 1;
+    max-height: 360px;
+  }
+  .sk-canvas svg { display: block; width: 100%; height: 100%; }
+  .sk-controls {
+    display: flex; flex-direction: column; gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .sk-toggle {
+    display: flex; gap: 0;
+    border: 2px solid var(--ink);
+  }
+  .sk-toggle button {
+    flex: 1;
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+    background: #fff; border: none; padding: 8px 10px;
+    cursor: pointer;
+    border-right: 2px solid var(--ink);
+    transition: background 200ms var(--ease);
+  }
+  .sk-toggle button:last-child { border-right: none; }
+  .sk-toggle button:hover { background: var(--cream-soft); }
+  .sk-toggle button.active { background: var(--cream); }
+  .sk-slider {
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px;
+  }
+  .sk-slider input[type=range] {
+    width: 100%;
+    accent-color: var(--accent-purple);
+  }
+  .sk-stat {
+    border: 2px solid var(--ink);
+    background: var(--cream-soft);
+    padding: 8px 12px;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .sk-stat b { background: var(--cream); padding: 1px 5px; }
+
+  /* mini confusion matrix for threshold viz */
+  .cm-mini {
+    display: grid;
+    grid-template-columns: 60px 60px;
+    grid-template-rows: 60px 60px;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-weight: 800;
+  }
+  .cm-mini > div {
+    display: grid; place-items: center;
+    border: 2px solid var(--ink);
+    font-size: 16px;
+    transition: background 200ms var(--ease);
+  }
+  .cm-mini .cm-tp { background: #d6f5dd; }
+  .cm-mini .cm-tn { background: #d6f5dd; }
+  .cm-mini .cm-fp { background: #ffd6cc; }
+  .cm-mini .cm-fn { background: #ffd6cc; }
+
+  /* tree viz */
+  .tree-svg .node {
+    fill: #fff; stroke: var(--ink); stroke-width: 2;
+  }
+  .tree-svg .node.leaf-a { fill: #c8e6ff; }
+  .tree-svg .node.leaf-b { fill: #ffd6cc; }
+  .tree-svg .edge { stroke: var(--ink); stroke-width: 2; fill: none; }
+  .tree-svg .lbl {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  }
+
+  /* bias-variance triple */
+  .bv-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .bv-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 10px;
+  }
+  .bv-card svg { display: block; width: 100%; height: 130px; }
+  .bv-card h4 {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 800;
+    text-align: center; margin-bottom: 4px;
+  }
+  .bv-card .verdict {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+    text-align: center; margin-top: 4px;
+  }
+
+  /* "what is learning" diagram */
+  .learn-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .learn-box {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 14px; text-align: center;
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+  }
+  .learn-box.params { background: var(--cream); }
+  .learn-arrow {
+    font-size: 26px; color: var(--accent-blue); font-weight: 800;
+    text-align: center;
+  }
+  .learn-loop {
+    margin-top: 12px;
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--ink-soft); text-align: center;
+  }
+  .learn-loop b { color: var(--accent-purple); }
+
+  /* ===== misc additions ===== */
+  /* memory layout cells */
+  .mem-strip {
+    display: inline-flex; gap: 0;
+    border: 2px solid var(--ink); background: #fff;
+    font-family: var(--font-mono);
+  }
+  .mem-strip > div {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-right: 2px solid var(--ink);
+    font-size: 13px; font-weight: 700;
+  }
+  .mem-strip > div:last-child { border-right: none; }
+  .mem-strip > div.row0 { background: #c8e6ff; }
+  .mem-strip > div.row1 { background: #d6f5dd; }
+  .mem-strip > div.row2 { background: var(--cream); }
+
+  /* image-as-array */
+  .img-grid {
+    display: grid; gap: 1px;
+    background: var(--ink);
+    border: 2px solid var(--ink);
+    width: max-content;
+  }
+  .img-cell {
+    width: 24px; height: 24px;
+  }
+
+  /* roc curve / perf bars */
+  .perf-bar {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 13px;
+    margin: 3px 0;
+  }
+  .perf-bar .name { width: 110px; }
+  .perf-bar .bar {
+    height: 18px; background: var(--cream);
+    border: 2px solid var(--ink);
+    position: relative;
+  }
+  .perf-bar .bar-fill {
+    position: absolute; top: 0; left: 0; bottom: 0;
+    background: var(--accent-blue);
+  }
+  .perf-bar .val { width: 60px; font-weight: 800; }
+
+  /* model comparison cards */
+  .model-card {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+  }
+  .model-card h4 {
+    font-size: 15px; font-weight: 800; margin-bottom: 4px;
+  }
+  .model-card .tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    padding: 2px 6px; margin-bottom: 6px;
+    background: var(--cream);
+  }
+  .model-card .pros, .model-card .cons {
+    font-size: 12px; line-height: 1.5; margin-top: 4px;
+  }
+  .model-card .pros { color: var(--accent-green); }
+  .model-card .cons { color: var(--accent-red); }
+
+  /* roc canvas */
+  .roc-stage { display: flex; gap: 18px; align-items: flex-start; }
+  .roc-stage svg { border: 2px solid var(--ink); background: #fff; }
+
+  /* gridsearch grid */
+  .gs-grid {
+    display: grid;
+    gap: 3px;
+    margin: 10px 0;
+  }
+  .gs-cell {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    border: 1.5px solid var(--ink);
+    transition: transform 200ms var(--ease);
+  }
+  .gs-cell.best { background: var(--accent-green); color: #fff; transform: scale(1.05); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <section class="slide title">
+      <h1>NOAI · Day 1<br/>NumPy</h1>
+      <p class="subtitle">Arrays, vectorize, broadcast.<br/>1.5 hours</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <!-- 5. Day 1 divider -->
+    <section class="slide divider">
+      <div class="roman">I</div>
+      <div>
+        <span class="day-tag">DAY ONE · 1.5 HOURS</span>
+        <h1><em>NumPy</em></h1>
+        <p class="sub">Arrays, vectorize, broadcast.<br/>Foundation under every other library.</p>
+      </div>
+    </section>
+
+    <!-- D1-P0: warmup -->
+    <section class="slide problem">
+      <h2>Warm-up — Python list vs array</h2>
+      <div class="prob-q">
+        Plain Python: <code>[1,2,3] * 2</code> → ? &nbsp; NumPy: <code>np.array([1,2,3]) * 2</code> → ? &nbsp; Predict both, then explain the difference in one sentence.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code">[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>] * <span class="num">2</span>                  <span class="cmt"># [1, 2, 3, 1, 2, 3]   (repeat)</span>
+np.array([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>]) * <span class="num">2</span>        <span class="cmt"># [2, 4, 6]            (element-wise)</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Same syntax, different meaning. Python list = container of objects. NumPy array = math object. The whole point of switching libs.
+      </div>
+    </section>
+
+    <!-- 6. Why arrays -->
+    <section class="slide">
+      <h2>Why arrays?</h2>
+      <ul>
+        <li class="fragment">1,000,000 numbers. Multiply each by 2.</li>
+        <li class="fragment">Python list + <code>for</code> loop $\Rightarrow$ <b class="tk-red">slow</b>. Seconds.</li>
+        <li class="fragment">NumPy: <code>a * 2</code>. <b class="tk-green">One line. ~50× faster.</b></li>
+        <li class="fragment">Same idea powers GPU neural net training.</li>
+      </ul>
+      <p class="callout fragment">Loops expensive. Arrays cheap. Think in arrays.</p>
+    </section>
+
+    <!-- 7. What is NumPy -->
+    <section class="slide">
+      <h2>What is NumPy?</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">N-dimensional array</b> library for Python.</li>
+        <li class="fragment">Foundation under <b class="tk-purple">pandas, scikit-learn, PyTorch, TensorFlow</b>.</li>
+        <li class="fragment">Written in C → fast loops without writing C.</li>
+      </ul>
+      <pre class="code"><span class="cmt"># install once</span>
+<span class="kw">pip</span> install numpy
+
+<span class="cmt"># in every script</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np</pre>
+      <p class="callout fragment"><b>Convention:</b> always <code>np</code>. Everyone reads it that way.</p>
+    </section>
+
+    <!-- 8. First array -->
+    <section class="slide">
+      <h2>Your first array</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">a = np.array([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>])
+
+a.shape   <span class="cmt"># (4,)</span>
+a.dtype   <span class="cmt"># int64</span>
+a.ndim    <span class="cmt"># 1</span>
+a.size    <span class="cmt"># 4</span></pre>
+        </div>
+        <div>
+          <div class="np-grid" style="grid-template-columns: repeat(4, 42px);">
+            <div class="np-cell">1</div>
+            <div class="np-cell">2</div>
+            <div class="np-cell">3</div>
+            <div class="np-cell">4</div>
+          </div>
+          <div style="margin-top:10px; font-size:13px; color:var(--ink-soft);">
+            shape = (4,) &nbsp; ndim = 1
+          </div>
+        </div>
+      </div>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-blue">shape</b> — size in each dimension.</li>
+        <li class="fragment"><b class="tk-purple">dtype</b> — element type. All same. Unlike Python lists.</li>
+      </ul>
+    </section>
+
+    <!-- 9. Create arrays -->
+    <section class="slide dense">
+      <h2>Make arrays without typing them</h2>
+      <pre class="code">np.zeros(<span class="num">5</span>)              <span class="cmt"># [0. 0. 0. 0. 0.]</span>
+np.ones((<span class="num">2</span>, <span class="num">3</span>))          <span class="cmt"># 2x3 ones</span>
+np.arange(<span class="num">0</span>, <span class="num">10</span>, <span class="num">2</span>)       <span class="cmt"># [0 2 4 6 8]</span>
+np.linspace(<span class="num">0</span>, <span class="num">1</span>, <span class="num">5</span>)      <span class="cmt"># [0. 0.25 0.5 0.75 1.]</span>
+np.random.rand(<span class="num">3</span>)        <span class="cmt"># 3 uniform [0,1)</span>
+np.random.randn(<span class="num">3</span>)       <span class="cmt"># 3 from N(0,1)</span>
+np.eye(<span class="num">3</span>)                <span class="cmt"># 3x3 identity</span></pre>
+      <ul>
+        <li class="fragment"><b class="tk-blue">zeros / ones</b> — init buffers.</li>
+        <li class="fragment"><b class="tk-green">arange</b> — like <code>range</code>, float-friendly.</li>
+        <li class="fragment"><b class="tk-purple">linspace</b> — N evenly-spaced points. Plot workhorse.</li>
+        <li class="fragment"><b class="tk-pink">random.rand / randn</b> — quick test data.</li>
+      </ul>
+    </section>
+
+    <!-- D1-P1: array creation problem -->
+    <section class="slide problem">
+      <h2>Temperature buffer</h2>
+      <div class="prob-q">
+        You need 24 hourly temperature readings, all initialized to <b>25.0°C</b>. After midnight, hour 0 must be set to <b>22.5</b>. How would you build this — without typing 24 numbers?
+      </div>
+      <div class="prob-think fragment">
+        <b>Think first:</b> Why <code>np.full</code> over <code>np.zeros + 25</code>? What dtype do you get? Will <code>temps[0] = 22.5</code> work if dtype is int?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">temps = np.full(<span class="num">24</span>, <span class="num">25.0</span>)   <span class="cmt"># float dtype inferred</span>
+temps[<span class="num">0</span>] = <span class="num">22.5</span>
+temps.shape, temps.dtype</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Twist:</b> If you'd written <code>np.zeros(24, dtype=int) + 25</code>, what breaks at line 2?
+      </div>
+    </section>
+
+    <!-- 10. Shape & reshape -->
+    <section class="slide">
+      <h2>Shape &amp; reshape</h2>
+      <p style="font-size:14px;">Same 12 numbers — change shape, not memory.</p>
+      <div class="reshape-stage">
+        <div>
+          <div class="np-grid" style="grid-template-columns: repeat(12, 32px);">
+            <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div><div class="np-cell small">3</div>
+            <div class="np-cell small">4</div><div class="np-cell small">5</div><div class="np-cell small">6</div><div class="np-cell small">7</div>
+            <div class="np-cell small">8</div><div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:center;">(12,)</div>
+        </div>
+        <div class="reshape-arrow fragment fade-only">→</div>
+        <div class="fragment fade-only">
+          <div class="np-grid" style="grid-template-columns: repeat(4, 32px);">
+            <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div><div class="np-cell small">3</div>
+            <div class="np-cell small">4</div><div class="np-cell small">5</div><div class="np-cell small">6</div><div class="np-cell small">7</div>
+            <div class="np-cell small">8</div><div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:center;">(3, 4)</div>
+        </div>
+        <div class="reshape-arrow fragment fade-only">→</div>
+        <div class="fragment fade-only">
+          <div style="display:flex; gap:10px;">
+            <div>
+              <div class="np-grid" style="grid-template-columns: repeat(3, 32px);">
+                <div class="np-cell small">0</div><div class="np-cell small">1</div><div class="np-cell small">2</div>
+                <div class="np-cell small">3</div><div class="np-cell small">4</div><div class="np-cell small">5</div>
+              </div>
+            </div>
+            <div>
+              <div class="np-grid" style="grid-template-columns: repeat(3, 32px);">
+                <div class="np-cell small">6</div><div class="np-cell small">7</div><div class="np-cell small">8</div>
+                <div class="np-cell small">9</div><div class="np-cell small">10</div><div class="np-cell small">11</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:center;">(2, 2, 3)</div>
+        </div>
+      </div>
+      <pre class="code" style="margin-top: 12px;">a = np.arange(<span class="num">12</span>)
+b = a.reshape(<span class="num">3</span>, <span class="num">4</span>)
+c = a.reshape(<span class="num">2</span>, <span class="num">2</span>, <span class="num">3</span>)
+d = a.reshape(<span class="num">3</span>, -<span class="num">1</span>)   <span class="cmt"># -1 = "you figure it out"</span></pre>
+      <p class="callout fragment">Memory unchanged. Only <b class="tk-blue">interpretation</b> changes.</p>
+    </section>
+
+    <!-- D1-P2: reshape problem -->
+    <section class="slide problem">
+      <h2>Image as numbers</h2>
+      <div class="prob-q">
+        Grayscale image has <b>1,024 pixels</b> in a flat array. You want to display it as a square. Then you discover it was actually <b>32 × 32</b>. Reshape it. What if it had been 16 × 64 instead — would the same data still fit?
+      </div>
+      <div class="prob-given">
+        <div class="label">GIVEN</div>
+        pixels = np.arange(1024)  &nbsp;&nbsp; <span style="color:var(--ink-soft)"># shape (1024,)</span>
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> What constraint must shape obey? Why does <code>(33, 31)</code> fail but <code>(32, 32)</code> work? When is <code>-1</code> useful?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">img    = pixels.reshape(<span class="num">32</span>, <span class="num">32</span>)
+wide   = pixels.reshape(<span class="num">16</span>, <span class="num">64</span>)   <span class="cmt"># same data, fits</span>
+auto   = pixels.reshape(<span class="num">32</span>, -<span class="num">1</span>)   <span class="cmt"># NumPy: "you figure col"</span>
+
+<span class="cmt"># Product of new shape must equal 1024.</span></pre>
+      </div>
+    </section>
+
+    <!-- 11. Indexing playground — INTERACTIVE -->
+    <section class="slide">
+      <h2>Indexing &amp; slicing</h2>
+      <p style="font-size:14px;">Click expression. Highlight shows what it picks.</p>
+      <div id="idx-grid-1d" style="margin: 6px 0;">
+        <div style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">a = np.arange(10)</div>
+        <div class="np-grid" data-row="1d" style="grid-template-columns: repeat(10, 42px);"></div>
+      </div>
+      <div class="idx-bar" data-bar="1d">
+        <button class="idx-btn" data-pick="0">a[0]</button>
+        <button class="idx-btn" data-pick="-1">a[-1]</button>
+        <button class="idx-btn" data-pick="2:5">a[2:5]</button>
+        <button class="idx-btn" data-pick="::2">a[::2]</button>
+        <button class="idx-btn" data-pick=":">a[:]</button>
+      </div>
+      <div class="idx-result" id="idx-out-1d">→ click a button</div>
+      <div style="margin-top: 14px;">
+        <div style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">m = np.arange(12).reshape(3, 4)</div>
+        <div class="np-grid" data-row="2d" style="grid-template-columns: repeat(4, 42px);"></div>
+      </div>
+      <div class="idx-bar" data-bar="2d">
+        <button class="idx-btn" data-pick="m[1,2]">m[1, 2]</button>
+        <button class="idx-btn" data-pick="m[:,0]">m[:, 0]</button>
+        <button class="idx-btn" data-pick="m[0,:]">m[0, :]</button>
+        <button class="idx-btn" data-pick="m[1:,1:]">m[1:, 1:]</button>
+      </div>
+      <div class="idx-result" id="idx-out-2d">→ click a button</div>
+    </section>
+
+    <!-- D1-P3: indexing problem -->
+    <section class="slide problem">
+      <h2>Even-indexed students</h2>
+      <div class="prob-q">
+        Class has 10 students. <code>scores = np.arange(10) * 10 + 50</code> (50, 60, …, 140). Get scores at <b>even indices only</b>. Then get the <b>last 3 students</b>. Then both at once.
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Which slice gets every other element? Why does <code>scores[-3:]</code> beat <code>scores[7:10]</code> when class size might change?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">scores = np.arange(<span class="num">10</span>) * <span class="num">10</span> + <span class="num">50</span>
+
+scores[::<span class="num">2</span>]        <span class="cmt"># [50, 70, 90, 110, 130]</span>
+scores[-<span class="num">3</span>:]        <span class="cmt"># [120, 130, 140]</span>
+scores[-<span class="num">3</span>::<span class="num">2</span>]      <span class="cmt"># last 3, step 2 → [120, 140]</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> If you later replace <code>scores[::2] = 0</code>, what happens to the original? View vs copy — be ready.
+      </div>
+    </section>
+
+    <!-- 12. Vectorized math -->
+    <section class="slide">
+      <h2>Vectorized math</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">a = np.array([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+b = np.array([<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>])
+
+a + b        <span class="cmt"># [11 22 33]</span>
+a * b        <span class="cmt"># [10 40 90]</span>
+a ** <span class="num">2</span>       <span class="cmt"># [1 4 9]</span>
+np.sqrt(b)   <span class="cmt"># [3.16 4.47 5.48]</span>
+np.exp(a)    <span class="cmt"># element-wise e^x</span></pre>
+        </div>
+        <div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+            <div class="np-grid" style="grid-template-columns: repeat(3, 42px);">
+              <div class="np-cell">1</div><div class="np-cell">2</div><div class="np-cell">3</div>
+            </div>
+            <div style="font-size:22px;font-weight:800;">+</div>
+            <div class="np-grid" style="grid-template-columns: repeat(3, 42px);">
+              <div class="np-cell">10</div><div class="np-cell">20</div><div class="np-cell">30</div>
+            </div>
+            <div style="font-size:22px;font-weight:800;color:var(--accent-blue);">↓</div>
+            <div class="np-grid" style="grid-template-columns: repeat(3, 42px);">
+              <div class="np-cell hi">11</div><div class="np-cell hi">22</div><div class="np-cell hi">33</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment"><span class="tk-red">Rule of thumb:</span> if you wrote a loop, NumPy has a one-liner.</p>
+    </section>
+
+    <!-- D1-P4: vectorize problem -->
+    <section class="slide problem">
+      <h2>Celsius → Fahrenheit, no loop</h2>
+      <div class="prob-q">
+        You have a week of temperatures in Celsius. Convert all to Fahrenheit. Then find which days were above <b>30°C</b>. Solve without a single <code>for</code> loop.
+      </div>
+      <div class="prob-given">
+        <div class="label">GIVEN</div>
+        c = np.array([28, 31, 33, 29, 35, 27, 30])
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Formula is $F = C \cdot 1.8 + 32$. How does NumPy apply it to all 7 numbers at once? What does the comparison <code>c &gt; 30</code> produce?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">f = c * <span class="num">1.8</span> + <span class="num">32</span>            <span class="cmt"># [82.4 87.8 91.4 ...]</span>
+hot_mask = c &gt; <span class="num">30</span>           <span class="cmt"># [F T T F T F F]</span>
+hot_days = np.where(hot_mask)[<span class="num">0</span>]  <span class="cmt"># indices: [1, 2, 4]</span>
+hot_count = hot_mask.sum()      <span class="cmt"># 3</span></pre>
+      </div>
+    </section>
+
+    <!-- 13. Broadcasting -->
+    <section class="slide">
+      <h2>Broadcasting</h2>
+      <p style="font-size:14px;">Different shapes? NumPy stretches the smaller one — if shapes line up.</p>
+      <div class="split-2">
+        <div>
+          <pre class="code">m = np.array([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],
+              [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])
+v = np.array([<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>])
+
+m + v
+<span class="cmt"># [[11 22 33]</span>
+<span class="cmt">#  [14 25 36]]</span>
+
+m + <span class="num">100</span>     <span class="cmt"># scalar broadcasts too</span></pre>
+        </div>
+        <div>
+          <div class="np-grid bc-pulse" style="grid-template-columns: repeat(3, 42px);">
+            <div class="np-cell hi">10</div><div class="np-cell hi">20</div><div class="np-cell hi">30</div>
+          </div>
+          <div style="font-size:22px;text-align:center;margin:6px 0;color:var(--accent-purple);">↓ stretch ↓</div>
+          <div class="np-grid" style="grid-template-columns: repeat(3, 42px);">
+            <div class="np-cell hi">10</div><div class="np-cell hi">20</div><div class="np-cell hi">30</div>
+            <div class="np-cell hi">10</div><div class="np-cell hi">20</div><div class="np-cell hi">30</div>
+          </div>
+        </div>
+      </div>
+      <div class="pitfall fragment"><b>Rule:</b> shapes match right-to-left. Each dim equal, or one of them is 1. Else <code>ValueError</code>.</div>
+    </section>
+
+    <!-- D1-P5: broadcasting problem -->
+    <section class="slide problem">
+      <h2>Normalize each column</h2>
+      <div class="prob-q">
+        Dataset has <b>5 students × 3 subjects</b>. Subtract each subject's mean from every student's score, so every column has mean 0. Will <code>data - data.mean()</code> work? Why not?
+      </div>
+      <div class="prob-given">
+        <div class="label">GIVEN</div>
+        data = np.array([[80, 70, 60], [85, 65, 75], [90, 80, 70], [60, 75, 85], [70, 90, 80]])
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> <code>data.mean()</code> = scalar. <code>data.mean(axis=0)</code> = shape (3,). Which one broadcasts the way you want? What shape result do you need?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">col_means = data.mean(axis=<span class="num">0</span>)   <span class="cmt"># shape (3,) — one per subject</span>
+centered  = data - col_means     <span class="cmt"># broadcasts down rows</span>
+
+centered.mean(axis=<span class="num">0</span>)            <span class="cmt"># ≈ [0, 0, 0] ✓</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Twist:</b> Now normalize <b>each row</b> instead (per-student mean). Why does <code>data - data.mean(axis=1)</code> fail, and how do you fix it with <code>[:, None]</code>?
+      </div>
+    </section>
+
+    <!-- 14. Axis aggregations -->
+    <section class="slide">
+      <h2>Aggregations along an <code>axis</code></h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">a = np.array([[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],
+              [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]])
+
+a.sum()           <span class="cmt"># 21</span>
+a.sum(axis=<span class="num">0</span>)    <span class="cmt"># [5 7 9]  rows ↓</span>
+a.sum(axis=<span class="num">1</span>)    <span class="cmt"># [6 15]   cols →</span>
+a.mean(axis=<span class="num">0</span>)
+a.max(axis=<span class="num">1</span>)
+a.argmax()</pre>
+          <div class="idx-bar" style="margin-top: 8px;">
+            <button class="agg-btn" data-axis="all">.sum()</button>
+            <button class="agg-btn" data-axis="0">axis=0</button>
+            <button class="agg-btn" data-axis="1">axis=1</button>
+          </div>
+        </div>
+        <div>
+          <div class="agg-wrap">
+            <div class="np-grid" id="agg-grid" style="grid-template-columns: repeat(3, 42px);"></div>
+            <div class="agg-sums" id="agg-rowsums"></div>
+          </div>
+          <div class="agg-sums" id="agg-colsums" style="grid-template-columns: repeat(3, 42px); margin-top: 4px;"></div>
+          <div id="agg-out" style="font-size:13px; color:var(--ink-soft); margin-top: 10px;">→ click an axis</div>
+        </div>
+      </div>
+      <p class="callout fragment"><b>axis = the dimension that disappears.</b></p>
+    </section>
+
+    <!-- D1-P6: aggregation problem -->
+    <section class="slide problem">
+      <h2>Best student, best subject</h2>
+      <div class="prob-q">
+        Same <b>5 × 3</b> score matrix. Find: (1) class average per subject, (2) total score per student, (3) which <b>student</b> got the highest total, (4) which <b>subject</b> the class did worst in.
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Axis = the dimension that <i>disappears</i>. Per-subject collapses rows → <code>axis=0</code>. Per-student collapses cols → <code>axis=1</code>. Sketch it on paper if stuck.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">subj_mean   = data.mean(axis=<span class="num">0</span>)    <span class="cmt"># shape (3,) — per subject</span>
+stud_total  = data.sum(axis=<span class="num">1</span>)     <span class="cmt"># shape (5,) — per student</span>
+
+best_stud   = stud_total.argmax()    <span class="cmt"># index of top student</span>
+worst_subj  = subj_mean.argmin()     <span class="cmt"># index of worst subject</span></pre>
+      </div>
+    </section>
+
+    <!-- 15. Boolean masks -->
+    <section class="slide">
+      <h2>Boolean masks — filtering</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">scores = np.array([<span class="num">42</span>, <span class="num">88</span>, <span class="num">71</span>, <span class="num">95</span>, <span class="num">60</span>])
+
+mask = scores &gt; <span class="num">70</span>
+<span class="cmt"># [F  T  T  T  F]</span>
+
+scores[mask]
+<span class="cmt"># [88 71 95]</span>
+
+(scores &gt; <span class="num">70</span>).sum()  <span class="cmt"># 3</span>
+scores[scores &gt; <span class="num">70</span>].mean()</pre>
+        </div>
+        <div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">scores</div>
+          <div id="mask-grid" class="np-grid" style="grid-template-columns: repeat(5, 42px);">
+            <div class="np-cell">42</div><div class="np-cell">88</div><div class="np-cell">71</div><div class="np-cell">95</div><div class="np-cell">60</div>
+          </div>
+          <div style="font-size:13px;color:var(--ink-soft);margin:8px 0 4px;">scores &gt; 70</div>
+          <div id="mask-bool" class="np-grid" style="grid-template-columns: repeat(5, 42px);">
+            <div class="np-cell maskF">F</div><div class="np-cell mask">T</div><div class="np-cell mask">T</div><div class="np-cell mask">T</div><div class="np-cell maskF">F</div>
+          </div>
+          <div style="margin-top: 10px; font-size:13px;color:var(--ink-soft);">
+            scores[mask] → <b style="background:var(--cream);padding:1px 5px;">[88, 71, 95]</b>
+          </div>
+        </div>
+      </div>
+      <p class="callout fragment">Boolean array as index = filter. Same idea drives <code>df[df.col &gt; x]</code> tomorrow.</p>
+    </section>
+
+    <!-- D1-P7: mask problem -->
+    <section class="slide problem">
+      <h2>Find the outliers</h2>
+      <div class="prob-q">
+        Lab measured 20 sensor readings. Anything more than <b>2 standard deviations</b> from the mean is suspect. Find: how many outliers, their indices, and replace them with the median.
+      </div>
+      <div class="prob-given">
+        <div class="label">GIVEN</div>
+        rng = np.random.default_rng(0); x = rng.normal(50, 5, size=20); x[3] = 90; x[15] = 10
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Mask = boolean array. <code>mask.sum()</code> counts <code>True</code>. <code>np.where(mask)</code> gives indices. <code>x[mask] = value</code> assigns in place.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">mean, std = x.mean(), x.std()
+mask = np.abs(x - mean) &gt; <span class="num">2</span> * std
+
+n_out   = mask.sum()
+idx_out = np.where(mask)[<span class="num">0</span>]
+x[mask] = np.median(x)            <span class="cmt"># replace in place</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Why use <code>median</code> not <code>mean</code> for replacement? (Outliers pull mean. Median is robust.)
+      </div>
+    </section>
+
+    <!-- D1+: image is just an array -->
+    <section class="slide">
+      <h2>An image is just an array</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code"><span class="kw">from</span> PIL <span class="kw">import</span> Image
+img = np.asarray(Image.open(<span class="str">"cat.jpg"</span>))
+
+img.shape        <span class="cmt"># (480, 640, 3)</span>
+<span class="cmt">#                  H    W    RGB</span>
+
+img[<span class="num">0</span>, <span class="num">0</span>]       <span class="cmt"># [r, g, b] of top-left</span>
+img[:, :, <span class="num">0</span>]    <span class="cmt"># red channel only</span>
+img[::-<span class="num">1</span>]       <span class="cmt"># flip vertically</span>
+img.mean(axis=(<span class="num">0</span>,<span class="num">1</span>))  <span class="cmt"># avg color (R,G,B)</span></pre>
+        </div>
+        <div>
+          <div class="img-grid" style="grid-template-columns: repeat(6, 24px);">
+            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
+            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
+            <div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div>
+            <div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div>
+            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
+            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">6×6×3 — each cell = (R, G, B).</div>
+        </div>
+      </div>
+      <p class="callout fragment">Computer vision = NumPy on (H, W, C) arrays. Filters, convolutions, augmentation — all array ops.</p>
+    </section>
+
+    <!-- D1+ PROBLEM: view mutation -->
+    <section class="slide problem">
+      <h2>Why did my array change?</h2>
+      <div class="prob-q">
+        You write a function: <code>def normalize(x): x -= x.mean(); return x</code>. Caller passes <code>a</code>. After return — caller's <code>a</code> is also modified! Explain in one sentence. Fix it without renaming the function.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code"><span class="kw">def</span> normalize(x):
+    x = x - x.mean()        <span class="cmt"># rebind to new array</span>
+    <span class="kw">return</span> x
+
+<span class="cmt"># or explicit copy at entry</span>
+<span class="kw">def</span> normalize(x):
+    x = x.copy()
+    x -= x.mean()
+    <span class="kw">return</span> x</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> <code>x -= ...</code> is <i>in-place</i>. Mutates whatever object <code>x</code> references — including caller's. NumPy makes this trap easy to step in.
+      </div>
+    </section>
+
+    <!-- 17. Random + reproducibility -->
+    <section class="slide">
+      <h2>Random — and the seed</h2>
+      <pre class="code">rng = np.random.default_rng(<span class="num">42</span>)
+
+rng.random(<span class="num">3</span>)              <span class="cmt"># uniform</span>
+rng.normal(<span class="num">0</span>, <span class="num">1</span>, size=<span class="num">5</span>)   <span class="cmt"># N(0, 1)</span>
+rng.integers(<span class="num">0</span>, <span class="num">10</span>, size=<span class="num">5</span>) <span class="cmt"># ints</span>
+rng.choice([<span class="str">"a"</span>,<span class="str">"b"</span>,<span class="str">"c"</span>], <span class="num">2</span>)</pre>
+      <ul>
+        <li class="fragment"><b class="tk-blue">Seed</b> = reproducibility. Same seed → same numbers.</li>
+        <li class="fragment">Stage 2 graders rerun your code. <b class="tk-red">Always seed.</b></li>
+        <li class="fragment">Old API <code>np.random.seed(42)</code> still works. New <code>default_rng</code> preferred.</li>
+      </ul>
+    </section>
+
+    <!-- D1-P9: random seed problem -->
+    <section class="slide problem">
+      <h2>Why my score keeps changing</h2>
+      <div class="prob-q">
+        You run your model. Get accuracy 0.84. Run again. Get 0.81. Tweak hyperparameter. Get 0.83. Was the tweak good? <b>You can't tell.</b> Why? Fix it.
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Where does randomness enter? Train/test split. Model init. Data shuffling. Without seed, each run = new universe. With seed = same numbers every time.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">SEED = <span class="num">42</span>
+rng = np.random.default_rng(SEED)
+data = rng.normal(<span class="num">0</span>, <span class="num">1</span>, size=<span class="num">100</span>)
+
+<span class="cmt"># also pass to every sklearn function that takes random_state</span>
+train_test_split(X, y, random_state=SEED)
+RandomForestClassifier(random_state=SEED)</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Critical:</b> Seed everywhere isn't "cheating." It's <i>science</i>. You need controlled experiments to know what changed the score.
+      </div>
+    </section>
+
+    <!-- 18. Pitfalls -->
+    <section class="slide">
+      <h2>Day 1 pitfalls</h2>
+      <ul>
+        <li class="fragment"><b class="tk-red">view vs copy</b> — slices are views. Mutating slice mutates original. Use <code>.copy()</code> when scared.</li>
+        <li class="fragment"><b class="tk-red">int vs float</b> — <code>np.zeros(3)</code> is float. <code>np.zeros(3, dtype=int)</code> if you need int.</li>
+        <li class="fragment"><b class="tk-red">shape mismatch</b> — <code>(3,)</code> ≠ <code>(3, 1)</code>. Broadcasting cares.</li>
+        <li class="fragment"><b class="tk-red">NaN poisons</b> — <code>np.nan + x = nan</code>. Use <code>np.nanmean</code>, etc.</li>
+        <li class="fragment"><b class="tk-red">@ vs *</b> — matmul vs element-wise. Different operators.</li>
+      </ul>
+      <p class="callout fragment">Most bugs = shape bug. <code>print(a.shape)</code> is your friend.</p>
+    </section>
+
+    <!-- D1-CAPSTONE -->
+    <section class="slide problem">
+      <h2>Day 1 capstone — exam stats</h2>
+      <div class="prob-q">
+        100 students. 5 exams. Score matrix shape <code>(100, 5)</code>. Without any <code>for</code> loop, answer: <b>(1)</b> mean per exam, <b>(2)</b> top student's total, <b>(3)</b> how many students passed all 5 (passing = ≥ 50), <b>(4)</b> rank of student #7 by total score.
+      </div>
+      <div class="prob-think fragment">
+        <b>Plan first:</b> Which axis collapses for "per exam"? For "per student"? How does <code>(scores &gt;= 50).all(axis=1)</code> work? <code>argsort</code> + position lookup for rank.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">SOLUTION</div>
+        <pre class="code">rng = np.random.default_rng(<span class="num">42</span>)
+scores = rng.integers(<span class="num">30</span>, <span class="num">100</span>, size=(<span class="num">100</span>, <span class="num">5</span>))
+
+exam_mean   = scores.mean(axis=<span class="num">0</span>)               <span class="cmt"># (5,)</span>
+top_total   = scores.sum(axis=<span class="num">1</span>).max()           <span class="cmt"># scalar</span>
+all_pass    = (scores &gt;= <span class="num">50</span>).all(axis=<span class="num">1</span>).sum()    <span class="cmt"># int</span>
+
+totals      = scores.sum(axis=<span class="num">1</span>)
+rank_of_7   = (-totals).argsort().argsort()[<span class="num">7</span>] + <span class="num">1</span>  <span class="cmt"># 1-indexed</span></pre>
+      </div>
+    </section>
+
+    <!-- 19. Day 1 recap -->
+    <section class="slide">
+      <h2>Day 1 recap</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">Array</b> — fixed-type, n-d grid. Has <code>shape</code>, <code>dtype</code>.</li>
+        <li class="fragment"><b class="tk-green">Vectorize</b> — drop loops. Operator works element-wise.</li>
+        <li class="fragment"><b class="tk-purple">Broadcast</b> — different shapes auto-stretch (when compatible).</li>
+        <li class="fragment"><b class="tk-pink">Aggregate</b> — <code>sum / mean / max</code> along an <code>axis</code>.</li>
+        <li class="fragment"><b class="tk-red">Mask</b> — boolean array as index = filter.</li>
+      </ul>
+      <p class="callout fragment">Tomorrow: same ideas, but rows have names.</p>
+    </section>
+
+    <!-- ============================================== -->
+    <!--                   DAY  2                       -->
+    <!-- ============================================== -->
+
+
+  </div>
+</div>
+
+<!-- shared engine -->
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<!-- deck-local interactive logic -->
+<script>
+(function(){
+  function el(tag, cls, txt){
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt !== undefined) e.textContent = txt;
+    return e;
+  }
+
+  /* ---- slide 3: day-card selector ---- */
+  const detail = document.getElementById('day-detail');
+  const dayInfo = {
+    '1': `<b>Day 1 — NumPy · 1.5h</b><br/>
+          Arrays, shape, dtype, reshape, slicing, broadcasting, masks, axis-aware reductions. Foundation under pandas + sklearn + PyTorch.`,
+    '2': `<b>Day 2 — Pandas + Seaborn · 1.5h</b><br/>
+          60 min Pandas core (<code>read_csv</code>, <code>loc</code>/<code>iloc</code>, <code>groupby</code>, <code>merge</code>, <code>fillna</code>) → 20 min Seaborn EDA (<code>pairplot</code>, <code>heatmap</code>, <code>boxplot</code>) → 10 min buffer.`,
+    '3': `<b>Day 3 — scikit-learn · 2.0h</b><br/>
+          <code>train_test_split</code>, LogisticRegression + RandomForest, accuracy / confusion matrix / classification_report, plus a cross_val_score teaser.`
+  };
+  if (detail) {
+    document.querySelectorAll('.day-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        detail.classList.remove('empty');
+        detail.innerHTML = dayInfo[card.dataset.day];
+      });
+    });
+  }
+
+  /* ---- slide 11: indexing playground ---- */
+  const grid1d = document.querySelector('[data-row="1d"]');
+  if (grid1d) {
+    for (let i = 0; i < 10; i++) {
+      const c = el('div', 'np-cell', i);
+      c.dataset.idx = i;
+      grid1d.appendChild(c);
+    }
+  }
+  const grid2d = document.querySelector('[data-row="2d"]');
+  if (grid2d) {
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 4; c++) {
+        const cell = el('div', 'np-cell', r*4 + c);
+        cell.dataset.r = r; cell.dataset.c = c;
+        grid2d.appendChild(cell);
+      }
+    }
+  }
+  function clearMarks(grid){
+    grid.querySelectorAll('.np-cell').forEach(c => {
+      c.classList.remove('hi','pick','row','col','dim','mask','maskF');
+    });
+  }
+  document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid1d);
+      document.querySelectorAll('[data-bar="1d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid1d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach((c, i) => {
+        let on = false;
+        if (pick === '0' && i === 0) on = true;
+        else if (pick === '-1' && i === 9) on = true;
+        else if (pick === '2:5' && i >= 2 && i < 5) on = true;
+        else if (pick === '::2' && i % 2 === 0) on = true;
+        else if (pick === ':') on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-1d');
+      out.innerHTML = `a[${pick}] → <b>[${result.join(', ')}]</b>`;
+    });
+  });
+  document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      clearMarks(grid2d);
+      document.querySelectorAll('[data-bar="2d"] .idx-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cells = grid2d.querySelectorAll('.np-cell');
+      let result = [];
+      cells.forEach(c => {
+        const r = +c.dataset.r, col = +c.dataset.c;
+        let on = false;
+        if (pick === 'm[1,2]' && r === 1 && col === 2) on = true;
+        else if (pick === 'm[:,0]' && col === 0) on = true;
+        else if (pick === 'm[0,:]' && r === 0) on = true;
+        else if (pick === 'm[1:,1:]' && r >= 1 && col >= 1) on = true;
+        if (on) { c.classList.add('pick'); result.push(c.textContent); }
+        else c.classList.add('dim');
+      });
+      const out = document.getElementById('idx-out-2d');
+      out.innerHTML = `${pick} → <b>${result.length === 1 ? result[0] : '[' + result.join(', ') + ']'}</b>`;
+    });
+  });
+
+  /* ---- slide 14: axis aggregation viz ---- */
+  const aggGrid = document.getElementById('agg-grid');
+  const aggData = [[1,2,3],[4,5,6]];
+  if (aggGrid) {
+    aggData.forEach((row, r) => {
+      row.forEach((v, c) => {
+        const cell = el('div', 'np-cell', v);
+        cell.dataset.r = r; cell.dataset.c = c;
+        aggGrid.appendChild(cell);
+      });
+    });
+  }
+  const aggRowSums = document.getElementById('agg-rowsums');
+  const aggColSums = document.getElementById('agg-colsums');
+  function clearAggSums() {
+    if (aggRowSums) aggRowSums.innerHTML = '';
+    if (aggColSums) aggColSums.innerHTML = '';
+  }
+  function showColSums() {
+    if (!aggColSums) return;
+    const sums = [0,0,0];
+    aggData.forEach(row => row.forEach((v,c) => sums[c]+=v));
+    sums.forEach((s) => {
+      const cell = el('div', 'agg-sum-cell', '↓'+s);
+      aggColSums.appendChild(cell);
+    });
+  }
+  function showRowSums() {
+    if (!aggRowSums) return;
+    const sums = aggData.map(row => row.reduce((a,b)=>a+b,0));
+    sums.forEach((s) => {
+      const cell = el('div', 'agg-sum-cell', '→'+s);
+      aggRowSums.appendChild(cell);
+    });
+  }
+  document.querySelectorAll('.agg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const axis = btn.dataset.axis;
+      const cells = aggGrid.querySelectorAll('.np-cell');
+      cells.forEach(c => c.classList.remove('hi','row','col','pick'));
+      clearAggSums();
+      document.querySelectorAll('.agg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const out = document.getElementById('agg-out');
+      if (axis === 'all') {
+        cells.forEach(c => c.classList.add('hi'));
+        out.innerHTML = 'a.sum() → <b>21</b> &nbsp;<span style="color:#888">(all collapse)</span>';
+      } else if (axis === '0') {
+        cells.forEach(c => c.classList.add('col'));
+        showColSums();
+        out.innerHTML = 'a.sum(axis=0) → <b>[5, 7, 9]</b> &nbsp;<span style="color:#888">(rows collapse ↓)</span>';
+      } else if (axis === '1') {
+        cells.forEach(c => c.classList.add('row'));
+        showRowSums();
+        out.innerHTML = 'a.sum(axis=1) → <b>[6, 15]</b> &nbsp;<span style="color:#888">(cols collapse →)</span>';
+      }
+    });
+  });
+  /* ---- DAY 3 — decision boundary explorer ---- */
+  const dbSvg = document.getElementById('db-svg');
+  if (dbSvg) {
+    const W = 400, H = 320;
+    // synthetic 2-class data (slight curve)
+    const rng = (() => { let s = 7; return () => { s = (s*9301+49297) % 233280; return s/233280; }; })();
+    const pts = [];
+    for (let i = 0; i < 30; i++) {
+      const x = 60 + rng()*120, y = 60 + rng()*200;
+      pts.push({x, y, cls: 'A'});
+    }
+    for (let i = 0; i < 30; i++) {
+      const x = 220 + rng()*120, y = 60 + rng()*200;
+      pts.push({x, y, cls: 'B'});
+    }
+    // 8 outliers crossing the line — exposes LogReg weakness
+    for (let i = 0; i < 5; i++) {
+      pts.push({x: 250 + rng()*40, y: 80 + rng()*40, cls: 'A'});
+      pts.push({x: 130 + rng()*40, y: 220 + rng()*40, cls: 'B'});
+    }
+
+    const explainText = {
+      logreg: "<b>LogReg</b> — straight line. Splits plane into 2 half-planes. Fast, interpretable. Fails on curves.",
+      rf:     "<b>RandomForest</b> — many trees vote. Region boundary is jagged blocks. Captures complex shape, can overfit.",
+      knn:    "<b>KNN</b> — \"vote of nearest 5 points\". Boundary follows local density. Smooth-ish, slow at predict time."
+    };
+
+    function classify(model, x, y) {
+      if (model === 'logreg') {
+        return x < 200 ? 'A' : 'B';                                  // linear vertical line
+      }
+      if (model === 'rf') {
+        // axis-aligned rectangles
+        if (x < 180) return 'A';
+        if (x > 220) return 'B';
+        if (y < 150) return (x < 200 ? 'A' : 'B');
+        return (x < 210 ? 'A' : 'B');
+      }
+      // knn-ish: nearest 5
+      const sorted = pts
+        .map(p => ({d: (p.x-x)**2 + (p.y-y)**2, cls: p.cls}))
+        .sort((a,b) => a.d-b.d).slice(0, 5);
+      const a = sorted.filter(p => p.cls === 'A').length;
+      return a >= 3 ? 'A' : 'B';
+    }
+
+    function render(model) {
+      let svg = '';
+      // background shading by classify on coarse grid
+      const STEP = 16;
+      for (let x = 0; x < W; x += STEP) {
+        for (let y = 0; y < H; y += STEP) {
+          const c = classify(model, x + STEP/2, y + STEP/2);
+          const fill = c === 'A' ? 'rgba(184,238,240,0.55)' : 'rgba(255,214,204,0.55)';
+          svg += `<rect x="${x}" y="${y}" width="${STEP}" height="${STEP}" fill="${fill}"/>`;
+        }
+      }
+      // points
+      pts.forEach(p => {
+        const fill = p.cls === 'A' ? '#1d3fb6' : '#d62828';
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${fill}" stroke="#111" stroke-width="1"/>`;
+      });
+      dbSvg.innerHTML = svg;
+    }
+    render('logreg');
+
+    document.querySelectorAll('[data-toggle="db-model"] button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-toggle="db-model"] button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const m = btn.dataset.model;
+        render(m);
+        document.getElementById('db-explain').innerHTML = explainText[m];
+      });
+    });
+  }
+
+  /* ---- DAY 3 — KNN interactive ---- */
+  const knnSvg = document.getElementById('knn-svg');
+  if (knnSvg) {
+    const knnPts = [
+      {x: 55, y: 60, c: 'A'},  {x: 75, y: 110, c: 'A'}, {x: 110, y: 70, c: 'A'},
+      {x: 160, y: 120, c: 'A'},{x: 95, y: 150, c: 'A'},
+      {x: 220, y: 150, c: 'B'},{x: 250, y: 110, c: 'B'},{x: 235, y: 180, c: 'B'},
+      {x: 190, y: 90, c: 'B'}, {x: 270, y: 60, c: 'B'},{x: 200, y: 200, c: 'B'},
+    ];
+    let knnQ = {x: 160, y: 140};
+    let knnK = 5;
+    function knnRender() {
+      const sorted = knnPts.map(p => ({...p, d: Math.hypot(p.x - knnQ.x, p.y - knnQ.y)}))
+        .sort((a, b) => a.d - b.d);
+      const top = sorted.slice(0, knnK);
+      const votesA = top.filter(p => p.c === 'A').length;
+      const pred = votesA > knnK / 2 ? 'A' : 'B';
+      const predColor = pred === 'A' ? '#1d3fb6' : '#d62828';
+      let svg = '';
+      // lines to top-k
+      top.forEach(p => {
+        svg += `<line x1="${knnQ.x}" y1="${knnQ.y}" x2="${p.x}" y2="${p.y}" stroke="#7048e8" stroke-width="2"/>`;
+      });
+      // all points
+      knnPts.forEach(p => {
+        const inTop = top.includes(p);
+        const fill = p.c === 'A' ? '#1d3fb6' : '#d62828';
+        const stroke = inTop ? '#7048e8' : '#111';
+        const sw = inTop ? 3 : 1;
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      });
+      // query
+      svg += `<circle cx="${knnQ.x}" cy="${knnQ.y}" r="11" fill="${predColor}" fill-opacity="0.3" stroke="${predColor}" stroke-width="3" stroke-dasharray="4 3"/>`;
+      svg += `<text x="${knnQ.x}" y="${knnQ.y + 4}" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="${predColor}">?</text>`;
+      knnSvg.innerHTML = svg;
+      document.getElementById('knn-out').innerHTML =
+        `k=${knnK} · A=${votesA} · B=${knnK - votesA} → predict <b style="color:${predColor}">${pred}</b>`;
+    }
+    knnSvg.addEventListener('click', e => {
+      const rect = knnSvg.getBoundingClientRect();
+      const vbW = 320, vbH = 240;
+      knnQ.x = ((e.clientX - rect.left) / rect.width) * vbW;
+      knnQ.y = ((e.clientY - rect.top) / rect.height) * vbH;
+      knnRender();
+    });
+    const knnSlider = document.getElementById('knn-slider');
+    knnSlider.addEventListener('input', () => {
+      knnK = +knnSlider.value;
+      document.getElementById('knn-k').textContent = knnK;
+      knnRender();
+    });
+    knnRender();
+  }
+
+  /* ---- DAY 3 — threshold slider ---- */
+  const thrSvg = document.getElementById('thr-svg');
+  if (thrSvg) {
+    // synthetic predicted probabilities + true labels
+    const samples = [];
+    for (let i = 0; i < 50; i++) {
+      // class 0 — mostly low prob
+      samples.push({p: Math.max(0, Math.min(1, 0.3 + (Math.random()-0.5)*0.6)), y: 0});
+    }
+    for (let i = 0; i < 50; i++) {
+      samples.push({p: Math.max(0, Math.min(1, 0.7 + (Math.random()-0.5)*0.6)), y: 1});
+    }
+    function drawHist(thr) {
+      const W = 400, H = 220;
+      const bins = 20;
+      const cnt0 = new Array(bins).fill(0);
+      const cnt1 = new Array(bins).fill(0);
+      samples.forEach(s => {
+        const b = Math.min(bins-1, Math.floor(s.p * bins));
+        if (s.y === 0) cnt0[b]++; else cnt1[b]++;
+      });
+      const maxC = Math.max(...cnt0, ...cnt1);
+      const bw = W / bins;
+      let svg = '';
+      // axis
+      svg += `<line x1="0" y1="${H-20}" x2="${W}" y2="${H-20}" stroke="#111" stroke-width="1"/>`;
+      // bars
+      for (let i = 0; i < bins; i++) {
+        const h0 = (cnt0[i] / maxC) * (H - 30);
+        const h1 = (cnt1[i] / maxC) * (H - 30);
+        svg += `<rect x="${i*bw}" y="${H-20-h0}" width="${bw-1}" height="${h0}" fill="#1d3fb6" opacity="0.55"/>`;
+        svg += `<rect x="${i*bw}" y="${H-20-h1}" width="${bw-1}" height="${h1}" fill="#d62828" opacity="0.55"/>`;
+      }
+      // threshold line
+      const tx = thr * W;
+      svg += `<line x1="${tx}" y1="0" x2="${tx}" y2="${H-20}" stroke="#7048e8" stroke-width="3" stroke-dasharray="6 4"/>`;
+      // flip text to left side when slider near right edge so number stays visible
+      const textX = tx > W - 80 ? tx - 6 : tx + 6;
+      const anchor = tx > W - 80 ? 'end' : 'start';
+      svg += `<text x="${textX}" y="14" text-anchor="${anchor}" font-family="JetBrains Mono" font-size="12" font-weight="800" fill="#7048e8">thr=${thr.toFixed(2)}</text>`;
+      // legend
+      svg += `<rect x="${W-110}" y="${H-18}" width="10" height="10" fill="#1d3fb6" opacity="0.55"/>`;
+      svg += `<text x="${W-95}" y="${H-9}" font-family="JetBrains Mono" font-size="11">class 0</text>`;
+      svg += `<rect x="${W-50}" y="${H-18}" width="10" height="10" fill="#d62828" opacity="0.55"/>`;
+      svg += `<text x="${W-35}" y="${H-9}" font-family="JetBrains Mono" font-size="11">class 1</text>`;
+      thrSvg.innerHTML = svg;
+    }
+    function update() {
+      const thr = +document.getElementById('thr-slider').value / 100;
+      document.getElementById('thr-val').textContent = thr.toFixed(2);
+      drawHist(thr);
+      let TP=0, FP=0, TN=0, FN=0;
+      samples.forEach(s => {
+        const pred = s.p >= thr ? 1 : 0;
+        if (pred === 1 && s.y === 1) TP++;
+        else if (pred === 1 && s.y === 0) FP++;
+        else if (pred === 0 && s.y === 0) TN++;
+        else FN++;
+      });
+      document.getElementById('thr-tp').textContent = TP;
+      document.getElementById('thr-fp').textContent = FP;
+      document.getElementById('thr-tn').textContent = TN;
+      document.getElementById('thr-fn').textContent = FN;
+      const prec = TP / (TP + FP || 1);
+      const rec  = TP / (TP + FN || 1);
+      const f1   = 2 * prec * rec / ((prec + rec) || 1);
+      document.getElementById('thr-prec').textContent = prec.toFixed(2);
+      document.getElementById('thr-rec').textContent  = rec.toFixed(2);
+      document.getElementById('thr-f1').textContent   = f1.toFixed(2);
+    }
+    document.getElementById('thr-slider').addEventListener('input', update);
+    update();
+  }
+})();
+</script>
+
+</body>
+</html>
