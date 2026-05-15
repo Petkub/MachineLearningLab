@@ -1054,7 +1054,11 @@ scores[mask]
 <span class="cmt"># [88 71 95]</span>
 
 (scores &gt; <span class="num">70</span>).sum()  <span class="cmt"># 3</span>
-scores[scores &gt; <span class="num">70</span>].mean()</pre>
+scores[scores &gt; <span class="num">70</span>].mean()
+
+<span class="cmt"># mask = pick rows · where = transform</span>
+np.where(scores &gt; <span class="num">70</span>, <span class="num">1</span>, <span class="num">0</span>)
+<span class="cmt"># [0 1 1 1 0]  vectorized if/else</span></pre>
         </div>
         <div>
           <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">scores</div>
@@ -1068,9 +1072,14 @@ scores[scores &gt; <span class="num">70</span>].mean()</pre>
           <div style="margin-top: 10px; font-size:13px;color:var(--ink-soft);">
             scores[mask] → <b style="background:var(--cream);padding:1px 5px;">[88, 71, 95]</b>
           </div>
+
+          <div style="margin-top:14px;font-size:13px;color:var(--ink-soft);">Example — label pass/fail</div>
+          <pre class="code" style="margin-top:4px;">grades = np.array([<span class="num">55</span>, <span class="num">82</span>, <span class="num">90</span>, <span class="num">48</span>])
+np.where(grades &gt;= <span class="num">60</span>, <span class="str">"PASS"</span>, <span class="str">"FAIL"</span>)
+<span class="cmt"># ['FAIL' 'PASS' 'PASS' 'FAIL']</span></pre>
         </div>
       </div>
-      <p class="callout fragment">Boolean array as index = filter. Same idea drives <code>df[df.col &gt; x]</code> tomorrow.</p>
+      <p class="callout fragment"><code>scores[mask]</code> = <b>filter</b> (drop rows). <code>np.where</code> = <b>transform</b> (keep shape, swap values). Filter → <code>df[df.col &gt; x]</code> · where → encoding 0/1 for sklearn (Day 3).</p>
     </section>
 
     <!-- D1-P7: mask problem -->
@@ -1100,57 +1109,67 @@ x[mask] = np.median(x)            <span class="cmt"># replace in place</span></p
       </div>
     </section>
 
-    <!-- D1+: image is just an array -->
+    <!-- D1+: combine & split arrays -->
     <section class="slide">
-      <h2>An image is just an array</h2>
+      <h2>Combine &amp; split arrays</h2>
       <div class="split-2">
         <div>
-          <pre class="code"><span class="kw">from</span> PIL <span class="kw">import</span> Image
-img = np.asarray(Image.open(<span class="str">"cat.jpg"</span>))
+          <pre class="code">age    = np.array([<span class="num">17</span>, <span class="num">16</span>, <span class="num">18</span>])
+height = np.array([<span class="num">170</span>, <span class="num">165</span>, <span class="num">180</span>])
 
-img.shape        <span class="cmt"># (480, 640, 3)</span>
-<span class="cmt">#                  H    W    RGB</span>
+<span class="cmt"># glue end-to-end (1-D)</span>
+np.concatenate([age, height])
+<span class="cmt"># [17 16 18 170 165 180]</span>
 
-img[<span class="num">0</span>, <span class="num">0</span>]       <span class="cmt"># [r, g, b] of top-left</span>
-img[:, :, <span class="num">0</span>]    <span class="cmt"># red channel only</span>
-img[::-<span class="num">1</span>]       <span class="cmt"># flip vertically</span>
-img.mean(axis=(<span class="num">0</span>,<span class="num">1</span>))  <span class="cmt"># avg color (R,G,B)</span></pre>
+<span class="cmt"># each array = one FEATURE column</span>
+X = np.column_stack([age, height])
+X.shape          <span class="cmt"># (3, 2)</span>
+
+np.vstack([age, height]).shape  <span class="cmt"># (2, 3)</span>
+X[:<span class="num">2</span>], X[<span class="num">2</span>:]    <span class="cmt"># split rows: train | test</span></pre>
         </div>
         <div>
-          <div class="img-grid" style="grid-template-columns: repeat(6, 24px);">
-            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
-            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
-            <div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div>
-            <div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fff;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div>
-            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#fde9a3;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
-            <div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#d62828;"></div><div class="img-cell" style="background:#1d3fb6;"></div><div class="img-cell" style="background:#1d3fb6;"></div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px;">age &nbsp; height</div>
+          <div class="np-grid" style="grid-template-columns: repeat(2, 52px);">
+            <div class="np-cell">17</div><div class="np-cell">170</div>
+            <div class="np-cell">16</div><div class="np-cell">165</div>
+            <div class="np-cell">18</div><div class="np-cell">180</div>
           </div>
-          <div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">6×6×3 — each cell = (R, G, B).</div>
+          <div style="margin-top:10px;font-size:13px;color:var(--ink-soft);">
+            <code>column_stack</code> → <b style="background:var(--cream);padding:1px 5px;">X, shape (3, 2)</b>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:var(--ink-soft);">
+            row = a sample · column = a feature
+          </div>
         </div>
       </div>
-      <p class="callout fragment">Computer vision = NumPy on (H, W, C) arrays. Filters, convolutions, augmentation — all array ops.</p>
+      <p class="callout fragment">Every camp task: scattered arrays → one matrix <code>X</code> → split rows. Same three moves.</p>
     </section>
 
-    <!-- D1+ PROBLEM: view mutation -->
+    <!-- D1+ PROBLEM: build the feature matrix -->
     <section class="slide problem">
-      <h2>Why did my array change?</h2>
+      <h2>Build the feature matrix</h2>
       <div class="prob-q">
-        You write a function: <code>def normalize(x): x -= x.mean(); return x</code>. Caller passes <code>a</code>. After return — caller's <code>a</code> is also modified! Explain in one sentence. Fix it without renaming the function.
+        3 separate feature arrays (<code>age</code>, <code>height</code>, <code>weight</code>), each length 100, plus labels <code>y</code>. Build matrix <code>X</code> of shape <code>(100, 3)</code>, then split the <b>first 80</b> rows as train, <b>last 20</b> as test. No loop.
+      </div>
+      <div class="prob-given">
+        <div class="label">GIVEN</div>
+        rng = np.random.default_rng(0); age = rng.integers(15,19,100); height = rng.normal(170,8,100); weight = rng.normal(60,10,100); y = rng.integers(0,2,100)
+      </div>
+      <div class="prob-think fragment">
+        <b>Think:</b> Each array is one column → <code>np.column_stack</code>. Shape must be <code>(100, 3)</code>, not <code>(3, 100)</code>. Splitting = slicing rows, no shuffle needed here.
       </div>
       <div class="prob-sol fragment">
         <div class="label">SOLUTION</div>
-        <pre class="code"><span class="kw">def</span> normalize(x):
-    x = x - x.mean()        <span class="cmt"># rebind to new array</span>
-    <span class="kw">return</span> x
+        <pre class="code">X = np.column_stack([age, height, weight])  <span class="cmt"># (100, 3)</span>
 
-<span class="cmt"># or explicit copy at entry</span>
-<span class="kw">def</span> normalize(x):
-    x = x.copy()
-    x -= x.mean()
-    <span class="kw">return</span> x</pre>
+X_train, X_test = X[:<span class="num">80</span>], X[<span class="num">80</span>:]
+y_train, y_test = y[:<span class="num">80</span>], y[<span class="num">80</span>:]
+
+X_train.shape, X_test.shape  <span class="cmt"># (80, 3) (20, 3)</span></pre>
       </div>
       <div class="prob-twist fragment">
-        <b>Critical:</b> <code>x -= ...</code> is <i>in-place</i>. Mutates whatever object <code>x</code> references — including caller's. NumPy makes this trap easy to step in.
+        <b>Day 3:</b> <code>train_test_split(X, y, ...)</code> does this for you — and shuffles. Knowing the manual version means you read that line without panic.
       </div>
     </section>
 
@@ -1239,6 +1258,7 @@ rank_of_7   = (-totals).argsort().argsort()[<span class="num">7</span>] + <span 
         <li class="fragment"><b class="tk-purple">Broadcast</b> — different shapes auto-stretch (when compatible).</li>
         <li class="fragment"><b class="tk-pink">Aggregate</b> — <code>sum / mean / max</code> along an <code>axis</code>.</li>
         <li class="fragment"><b class="tk-red">Mask</b> — boolean array as index = filter.</li>
+        <li class="fragment"><b class="tk-blue">Combine</b> — <code>column_stack</code> arrays into <code>X</code>, slice rows to split.</li>
       </ul>
       <p class="callout fragment">Tomorrow: same ideas, but rows have names.</p>
     </section>
