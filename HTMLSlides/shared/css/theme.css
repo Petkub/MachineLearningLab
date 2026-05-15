@@ -568,6 +568,10 @@ body.wb-mode .side-nav { display: none; }
   pointer-events: auto;
   cursor: crosshair;
 }
+/* Overlay z-index trapped inside .deck (transform stacking context, body-z 0).
+   While drawing, lift whole deck subtree above body-level chrome
+   (controls 50 / side-nav 55 / home 60) but below toolbar (70). */
+body:has(.draw-overlay.active) .stage { z-index: 65; }
 .draw-canvas, .draw-svg {
   width: 100%;
   height: 100%;
@@ -576,6 +580,9 @@ body.wb-mode .side-nav { display: none; }
   user-select: none;
   -webkit-user-select: none;
 }
+/* SVG default = visiblePainted: transparent canvas ignores pointer events.
+   Force whole area as hit target while drawing, else widgets stay clickable. */
+.draw-overlay.active .draw-svg { pointer-events: all; }
 .draw-svg text { user-select: none; -webkit-user-select: none; pointer-events: none; }
 
 .draw-toolbar {

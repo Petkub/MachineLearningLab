@@ -28,10 +28,9 @@
   .deck .slide.dense p,
   .deck .slide.dense pre.code { margin-bottom: 6px; }
 
-  /* FORCE interactive widgets ABOVE draw-overlay (z:40) AND inside slide stacking ctx.
-     Slide is z:5, overlay z:40. Buttons need higher than 40 PLUS slide must establish
-     stacking context. Give slide.active z:9999 so children stack on top. */
-  .deck .slide.active { z-index: 9999 !important; }
+  /* Widgets clickable when NOT drawing: neutralize overlay so clicks reach
+     content. While drawing, theme.css lifts overlay above slide content.
+     (Do NOT raise .slide.active z-index — that re-buries the draw overlay.) */
   .deck .draw-overlay:not(.active) {
     z-index: 0 !important;
     pointer-events: none !important;
