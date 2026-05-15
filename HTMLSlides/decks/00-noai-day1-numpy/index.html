@@ -724,13 +724,14 @@ a.size    <span class="cmt"># 4</span></pre>
       <h2>Make arrays without typing them</h2>
       <pre class="code">np.zeros(<span class="num">5</span>)              <span class="cmt"># [0. 0. 0. 0. 0.]</span>
 np.ones((<span class="num">2</span>, <span class="num">3</span>))          <span class="cmt"># 2x3 ones</span>
+np.full(<span class="num">4</span>, <span class="num">25.0</span>)        <span class="cmt"># [25. 25. 25. 25.]</span>
 np.arange(<span class="num">0</span>, <span class="num">10</span>, <span class="num">2</span>)       <span class="cmt"># [0 2 4 6 8]</span>
 np.linspace(<span class="num">0</span>, <span class="num">1</span>, <span class="num">5</span>)      <span class="cmt"># [0. 0.25 0.5 0.75 1.]</span>
 np.random.rand(<span class="num">3</span>)        <span class="cmt"># 3 uniform [0,1)</span>
 np.random.randn(<span class="num">3</span>)       <span class="cmt"># 3 from N(0,1)</span>
 np.eye(<span class="num">3</span>)                <span class="cmt"># 3x3 identity</span></pre>
       <ul>
-        <li class="fragment"><b class="tk-blue">zeros / ones</b> — init buffers.</li>
+        <li class="fragment"><b class="tk-blue">zeros / ones / full</b> — init buffers. <code>full(n, v)</code> = fill with any value (dtype from <code>v</code>).</li>
         <li class="fragment"><b class="tk-green">arange</b> — like <code>range</code>, float-friendly.</li>
         <li class="fragment"><b class="tk-purple">linspace</b> — N evenly-spaced points. Plot workhorse.</li>
         <li class="fragment"><b class="tk-pink">random.rand / randn</b> — quick test data.</li>
