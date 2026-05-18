@@ -42,14 +42,18 @@
   }
 
   /* ===== day-section divider ===== */
+  /* NOTE: never put `display:` on `.slide.divider` — it beats the engine's
+     `.slide{display:none}` (specificity) so EVERY divider stays rendered,
+     absolute/inset:0, and overlays later widget slides → dead clicks.
+     Scope layout to the ACTIVE divider only. */
   .slide.divider {
     background:
       radial-gradient(circle at 15% 15%, rgba(253,233,163,0.55), transparent 45%),
       radial-gradient(circle at 85% 85%, rgba(184,238,240,0.4),  transparent 50%),
       var(--bg);
-    display: grid; place-items: center;
     text-align: center;
   }
+  .slide.divider.active { display: grid; place-items: center; }
   .divider .day-tag {
     display: inline-block;
     background: var(--ink); color: #fff;
