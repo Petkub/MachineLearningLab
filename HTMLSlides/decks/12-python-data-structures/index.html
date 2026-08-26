@@ -190,6 +190,17 @@
   .cheat td { border: 2px solid var(--ink); padding: 5px 8px; font-family: var(--font-mono); }
   .cheat td:first-child { background: var(--cream-soft); font-weight: 700; white-space: nowrap; }
   .cheat h4 { font-size: 14px; letter-spacing: 1px; margin-bottom: 8px; }
+
+  /* ===== quick-fire drill grid ===== */
+  .qf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 12px 0 4px; }
+  .qf-item {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    border: 2px solid var(--ink); background: #fff; padding: 6px 12px;
+    font-family: var(--font-mono); font-size: 13.5px;
+  }
+  .qf-item code { background: none; border: none; padding: 0; font-weight: 700; }
+  .qf-a { font-weight: 800; color: var(--accent-green); white-space: nowrap; }
+  .qf-a.err { color: var(--accent-red); }
 </style>
 </head>
 <body>
@@ -199,7 +210,7 @@
 
     <section class="slide title">
       <h1>Python<br/>Data Structures</h1>
-      <p class="subtitle">Lists &amp; Dictionaries — how programs remember many things.<br/>90 minutes · pure Python, no libraries</p>
+      <p class="subtitle">Lists &amp; Dictionaries — how programs remember many things.<br/>2 hours · pure Python, no libraries<br/><span style="font-size:14px;">14 exercise slides — drop the quick-fire drills to fit 90 minutes</span></p>
       <div class="author">Petkub :D</div>
     </section>
 
@@ -250,7 +261,7 @@ song5 = <span class="str">"Lose Yourself"</span></pre>
     <section class="slide divider">
       <div class="roman">I</div>
       <div>
-        <span class="day-tag">PART ONE &middot; 40 MIN</span>
+        <span class="day-tag">PART ONE &middot; 50 MIN</span>
         <h1>The <em>List</em></h1>
         <p class="sub">Many things, in order.<br/>Numbered from zero.</p>
       </div>
@@ -547,11 +558,81 @@ print(sum(scores) / len(scores))    <span class="cmt"># 72.28...</span></pre>
       </div>
     </section>
 
+
+    <section class="slide dense">
+      <h2>Quick-fire &mdash; predict the output</h2>
+      <pre class="code">xs = [<span class="num">3</span>, <span class="num">7</span>, <span class="num">1</span>, <span class="num">9</span>]</pre>
+      <div class="qf">
+        <div class="qf-item"><code>xs[1]</code><span class="qf-a fragment">7</span></div>
+        <div class="qf-item"><code>xs[-2]</code><span class="qf-a fragment">1</span></div>
+        <div class="qf-item"><code>len(xs)</code><span class="qf-a fragment">4</span></div>
+        <div class="qf-item"><code>xs[1:3]</code><span class="qf-a fragment">[7, 1]</span></div>
+        <div class="qf-item"><code>xs[2:2]</code><span class="qf-a fragment">[]</span></div>
+        <div class="qf-item"><code>7 in xs</code><span class="qf-a fragment">True</span></div>
+        <div class="qf-item"><code>xs[4]</code><span class="qf-a err fragment">IndexError</span></div>
+        <div class="qf-item"><code>xs[1:99]</code><span class="qf-a fragment">[7, 1, 9]</span></div>
+        <div class="qf-item"><code>xs.append(5)</code><span class="qf-a fragment">None &middot; xs grows</span></div>
+        <div class="qf-item"><code>sorted(xs)[0]</code><span class="qf-a fragment">1</span></div>
+      </div>
+      <p class="callout fragment">Two of these look like the same mistake but are not: <code>xs[4]</code> crashes,
+        <code>xs[1:99]</code> does not. Slices forgive; indexes do not.</p>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Biggest without max()</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">temps = [<span class="num">28</span>, <span class="num">31</span>, <span class="num">27</span>, <span class="num">35</span>, <span class="num">30</span>]</pre>
+        Find the <b>hottest</b> temperature using a loop. You may not use <code>max()</code>.<br/>
+        Then: also print <b>which day</b> it was (day 0, day 1, ...).
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">best = temps[<span class="num">0</span>]                      <span class="cmt"># start with a REAL value, not 0</span>
+best_day = <span class="num">0</span>
+<span class="kw">for</span> i, t <span class="kw">in</span> enumerate(temps):
+    <span class="kw">if</span> t &gt; best:
+        best = t
+        best_day = i
+print(best, <span class="str">"on day"</span>, best_day)     <span class="cmt"># 35 on day 3</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Why start at <code>temps[0]</code> and not <code>0</code>?</b> Try it with
+        <code>[-5, -9, -3]</code>. Starting from <code>0</code> gives you <code>0</code> &mdash; a temperature
+        that is not even in the list.
+      </div>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Clean the sign-up sheet</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">signups = [<span class="str">"ann"</span>, <span class="str">"ben"</span>, <span class="str">"ann"</span>, <span class="str">"cat"</span>, <span class="str">"ben"</span>, <span class="str">"ann"</span>]</pre>
+        Build <code>unique</code> &mdash; each name once, <b>keeping the order they first signed up</b>.
+        Then print how many people actually signed up.
+      </div>
+      <div class="prob-think fragment">
+        <b>Before you code:</b> you already know the skeleton. Empty &rarr; loop &rarr; test &rarr; append.
+        The only new part is the test. What is it?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">unique = []
+<span class="kw">for</span> name <span class="kw">in</span> signups:
+    <span class="kw">if</span> name <span class="kw">not</span> <span class="kw">in</span> unique:      <span class="cmt"># the test: have I seen it already?</span>
+        unique.append(name)
+print(unique)                <span class="cmt"># ['ann', 'ben', 'cat']</span>
+print(len(unique))           <span class="cmt"># 3</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Careful with <code>in</code>:</b> the test is against <code>unique</code>, the list you are
+        <em>building</em> &mdash; not <code>signups</code>. Test against <code>signups</code> and you keep nothing.
+      </div>
+    </section>
+
     <!-- ============ II. DICTIONARIES ============ -->
     <section class="slide divider">
       <div class="roman">II</div>
       <div>
-        <span class="day-tag">PART TWO &middot; 30 MIN</span>
+        <span class="day-tag">PART TWO &middot; 40 MIN</span>
         <h1>The <em>Dictionary</em></h1>
         <p class="sub">Look things up by name.<br/>No counting required.</p>
       </div>
@@ -779,11 +860,83 @@ print(counts)      <span class="cmt"># {'b': 1, 'a': 3, 'n': 2}</span></pre>
       </div>
     </section>
 
+
+    <section class="slide dense">
+      <h2>Quick-fire &mdash; predict the output</h2>
+      <pre class="code">d = {<span class="str">"a"</span>: <span class="num">1</span>, <span class="str">"b"</span>: <span class="num">2</span>}</pre>
+      <p style="font-size:13px;color:var(--ink-soft);margin:-4px 0 2px;">The lines run <b>in order</b> &mdash; the last two answers use the changes made just above them.</p>
+      <div class="qf">
+        <div class="qf-item"><code>d["a"]</code><span class="qf-a fragment">1</span></div>
+        <div class="qf-item"><code>d["z"]</code><span class="qf-a err fragment">KeyError</span></div>
+        <div class="qf-item"><code>d.get("z")</code><span class="qf-a fragment">None</span></div>
+        <div class="qf-item"><code>d.get("z", 0)</code><span class="qf-a fragment">0</span></div>
+        <div class="qf-item"><code>"b" in d</code><span class="qf-a fragment">True</span></div>
+        <div class="qf-item"><code>2 in d</code><span class="qf-a fragment">False &middot; keys only!</span></div>
+        <div class="qf-item"><code>len(d)</code><span class="qf-a fragment">2</span></div>
+        <div class="qf-item"><code>d["a"] = 9</code><span class="qf-a fragment">overwrites &rarr; 9</span></div>
+        <div class="qf-item"><code>d["c"] = 3</code><span class="qf-a fragment">adds a new entry</span></div>
+        <div class="qf-item"><code>list(d.values())</code><span class="qf-a fragment">[9, 2, 3]</span></div>
+      </div>
+      <p class="callout fragment"><code>2 in d</code> is <b>False</b> even though 2 is right there as a value.
+        That one catches everybody once.</p>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Update the menu</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">menu    = {<span class="str">"pad thai"</span>: <span class="num">60</span>, <span class="str">"green curry"</span>: <span class="num">80</span>}
+new     = {<span class="str">"green curry"</span>: <span class="num">85</span>, <span class="str">"tom yum"</span>: <span class="num">70</span>}</pre>
+        Apply <code>new</code> to <code>menu</code>: prices that changed get updated, dishes that are new
+        get added. Use a loop &mdash; then print the total price of the whole menu.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;"><span class="kw">for</span> dish, price <span class="kw">in</span> new.items():
+    menu[dish] = price          <span class="cmt"># one line does BOTH jobs</span>
+
+print(menu)                     <span class="cmt"># {'pad thai': 60, 'green curry': 85, 'tom yum': 70}</span>
+print(sum(menu.values()))       <span class="cmt"># 215</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>You did not need an <code>if</code>.</b> <code>menu[dish] = price</code> already means
+        "add it, or replace it". That is exactly why dictionaries are pleasant to update
+        and two parallel lists are not.
+      </div>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Longest word wins</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">sentence = <span class="str">"the quick brown fox jumps"</span></pre>
+        Build <code>lengths</code> = <code>{word: how many letters}</code>, then print the
+        <b>longest word</b>.<br/>
+        Hint: <code>sentence.split()</code> gives you <code>['the', 'quick', ...]</code>.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">lengths = {}
+<span class="kw">for</span> w <span class="kw">in</span> sentence.split():
+    lengths[w] = len(w)
+
+longest = <span class="str">""</span>
+<span class="kw">for</span> w, n <span class="kw">in</span> lengths.items():
+    <span class="kw">if</span> n &gt; len(longest):
+        longest = w
+print(lengths)
+print(longest)                  <span class="cmt"># quick</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>"quick", "brown" and "jumps" are all 5 letters.</b> Your code returned one of them &mdash;
+        which? Whichever came <b>first</b>, because <code>&gt;</code> only replaces on a strictly bigger
+        value. Swap it to <code>&gt;=</code> and you get the <b>last</b> one instead.
+      </div>
+    </section>
+
     <!-- ============ III. LIST OF DICTIONARIES ============ -->
     <section class="slide divider">
       <div class="roman">III</div>
       <div>
-        <span class="day-tag">PART THREE &middot; 20 MIN</span>
+        <span class="day-tag">PART THREE &middot; 25 MIN</span>
         <h1>List of <em>Dictionaries</em></h1>
         <p class="sub">Many records, each with many fields.<br/>The shape real data actually has.</p>
       </div>
@@ -885,6 +1038,82 @@ print(total / len(students))       <span class="cmt"># 80.0</span></pre>
       <div class="prob-twist fragment">
         <b>Notice what (1) really is:</b> a list search by a <em>name</em>. If you do that a lot,
         that is Python telling you the outer container maybe wanted to be a dictionary keyed by name.
+      </div>
+    </section>
+
+
+    <section class="slide dense">
+      <h2>Quick-fire &mdash; predict the output</h2>
+      <pre class="code">students = [{<span class="str">"name"</span>: <span class="str">"Ann"</span>, <span class="str">"score"</span>: <span class="num">82</span>}, {<span class="str">"name"</span>: <span class="str">"Ben"</span>, <span class="str">"score"</span>: <span class="num">91</span>}]</pre>
+      <div class="qf">
+        <div class="qf-item"><code>len(students)</code><span class="qf-a fragment">2</span></div>
+        <div class="qf-item"><code>students[0]["name"]</code><span class="qf-a fragment">'Ann'</span></div>
+        <div class="qf-item"><code>students[-1]["score"]</code><span class="qf-a fragment">91</span></div>
+        <div class="qf-item"><code>len(students[0])</code><span class="qf-a fragment">2 &middot; fields, not students</span></div>
+        <div class="qf-item"><code>students["Ann"]</code><span class="qf-a err fragment">TypeError</span></div>
+        <div class="qf-item"><code>students[0]["club"]</code><span class="qf-a err fragment">KeyError</span></div>
+        <div class="qf-item"><code>"Ann" in students</code><span class="qf-a fragment">False</span></div>
+        <div class="qf-item"><code>students[0]["score"] = 85</code><span class="qf-a fragment">edits Ann's record</span></div>
+      </div>
+      <p class="callout fragment">Two different errors from one typo: a <b>name</b> in the first bracket is a
+        <code>TypeError</code>, a wrong <b>key</b> in the second is a <code>KeyError</code>.
+        The error name tells you which bracket to look at.</p>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Who is in which club?</h2>
+      <div class="prob-q">
+        Using the roster (Ann/robotics, Ben/music, Cat/robotics, Dan/art, Eve/music) &mdash;
+        build <code>members</code> = <code>{club: [names]}</code>, so that
+        <code>members["robotics"]</code> gives <code>['Ann', 'Cat']</code>.
+      </div>
+      <div class="prob-think fragment">
+        <b>This is the counting pattern with one change.</b> Instead of a number going up by one,
+        the value is a <b>list</b> you append a name to. What should the missing-key fallback be?
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">members = {}
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    club = s[<span class="str">"club"</span>]
+    <span class="kw">if</span> club <span class="kw">not</span> <span class="kw">in</span> members:
+        members[club] = []            <span class="cmt"># first time: start an empty list</span>
+    members[club].append(s[<span class="str">"name"</span>])
+
+<span class="cmt"># shorter, same thing:</span>
+<span class="cmt"># members.setdefault(club, []).append(s["name"])</span>
+print(members)   <span class="cmt"># {'robotics': ['Ann','Cat'], 'music': ['Ben','Eve'], 'art': ['Dan']}</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Do not write</b> <code>members.get(club, []).append(name)</code>. That appends to a
+        throwaway empty list when the key is missing &mdash; nothing is saved and nothing errors.
+        A silent bug, the worst kind.
+      </div>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Grade bump</h2>
+      <div class="prob-q">
+        The teacher adds <b>5 points to everyone in robotics</b> (capped at 100),
+        then a new student joins: <b>Gus</b>, 79, art.<br/>
+        Write both changes, then print every name with its final score.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;"><span class="kw">for</span> s <span class="kw">in</span> students:
+    <span class="kw">if</span> s[<span class="str">"club"</span>] == <span class="str">"robotics"</span>:
+        s[<span class="str">"score"</span>] = min(s[<span class="str">"score"</span>] + <span class="num">5</span>, <span class="num">100</span>)
+
+students.append({<span class="str">"name"</span>: <span class="str">"Gus"</span>, <span class="str">"score"</span>: <span class="num">79</span>, <span class="str">"club"</span>: <span class="str">"art"</span>})
+
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    print(s[<span class="str">"name"</span>], s[<span class="str">"score"</span>])</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Editing inside a loop is fine</b> &mdash; <code>s</code> is the real record, not a copy,
+        so <code>s["score"] = ...</code> changes the roster. But <b>appending</b> to a list while
+        looping over it is not: the loop would keep finding the items you just added, forever.
+        That is why the <code>append</code> is outside.
       </div>
     </section>
 
