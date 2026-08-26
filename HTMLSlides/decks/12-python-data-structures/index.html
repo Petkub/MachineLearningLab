@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Python Data Structures — Lists &amp; Dictionaries</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+<link rel="stylesheet" href="../../shared/css/theme.css" />
+<link rel="stylesheet" href="../../shared/css/widgets.css" />
+
+<style>
+  /* keep slide content clear of the draw-toolbar */
+  .deck .slide:not(.title):not(.divider) { padding-top: 64px !important; }
+  .deck .slide h2 { margin-bottom: 10px !important; }
+  .deck .slide.dense ul li,
+  .deck .slide.dense p,
+  .deck .slide.dense pre.code { margin-bottom: 6px; }
+
+  /* Widgets clickable when NOT drawing. Do NOT raise .slide.active z-index. */
+  .deck .draw-overlay:not(.active) {
+    z-index: 0 !important; pointer-events: none !important; visibility: hidden !important;
+  }
+  .deck .draw-overlay:not(.active) .draw-svg {
+    pointer-events: none !important; visibility: hidden !important;
+  }
+
+  /* ===== section divider =====
+     NOTE: never put `display:` on `.slide.divider` — it beats the engine's
+     `.slide{display:none}` so EVERY divider stays rendered and swallows clicks
+     on later widget slides. Scope layout to `.divider.active` only. */
+  .slide.divider {
+    background:
+      radial-gradient(circle at 15% 15%, rgba(253,233,163,0.55), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(184,238,240,0.4),  transparent 50%),
+      var(--bg);
+    text-align: center;
+  }
+  .slide.divider.active { display: grid; place-items: center; }
+  .divider .day-tag {
+    display: inline-block; background: var(--ink); color: #fff;
+    padding: 6px 18px; font-family: var(--font-mono);
+    font-weight: 800; font-size: 16px; letter-spacing: 2px;
+  }
+  .divider h1 { font-size: 88px; line-height: 1.05; margin-top: 14px; letter-spacing: -0.03em; }
+  .divider h1 em { font-style: normal; background: var(--cream); padding: 0 14px; }
+  .divider p.sub { font-size: 22px; color: var(--ink-soft); margin-top: 16px; }
+  .divider .roman {
+    font-size: 160px; color: var(--cream); font-weight: 800;
+    position: absolute; top: 40px; right: 60px; line-height: 1;
+  }
+
+  /* ===== layout helpers ===== */
+  .split-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .split-2.wide-left { grid-template-columns: 1.35fr 0.65fr; }
+  .split-2.wide-right { grid-template-columns: 0.65fr 1.35fr; }
+  .split-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .slide.dense pre.code { font-size: 13.5px; line-height: 1.45; }
+  .slide.tighter pre.code { font-size: 13px; line-height: 1.42; }
+
+  .box {
+    border: 2px solid var(--ink); background: #fff;
+    padding: 12px 14px; box-shadow: 4px 4px 0 var(--ink);
+  }
+  .box h4 { font-size: 14px; letter-spacing: 1px; margin-bottom: 6px; font-weight: 800; }
+  .box.soft { box-shadow: none; background: var(--cream-soft); }
+  .box.good { border-color: var(--accent-green); }
+  .box.bad  { border-color: var(--accent-red); }
+
+  .pitfall {
+    border: 2px solid var(--accent-red); background: #fff5f3;
+    padding: 10px 14px; margin-top: 12px; font-size: 14px;
+  }
+  .pitfall b { color: var(--accent-red); }
+
+  .checklist { font-size: 15px; }
+  .checklist li { margin-bottom: 6px; }
+  .checklist code { background: var(--cream-soft); padding: 1px 5px; border: 1px solid var(--ink); }
+
+  /* ===== your-turn slide theme ===== */
+  .slide.problem h2::before {
+    content: "\25B8 YOUR TURN"; display: inline-block;
+    background: var(--ink); color: #fff;
+    font-size: 12px; font-weight: 800; padding: 3px 10px;
+    margin-right: 12px; vertical-align: middle; letter-spacing: 1px;
+  }
+  .prob-q {
+    border-left: 6px solid var(--accent-purple); background: #f5efff;
+    padding: 12px 16px; margin: 10px 0 14px; font-size: 15px; line-height: 1.55;
+  }
+  .prob-q b { background: var(--cream); padding: 1px 5px; }
+  .prob-think {
+    border: 2px solid var(--accent-blue); background: #eef1ff;
+    padding: 10px 14px; margin: 10px 0; font-size: 14px; line-height: 1.55;
+  }
+  .prob-think b { color: var(--accent-blue); }
+  .prob-sol {
+    border-left: 6px solid var(--accent-green); background: #effbef;
+    padding: 12px 16px; margin: 10px 0; font-size: 14px;
+  }
+  .prob-sol .label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1px;
+    color: var(--accent-green); margin-bottom: 6px;
+  }
+  .prob-twist {
+    border: 2px solid var(--accent-red); background: #fff5f3;
+    padding: 10px 14px; margin: 10px 0; font-size: 14px;
+  }
+  .prob-twist b { color: var(--accent-red); }
+  .slide.problem pre.code { font-size: 13px; line-height: 1.4; }
+
+  /* ===== static box-diagram (non-widget slides) ===== */
+  .boxrow { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .cell {
+    border: 3px solid var(--ink); background: #fff; min-width: 78px;
+    text-align: center; font-family: var(--font-mono); font-weight: 700;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .cell .v { padding: 10px 8px; font-size: 15px; }
+  .cell .i {
+    border-top: 2px solid var(--ink); background: var(--cream);
+    font-size: 12px; padding: 3px 0; font-weight: 800;
+  }
+  .cell.neg .i { background: var(--accent-cyan); }
+  .cell.hit { background: var(--cream-soft); }
+
+  .kvrow { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+  .kv {
+    border: 3px solid var(--ink); background: #fff; box-shadow: 3px 3px 0 var(--ink);
+    font-family: var(--font-mono); font-weight: 700; min-width: 120px;
+  }
+  .kv .k { background: var(--accent-cyan); font-size: 13px; padding: 4px 8px; border-bottom: 2px solid var(--ink); }
+  .kv .val { font-size: 16px; padding: 8px; text-align: center; }
+
+  /* ===== widget shells ===== */
+  .wg {
+    border: 3px solid var(--ink); background: #fff;
+    box-shadow: 5px 5px 0 var(--ink); padding: 14px 16px; margin-top: 6px;
+  }
+  .wg-title {
+    font-size: 11px; font-weight: 800; letter-spacing: 2px;
+    color: var(--ink-soft); margin-bottom: 10px;
+  }
+  .wg-out {
+    font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+    border: 2px solid var(--ink); background: var(--cream-soft);
+    padding: 8px 12px; margin-top: 10px; min-height: 38px;
+  }
+  .wg-out.err { background: #fff5f3; border-color: var(--accent-red); color: var(--accent-red); }
+  .wg-hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+  .btn {
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+    border: 2px solid var(--ink); background: #fff; padding: 6px 11px;
+    cursor: pointer; box-shadow: 2px 2px 0 var(--ink);
+  }
+  .btn:hover { background: var(--cream); }
+  .btn:active { transform: translate(2px,2px); box-shadow: none; }
+  .btn.on { background: var(--ink); color: #fff; }
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .wg input[type=text] {
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+    border: 2px solid var(--ink); padding: 6px 10px; width: 190px;
+  }
+  .wg input[type=range] { width: 190px; vertical-align: middle; }
+  .cell.click { cursor: pointer; }
+  .cell.click:hover { background: var(--cream); }
+  .cell.sel { background: var(--cream); }
+  .cell.range { background: var(--accent-cyan); }
+
+  /* record drill-down table */
+  .rec-tbl { border-collapse: collapse; font-family: var(--font-mono); font-size: 13px; }
+  .rec-tbl th, .rec-tbl td { border: 2px solid var(--ink); padding: 6px 10px; }
+  .rec-tbl th { background: var(--ink); color: #fff; font-size: 12px; letter-spacing: 1px; }
+  .rec-tbl td { cursor: pointer; background: #fff; }
+  .rec-tbl td:hover { background: var(--cream); }
+  .rec-tbl td.sel { background: var(--cream); }
+  .rec-tbl tr.selrow td { background: var(--cream-soft); }
+  .rec-tbl td.idx { background: var(--accent-cyan); cursor: default; font-weight: 800; }
+
+  /* cheat sheet */
+  .cheat { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .cheat table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .cheat td { border: 2px solid var(--ink); padding: 5px 8px; font-family: var(--font-mono); }
+  .cheat td:first-child { background: var(--cream-soft); font-weight: 700; white-space: nowrap; }
+  .cheat h4 { font-size: 14px; letter-spacing: 1px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="deck">
+
+    <section class="slide title">
+      <h1>Python<br/>Data Structures</h1>
+      <p class="subtitle">Lists &amp; Dictionaries — how programs remember many things.<br/>90 minutes · pure Python, no libraries</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+    <section class="slide">
+      <h2>One box, or many boxes?</h2>
+      <div class="split-2">
+        <div class="box bad fragment">
+          <h4>WITHOUT A LIST</h4>
+          <pre class="code">song1 = <span class="str">"Levitating"</span>
+song2 = <span class="str">"Bohemian Rhapsody"</span>
+song3 = <span class="str">"Shape of You"</span>
+song4 = <span class="str">"Viva La Vida"</span>
+song5 = <span class="str">"Lose Yourself"</span></pre>
+          <p style="font-size:13.5px;margin-top:8px;">Now add a 6th song. Now print them all.
+            Now sort them. <b>You have to rewrite the program every time.</b></p>
+        </div>
+        <div class="box good fragment">
+          <h4>WITH A LIST</h4>
+          <pre class="code">playlist = [<span class="str">"Levitating"</span>, <span class="str">"Bohemian Rhapsody"</span>,
+            <span class="str">"Shape of You"</span>, <span class="str">"Viva La Vida"</span>,
+            <span class="str">"Lose Yourself"</span>]</pre>
+          <p style="font-size:13.5px;margin-top:8px;">One name holds all of them.
+            Add, print, sort, count — <b>one line each, any size.</b></p>
+        </div>
+      </div>
+      <p class="callout fragment">A <b>data structure</b> is a container. You learn two today; they cover most of Python.</p>
+    </section>
+
+    <section class="slide">
+      <h2>What you will build today</h2>
+      <ul>
+        <li class="fragment"><b class="tk-blue">List</b> — many things <em>in order</em>. A playlist. A queue. Scores in the order they came in.</li>
+        <li class="fragment"><b class="tk-red">Dictionary</b> — things you <em>look up by name</em>. A menu: price of "pad thai". A phonebook.</li>
+        <li class="fragment"><b>List of dictionaries</b> — the shape real data actually has.
+          A class roster: many students, each with a name, a score, a club.</li>
+      </ul>
+      <div class="box soft fragment" style="margin-top:16px;">
+        <h4>BY THE END</h4>
+        <pre class="code">students = [{<span class="str">"name"</span>: <span class="str">"Ann"</span>, <span class="str">"score"</span>: <span class="num">82</span>, <span class="str">"club"</span>: <span class="str">"robotics"</span>},
+            {<span class="str">"name"</span>: <span class="str">"Ben"</span>, <span class="str">"score"</span>: <span class="num">91</span>, <span class="str">"club"</span>: <span class="str">"music"</span>}]
+
+<span class="cmt"># you will write the code that finds the top scorer</span></pre>
+      </div>
+      <p class="callout fragment">Assumed known: variables, <code>print</code>, <code>if</code>, <code>for</code>, functions. Nothing else.</p>
+    </section>
+
+    <!-- ============ I. LISTS ============ -->
+    <section class="slide divider">
+      <div class="roman">I</div>
+      <div>
+        <span class="day-tag">PART ONE &middot; 40 MIN</span>
+        <h1>The <em>List</em></h1>
+        <p class="sub">Many things, in order.<br/>Numbered from zero.</p>
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Making a list</h2>
+      <pre class="code">playlist = [<span class="str">"Levitating"</span>, <span class="str">"Shape of You"</span>, <span class="str">"Viva La Vida"</span>]
+scores   = [<span class="num">82</span>, <span class="num">91</span>, <span class="num">67</span>, <span class="num">75</span>]
+empty    = []                       <span class="cmt"># a list with nothing in it yet</span>
+mixed    = [<span class="str">"Ann"</span>, <span class="num">82</span>, <span class="kw">True</span>]           <span class="cmt"># allowed, but rarely a good idea</span></pre>
+      <ul style="margin-top:14px;">
+        <li class="fragment">Square brackets <code>[ ]</code>. Items separated by commas.</li>
+        <li class="fragment">The items are called <b>elements</b>. They stay in the order you wrote them.</li>
+        <li class="fragment"><code>len(playlist)</code> tells you how many: <b>3</b>.</li>
+      </ul>
+      <p class="callout fragment">Order is the whole point of a list. Song 1 plays before song 2.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Index — counting starts at ZERO</h2>
+      <pre class="code">playlist = [<span class="str">"Levitating"</span>, <span class="str">"Shape of You"</span>, <span class="str">"Viva La Vida"</span>, <span class="str">"Lose Yourself"</span>]</pre>
+      <div class="boxrow">
+        <div class="cell"><div class="v">"Levitating"</div><div class="i">0</div></div>
+        <div class="cell"><div class="v">"Shape of You"</div><div class="i">1</div></div>
+        <div class="cell"><div class="v">"Viva La Vida"</div><div class="i">2</div></div>
+        <div class="cell"><div class="v">"Lose Yourself"</div><div class="i">3</div></div>
+      </div>
+      <pre class="code fragment">playlist[<span class="num">0</span>]   <span class="cmt"># "Levitating"    &larr; the FIRST one</span>
+playlist[<span class="num">2</span>]   <span class="cmt"># "Viva La Vida"</span>
+playlist[<span class="num">4</span>]   <span class="cmt"># IndexError: list index out of range</span></pre>
+      <div class="pitfall fragment">
+        <b>The #1 beginner bug.</b> 4 songs means indexes <code>0 1 2 3</code>. The last index is
+        <code>len(playlist) - 1</code>, never <code>len(playlist)</code>.
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Negative index — counting from the back</h2>
+      <div class="boxrow">
+        <div class="cell"><div class="v">"Levitating"</div><div class="i">0</div></div>
+        <div class="cell"><div class="v">"Shape of You"</div><div class="i">1</div></div>
+        <div class="cell"><div class="v">"Viva La Vida"</div><div class="i">2</div></div>
+        <div class="cell"><div class="v">"Lose Yourself"</div><div class="i">3</div></div>
+      </div>
+      <div class="boxrow" style="margin-top:-4px;">
+        <div class="cell neg"><div class="v">&nbsp;</div><div class="i">-4</div></div>
+        <div class="cell neg"><div class="v">&nbsp;</div><div class="i">-3</div></div>
+        <div class="cell neg"><div class="v">&nbsp;</div><div class="i">-2</div></div>
+        <div class="cell neg"><div class="v">&nbsp;</div><div class="i">-1</div></div>
+      </div>
+      <pre class="code fragment">playlist[-<span class="num">1</span>]  <span class="cmt"># "Lose Yourself"  &larr; the LAST one, always</span>
+playlist[-<span class="num">2</span>]  <span class="cmt"># "Viva La Vida"</span></pre>
+      <p class="callout fragment">There is no <code>-0</code>. Back-counting starts at <b>-1</b>, because <code>0</code> is already taken by the front.</p>
+    </section>
+
+    <section class="slide">
+      <h2>Play with it — index explorer</h2>
+      <div class="wg" data-idx-explorer>
+        <div class="wg-title">CLICK A BOX &middot; OR DRAG THE SLICE SLIDERS</div>
+        <div class="boxrow" data-cells></div>
+        <div class="btnrow" style="margin-top:10px; align-items:center;">
+          <button class="btn on" data-mode="index">index mode</button>
+          <button class="btn" data-mode="slice">slice mode</button>
+          <span data-sliders style="display:none; margin-left:10px; font-size:12px; font-weight:700;">
+            start <input type="range" data-start min="0" max="5" value="1" style="width:120px;">
+            <span data-sv>1</span>
+            &nbsp; end <input type="range" data-end min="0" max="5" value="4" style="width:120px;">
+            <span data-ev>4</span>
+          </span>
+        </div>
+        <div class="wg-out" data-out>Click a box above.</div>
+        <div class="wg-hint" data-hint>Tip: click the same box twice to see its negative index.</div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Slicing — take a piece of the list</h2>
+      <pre class="code">nums = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>]
+
+nums[<span class="num">1</span>:<span class="num">4</span>]    <span class="cmt"># [20, 30, 40]   &larr; from 1, STOP BEFORE 4</span>
+nums[:<span class="num">3</span>]     <span class="cmt"># [10, 20, 30]   &larr; from the start</span>
+nums[<span class="num">2</span>:]     <span class="cmt"># [30, 40, 50]   &larr; to the end</span>
+nums[-<span class="num">2</span>:]    <span class="cmt"># [40, 50]       &larr; last two</span></pre>
+      <div class="prob-think fragment">
+        <b>Read it as:</b> "start here, stop <em>before</em> there." <code>nums[1:4]</code> gives you
+        <b>4 &minus; 1 = 3</b> items. That subtraction always works.
+      </div>
+      <div class="pitfall fragment">
+        <b>Slice never crashes.</b> <code>nums[2:99]</code> is fine — it just stops at the end.
+        But <code>nums[99]</code> raises <code>IndexError</code>. One bracket pair, two very different behaviours.
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Changing an item</h2>
+      <pre class="code">order = [<span class="str">"pad thai"</span>, <span class="str">"green curry"</span>, <span class="str">"mango sticky rice"</span>]
+
+order[<span class="num">1</span>] = <span class="str">"tom yum"</span>
+print(order)   <span class="cmt"># ['pad thai', 'tom yum', 'mango sticky rice']</span></pre>
+      <ul style="margin-top:14px;">
+        <li class="fragment">Lists are <b>mutable</b> — you can change them after they are made.</li>
+        <li class="fragment">Same bracket you used to <em>read</em> (<code>order[1]</code>), now on the <em>left</em> of <code>=</code> to write.</li>
+        <li class="fragment">The list keeps its identity. It is the same list, edited — not a new one.</li>
+      </ul>
+      <p class="callout fragment">Read: <code>x = order[1]</code>. Write: <code>order[1] = x</code>. Bracket on the left means change.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Growing a list — append &amp; insert</h2>
+      <div class="split-2">
+        <div class="box">
+          <h4>APPEND &middot; ADD TO THE END</h4>
+          <pre class="code">playlist = [<span class="str">"Levitating"</span>, <span class="str">"Shape of You"</span>]
+playlist.append(<span class="str">"Viva La Vida"</span>)
+
+<span class="cmt"># ['Levitating', 'Shape of You',</span>
+<span class="cmt">#  'Viva La Vida']</span></pre>
+        </div>
+        <div class="box">
+          <h4>INSERT &middot; ADD AT A POSITION</h4>
+          <pre class="code">playlist.insert(<span class="num">0</span>, <span class="str">"Intro"</span>)
+
+<span class="cmt"># ['Intro', 'Levitating',</span>
+<span class="cmt">#  'Shape of You', 'Viva La Vida']</span></pre>
+        </div>
+      </div>
+      <div class="pitfall fragment">
+        <b>Do not write</b> <code>playlist = playlist.append("X")</code>. <code>append</code> changes the list
+        and returns <code>None</code> — you would throw your playlist away and keep nothing.
+        Just write <code>playlist.append("X")</code> on its own line.
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Shrinking a list — remove &amp; pop</h2>
+      <div class="split-2">
+        <div class="box">
+          <h4>REMOVE &middot; BY VALUE</h4>
+          <pre class="code">playlist.remove(<span class="str">"Intro"</span>)
+<span class="cmt"># deletes the FIRST "Intro" it finds</span>
+<span class="cmt"># ValueError if it is not there</span></pre>
+        </div>
+        <div class="box">
+          <h4>POP &middot; BY POSITION</h4>
+          <pre class="code">last = playlist.pop()      <span class="cmt"># takes the last</span>
+first = playlist.pop(<span class="num">0</span>)    <span class="cmt"># takes index 0</span>
+<span class="cmt"># pop GIVES YOU BACK what it removed</span></pre>
+        </div>
+      </div>
+      <div class="prob-think fragment">
+        <b>Which one?</b> You know <em>what</em> to delete &rarr; <code>remove</code>.
+        You know <em>where</em> it is, or you want the item back &rarr; <code>pop</code>.
+      </div>
+      <p class="callout fragment"><code>del playlist[2]</code> also works — deletes by position, gives nothing back.</p>
+    </section>
+
+    <section class="slide">
+      <h2>Play with it — method sandbox</h2>
+      <div class="wg" data-method-sandbox>
+        <div class="wg-title">PRESS A BUTTON &middot; WATCH THE LIST CHANGE</div>
+        <div class="boxrow" data-cells></div>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-op="append">append("kiwi")</button>
+          <button class="btn" data-op="insert">insert(0, "fig")</button>
+          <button class="btn" data-op="remove">remove("plum")</button>
+          <button class="btn" data-op="pop">pop()</button>
+          <button class="btn" data-op="pop0">pop(0)</button>
+          <button class="btn" data-op="sort">sort()</button>
+          <button class="btn" data-op="reverse">reverse()</button>
+          <button class="btn" data-op="reset">reset</button>
+        </div>
+        <div class="wg-out" data-out>fruits = ['plum', 'apple', 'pear']</div>
+        <div class="wg-hint" data-hint>Watch <code>len()</code> and the index numbers move as the list changes.</div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Two questions every list can answer</h2>
+      <pre class="code">scores = [<span class="num">82</span>, <span class="num">91</span>, <span class="num">67</span>, <span class="num">75</span>]
+
+len(scores)        <span class="cmt"># 4      &larr; how many?</span>
+<span class="num">91</span> <span class="kw">in</span> scores      <span class="cmt"># True   &larr; is it there?</span>
+<span class="num">50</span> <span class="kw">in</span> scores      <span class="cmt"># False</span>
+<span class="str">"pad thai"</span> <span class="kw">in</span> order   <span class="cmt"># works for strings too</span></pre>
+      <ul style="margin-top:14px;">
+        <li class="fragment"><code>in</code> gives back <code>True</code> / <code>False</code> — perfect inside an <code>if</code>.</li>
+        <li class="fragment">Also handy: <code>sum(scores)</code>, <code>max(scores)</code>, <code>min(scores)</code>,
+          <code>scores.count(91)</code>, <code>scores.index(67)</code>.</li>
+      </ul>
+      <pre class="code fragment"><span class="kw">if</span> <span class="str">"tom yum"</span> <span class="kw">in</span> order:
+    print(<span class="str">"already ordered!"</span>)</pre>
+    </section>
+
+    <section class="slide dense">
+      <h2>Looping over a list</h2>
+      <div class="split-2">
+        <div class="box">
+          <h4>THE NORMAL WAY</h4>
+          <pre class="code"><span class="kw">for</span> song <span class="kw">in</span> playlist:
+    print(song)
+
+<span class="cmt"># Levitating</span>
+<span class="cmt"># Shape of You</span>
+<span class="cmt"># Viva La Vida</span></pre>
+          <p style="font-size:13px;margin-top:8px;"><code>song</code> is a name <em>you</em> choose. It becomes each item, one at a time.</p>
+        </div>
+        <div class="box fragment">
+          <h4>WHEN YOU NEED THE POSITION</h4>
+          <pre class="code"><span class="kw">for</span> i, song <span class="kw">in</span> enumerate(playlist):
+    print(i, song)
+
+<span class="cmt"># 0 Levitating</span>
+<span class="cmt"># 1 Shape of You</span>
+<span class="cmt"># 2 Viva La Vida</span></pre>
+          <p style="font-size:13px;margin-top:8px;"><code>enumerate</code> hands you the index <em>and</em> the item.</p>
+        </div>
+      </div>
+      <p class="callout fragment">Loop first, count second. Reach for <code>enumerate</code> only when you actually need the number.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Loop + build: the pattern you will reuse forever</h2>
+      <pre class="code">scores = [<span class="num">82</span>, <span class="num">91</span>, <span class="num">67</span>, <span class="num">75</span>]
+
+passed = []                     <span class="cmt"># 1. start empty</span>
+<span class="kw">for</span> s <span class="kw">in</span> scores:              <span class="cmt"># 2. walk the input</span>
+    <span class="kw">if</span> s &gt;= <span class="num">70</span>:                <span class="cmt"># 3. test</span>
+        passed.append(s)        <span class="cmt"># 4. keep the good ones</span>
+
+print(passed)                   <span class="cmt"># [82, 91, 75]</span></pre>
+      <div class="prob-think fragment">
+        <b>Empty &rarr; loop &rarr; test &rarr; append.</b> Filtering, counting, totalling, searching —
+        they are all this same four-line skeleton with a different middle.
+      </div>
+      <p class="callout fragment">Never <code>append</code> to the list you are looping over. The loop will never end.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Sorting</h2>
+      <pre class="code">scores = [<span class="num">82</span>, <span class="num">91</span>, <span class="num">67</span>, <span class="num">75</span>]
+
+scores.sort()                <span class="cmt"># CHANGES scores &rarr; [67, 75, 82, 91]</span>
+scores.sort(reverse=<span class="kw">True</span>)   <span class="cmt"># [91, 82, 75, 67]</span>
+scores.reverse()             <span class="cmt"># flips whatever order it is in now</span>
+
+ranked = sorted(scores)      <span class="cmt"># NEW list, original untouched</span></pre>
+      <div class="split-2 fragment" style="margin-top:12px;">
+        <div class="box"><h4>.sort()</h4><p style="font-size:13.5px;">Changes the list in place. Returns <code>None</code>.</p></div>
+        <div class="box"><h4>sorted(...)</h4><p style="font-size:13.5px;">Leaves the list alone. Returns a new sorted list.</p></div>
+      </div>
+      <p class="callout fragment">Strings sort alphabetically — but uppercase comes before lowercase: <code>"Zoe" &lt; "ann"</code>.</p>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Fix the playlist</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">playlist = [<span class="str">"Intro"</span>, <span class="str">"Levitating"</span>, <span class="str">"Shape of You"</span>, <span class="str">"Outro"</span>]</pre>
+        Write the code to: <b>(1)</b> print the last song without using the number 3 &nbsp;
+        <b>(2)</b> delete <code>"Intro"</code> &nbsp; <b>(3)</b> add <code>"Encore"</code> at the very end &nbsp;
+        <b>(4)</b> print how many songs are left.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">print(playlist[-<span class="num">1</span>])          <span class="cmt"># "Outro" — works at any length</span>
+playlist.remove(<span class="str">"Intro"</span>)     <span class="cmt"># or playlist.pop(0)</span>
+playlist.append(<span class="str">"Encore"</span>)
+print(len(playlist))         <span class="cmt"># 4</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Why <code>-1</code> and not <code>3</code>?</b> Because tomorrow the playlist has 40 songs and
+        <code>playlist[3]</code> is suddenly the wrong song. <code>-1</code> is never wrong.
+      </div>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Count the high scores</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">scores = [<span class="num">55</span>, <span class="num">82</span>, <span class="num">91</span>, <span class="num">67</span>, <span class="num">75</span>, <span class="num">48</span>, <span class="num">88</span>]</pre>
+        Print <b>how many scores are 80 or above</b>, and the <b>average of the whole list</b>.
+        Use a loop for the first one.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">count = <span class="num">0</span>
+<span class="kw">for</span> s <span class="kw">in</span> scores:
+    <span class="kw">if</span> s &gt;= <span class="num">80</span>:
+        count = count + <span class="num">1</span>
+print(count)                        <span class="cmt"># 3</span>
+print(sum(scores) / len(scores))    <span class="cmt"># 72.28...</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Same skeleton as before</b> — start at zero, walk, test, update. Only "keep it" became "count it".
+      </div>
+    </section>
+
+    <!-- ============ II. DICTIONARIES ============ -->
+    <section class="slide divider">
+      <div class="roman">II</div>
+      <div>
+        <span class="day-tag">PART TWO &middot; 30 MIN</span>
+        <h1>The <em>Dictionary</em></h1>
+        <p class="sub">Look things up by name.<br/>No counting required.</p>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Where the list falls apart</h2>
+      <p>A menu. Two lists, kept side by side:</p>
+      <pre class="code">items  = [<span class="str">"pad thai"</span>, <span class="str">"green curry"</span>, <span class="str">"mango sticky rice"</span>]
+prices = [<span class="num">60</span>, <span class="num">80</span>, <span class="num">45</span>]
+
+<span class="cmt"># How much is green curry?</span>
+i = items.index(<span class="str">"green curry"</span>)   <span class="cmt"># find WHERE it is... 1</span>
+print(prices[i])                <span class="cmt"># ...then look in the other list</span></pre>
+      <ul style="margin-top:12px;">
+        <li class="fragment">Two steps for one question.</li>
+        <li class="fragment">If you sort <code>prices</code> and forget <code>items</code>, <b>every price is now wrong</b> and nothing crashes.</li>
+        <li class="fragment">Add a dish to one list only &rarr; silently broken forever.</li>
+      </ul>
+      <p class="callout fragment">Two lists that must stay lined up = a bug waiting to happen. Use a <b>dictionary</b>.</p>
+    </section>
+
+    <section class="slide">
+      <h2>Making a dictionary</h2>
+      <pre class="code">prices = {<span class="str">"pad thai"</span>: <span class="num">60</span>, <span class="str">"green curry"</span>: <span class="num">80</span>, <span class="str">"mango sticky rice"</span>: <span class="num">45</span>}</pre>
+      <div class="kvrow">
+        <div class="kv"><div class="k">"pad thai"</div><div class="val">60</div></div>
+        <div class="kv"><div class="k">"green curry"</div><div class="val">80</div></div>
+        <div class="kv"><div class="k">"mango sticky rice"</div><div class="val">45</div></div>
+      </div>
+      <ul class="fragment">
+        <li>Curly braces <code>{ }</code>. Each entry is <b>key</b> <code>:</code> <b>value</b>.</li>
+        <li class="fragment">The <b>key</b> is the label you search by. The <b>value</b> is what you get back.</li>
+        <li class="fragment">Keys must be <b>unique</b> — one price per dish. Values can repeat freely.</li>
+      </ul>
+      <p class="callout fragment">List = "give me #2". Dictionary = "give me <em>green curry</em>".</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Looking up, adding, changing</h2>
+      <pre class="code">prices = {<span class="str">"pad thai"</span>: <span class="num">60</span>, <span class="str">"green curry"</span>: <span class="num">80</span>}
+
+print(prices[<span class="str">"pad thai"</span>])          <span class="cmt"># 60      &larr; LOOK UP</span>
+
+prices[<span class="str">"tom yum"</span>] = <span class="num">70</span>            <span class="cmt"># key is new  &rarr; ADDS it</span>
+prices[<span class="str">"pad thai"</span>] = <span class="num">65</span>            <span class="cmt"># key exists  &rarr; OVERWRITES it</span>
+
+<span class="kw">del</span> prices[<span class="str">"green curry"</span>]          <span class="cmt"># DELETE the whole entry</span></pre>
+      <div class="prob-think fragment">
+        <b>Same line, two meanings.</b> <code>d[k] = v</code> adds if the key is new, replaces if it is not.
+        Python never asks "are you sure?" — a typo'd key quietly creates a second entry.
+      </div>
+      <p class="callout fragment">Square brackets again — but a <b>name</b> goes inside, not a number.</p>
+    </section>
+
+    <section class="slide">
+      <h2>Play with it — lookup machine</h2>
+      <div class="wg" data-lookup>
+        <div class="wg-title">TYPE A KEY &middot; OR CLICK ONE &middot; SEE WHAT COMES BACK</div>
+        <div class="kvrow" data-kv></div>
+        <div class="btnrow" style="margin-top:10px; align-items:center;">
+          <input type="text" data-key placeholder="green curry" />
+          <button class="btn on" data-mode="bracket">prices[key]</button>
+          <button class="btn" data-mode="get">prices.get(key)</button>
+          <button class="btn" data-mode="getdef">prices.get(key, 0)</button>
+          <button class="btn" data-mode="in">key in prices</button>
+        </div>
+        <div class="wg-out" data-out>Type a dish name, or click a card above.</div>
+        <div class="wg-hint">Try a key that does not exist — like <code>"pizza"</code> — in each of the four modes.</div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>The missing key — KeyError vs .get</h2>
+      <div class="split-2">
+        <div class="box bad">
+          <h4>BRACKETS &middot; CRASHES</h4>
+          <pre class="code">prices[<span class="str">"pizza"</span>]
+<span class="cmt"># KeyError: 'pizza'</span>
+<span class="cmt"># program stops. dead.</span></pre>
+        </div>
+        <div class="box good">
+          <h4>.get &middot; STAYS ALIVE</h4>
+          <pre class="code">prices.get(<span class="str">"pizza"</span>)      <span class="cmt"># None</span>
+prices.get(<span class="str">"pizza"</span>, <span class="num">0</span>)   <span class="cmt"># 0</span>
+<span class="cmt"># second argument = fallback</span></pre>
+        </div>
+      </div>
+      <pre class="code fragment" style="margin-top:14px;"><span class="kw">if</span> <span class="str">"pizza"</span> <span class="kw">in</span> prices:        <span class="cmt"># `in` checks the KEYS, never the values</span>
+    print(prices[<span class="str">"pizza"</span>])
+<span class="kw">else</span>:
+    print(<span class="str">"not on the menu"</span>)</pre>
+      <div class="pitfall fragment">
+        <b><code>80 in prices</code> is <code>False</code></b> even though 80 is a price.
+        <code>in</code> only ever looks at keys.
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Looping over a dictionary</h2>
+      <pre class="code">prices = {<span class="str">"pad thai"</span>: <span class="num">60</span>, <span class="str">"green curry"</span>: <span class="num">80</span>, <span class="str">"mango sticky rice"</span>: <span class="num">45</span>}</pre>
+      <div class="split-3" style="margin-top:12px;">
+        <div class="box">
+          <h4>KEYS</h4>
+          <pre class="code" style="font-size:12.5px;"><span class="kw">for</span> dish <span class="kw">in</span> prices:
+    print(dish)
+
+<span class="cmt"># pad thai</span>
+<span class="cmt"># green curry</span>
+<span class="cmt"># mango sticky rice</span></pre>
+        </div>
+        <div class="box fragment">
+          <h4>VALUES</h4>
+          <pre class="code" style="font-size:12.5px;"><span class="kw">for</span> p <span class="kw">in</span> prices.values():
+    print(p)
+
+<span class="cmt"># 60</span>
+<span class="cmt"># 80</span>
+<span class="cmt"># 45</span></pre>
+        </div>
+        <div class="box fragment">
+          <h4>BOTH &middot; USE THIS ONE</h4>
+          <pre class="code" style="font-size:12.5px;"><span class="kw">for</span> dish, p <span class="kw">in</span> prices.items():
+    print(dish, p)
+
+<span class="cmt"># pad thai 60</span>
+<span class="cmt"># green curry 80</span>
+<span class="cmt"># mango sticky rice 45</span></pre>
+        </div>
+      </div>
+      <p class="callout fragment">Looping a dict plainly gives you the <b>keys</b>, not the values. Want both? <code>.items()</code>.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Counting with a dictionary</h2>
+      <p>The classic use: count how many of each thing.</p>
+      <pre class="code">votes = [<span class="str">"pizza"</span>, <span class="str">"sushi"</span>, <span class="str">"pizza"</span>, <span class="str">"tacos"</span>, <span class="str">"pizza"</span>, <span class="str">"sushi"</span>]
+
+tally = {}                               <span class="cmt"># 1. start empty</span>
+<span class="kw">for</span> v <span class="kw">in</span> votes:                        <span class="cmt"># 2. walk the list</span>
+    tally[v] = tally.get(v, <span class="num">0</span>) + <span class="num">1</span>      <span class="cmt"># 3. old count (or 0) + 1</span>
+
+print(tally)   <span class="cmt"># {'pizza': 3, 'sushi': 2, 'tacos': 1}</span></pre>
+      <div class="prob-think fragment">
+        <b>Line 3 is the whole trick.</b> <code>.get(v, 0)</code> means "how many so far — and if I have
+        never seen this one, call it zero." Without it, the first vote for each item is a <code>KeyError</code>.
+      </div>
+      <p class="callout fragment">List &rarr; dictionary is how raw data becomes a summary.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>List or dictionary? Decide in one question</h2>
+      <div class="split-2">
+        <div class="box">
+          <h4>USE A LIST WHEN...</h4>
+          <ul style="font-size:14px;">
+            <li>the <b>order</b> matters (playlist, queue, steps)</li>
+            <li>you have <b>many of the same kind of thing</b></li>
+            <li>you will loop over all of it</li>
+            <li>you find things by <b>position</b></li>
+          </ul>
+        </div>
+        <div class="box">
+          <h4>USE A DICTIONARY WHEN...</h4>
+          <ul style="font-size:14px;">
+            <li>each item has a <b>name / id</b></li>
+            <li>you look things up by that name</li>
+            <li>you are describing <b>one thing's properties</b></li>
+            <li>you are <b>counting</b> or <b>summarising</b></li>
+          </ul>
+        </div>
+      </div>
+      <div class="prob-think fragment" style="margin-top:14px;">
+        <b>Ask yourself:</b> "when I need one item back, what will I know about it —
+        <em>where</em> it is, or <em>what it is called</em>?" Where &rarr; list. Called &rarr; dictionary.
+      </div>
+      <table style="margin-top:12px; font-size:13.5px; border-collapse:collapse;" class="fragment">
+        <tr><td style="border:2px solid var(--ink);padding:5px 10px;background:var(--cream-soft);font-weight:700;">Songs to play in order</td><td style="border:2px solid var(--ink);padding:5px 10px;">list</td>
+            <td style="border:2px solid var(--ink);padding:5px 10px;background:var(--cream-soft);font-weight:700;">Country &rarr; capital</td><td style="border:2px solid var(--ink);padding:5px 10px;">dict</td></tr>
+        <tr><td style="border:2px solid var(--ink);padding:5px 10px;background:var(--cream-soft);font-weight:700;">One song's title/artist/year</td><td style="border:2px solid var(--ink);padding:5px 10px;">dict</td>
+            <td style="border:2px solid var(--ink);padding:5px 10px;background:var(--cream-soft);font-weight:700;">Every test score in class</td><td style="border:2px solid var(--ink);padding:5px 10px;">list</td></tr>
+      </table>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Build the phonebook</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">capitals = {<span class="str">"Thailand"</span>: <span class="str">"Bangkok"</span>, <span class="str">"Japan"</span>: <span class="str">"Tokyo"</span>, <span class="str">"France"</span>: <span class="str">"Paris"</span>}</pre>
+        <b>(1)</b> Add Korea &rarr; Seoul. &nbsp; <b>(2)</b> Print France's capital. &nbsp;
+        <b>(3)</b> Print the capital of Brazil <em>without crashing</em>. &nbsp;
+        <b>(4)</b> Print every line as <code>Thailand -&gt; Bangkok</code>.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">capitals[<span class="str">"Korea"</span>] = <span class="str">"Seoul"</span>
+print(capitals[<span class="str">"France"</span>])                      <span class="cmt"># Paris</span>
+print(capitals.get(<span class="str">"Brazil"</span>, <span class="str">"unknown"</span>))       <span class="cmt"># unknown  — no crash</span>
+<span class="kw">for</span> country, city <span class="kw">in</span> capitals.items():
+    print(country, <span class="str">"-&gt;"</span>, city)</pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Why <code>.get</code> in (3)?</b> Real data always has holes. A program that dies on the first
+        missing key is useless the moment it meets the real world.
+      </div>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Count the letters</h2>
+      <div class="prob-q">
+        <pre class="code" style="margin:6px 0;">word = <span class="str">"banana"</span></pre>
+        Count how many times each letter appears. Expected output:
+        <code>{'b': 1, 'a': 3, 'n': 2}</code>. <br/>
+        Hint: <code>for ch in word:</code> walks a string one letter at a time — same as a list.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;">counts = {}
+<span class="kw">for</span> ch <span class="kw">in</span> word:
+    counts[ch] = counts.get(ch, <span class="num">0</span>) + <span class="num">1</span>
+print(counts)      <span class="cmt"># {'b': 1, 'a': 3, 'n': 2}</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Identical to the vote counter.</b> Different data, same three lines. That is what a
+        <em>pattern</em> means — learn it once, use it everywhere.
+      </div>
+    </section>
+
+    <!-- ============ III. LIST OF DICTIONARIES ============ -->
+    <section class="slide divider">
+      <div class="roman">III</div>
+      <div>
+        <span class="day-tag">PART THREE &middot; 20 MIN</span>
+        <h1>List of <em>Dictionaries</em></h1>
+        <p class="sub">Many records, each with many fields.<br/>The shape real data actually has.</p>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>The shape everything real has</h2>
+      <p>A class roster is <b>many students</b> (list), and <b>each student has fields</b> (dictionary):</p>
+      <pre class="code">students = [
+    {<span class="str">"name"</span>: <span class="str">"Ann"</span>, <span class="str">"score"</span>: <span class="num">82</span>, <span class="str">"club"</span>: <span class="str">"robotics"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Ben"</span>, <span class="str">"score"</span>: <span class="num">91</span>, <span class="str">"club"</span>: <span class="str">"music"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Cat"</span>, <span class="str">"score"</span>: <span class="num">67</span>, <span class="str">"club"</span>: <span class="str">"robotics"</span>},
+]</pre>
+      <ul style="margin-top:12px;">
+        <li class="fragment">Outer <code>[ ]</code> &rarr; a <b>list</b>. Its items happen to be dictionaries.</li>
+        <li class="fragment">Every dictionary uses the <b>same keys</b>. That is what makes it a table.</li>
+        <li class="fragment">This is exactly how a spreadsheet, a database row, and a JSON API all look.</li>
+      </ul>
+      <p class="callout fragment">Rows = the list. Columns = the keys.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Reaching in — index first, then key</h2>
+      <pre class="code">students[<span class="num">0</span>]                    <span class="cmt"># {'name': 'Ann', 'score': 82, 'club': 'robotics'}</span>
+students[<span class="num">0</span>][<span class="str">"name"</span>]            <span class="cmt"># 'Ann'</span>
+students[<span class="num">1</span>][<span class="str">"score"</span>]           <span class="cmt"># 91</span>
+students[-<span class="num">1</span>][<span class="str">"club"</span>]           <span class="cmt"># 'robotics'</span></pre>
+      <div class="prob-think fragment">
+        <b>Read left to right.</b> <code>students[1]</code> picks the row &rarr; you now hold one dictionary &rarr;
+        <code>["score"]</code> picks the column. Two brackets, two different jobs.
+      </div>
+      <pre class="code fragment" style="margin-top:12px;">students[<span class="num">0</span>][<span class="str">"score"</span>] = <span class="num">85</span>       <span class="cmt"># editing works the same way</span>
+students.append({<span class="str">"name"</span>: <span class="str">"Dan"</span>, <span class="str">"score"</span>: <span class="num">74</span>, <span class="str">"club"</span>: <span class="str">"art"</span>})</pre>
+      <div class="pitfall fragment">
+        <b>Number in the first bracket, name in the second.</b> <code>students["Ann"]</code> is a
+        <code>TypeError</code> — the outer thing is a list; lists know nothing about names.
+      </div>
+    </section>
+
+    <section class="slide">
+      <h2>Play with it — record drill-down</h2>
+      <div class="wg" data-records>
+        <div class="wg-title">CLICK ANY CELL &middot; SEE THE CODE THAT REACHES IT</div>
+        <table class="rec-tbl" data-tbl></table>
+        <div class="wg-out" data-out>Click a cell in the table.</div>
+        <div class="wg-hint">Click the blue index column to grab a whole record (a dictionary) instead of one field.</div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Looping over records</h2>
+      <pre class="code"><span class="kw">for</span> s <span class="kw">in</span> students:
+    print(s[<span class="str">"name"</span>], s[<span class="str">"score"</span>])
+
+<span class="cmt"># Ann 82</span>
+<span class="cmt"># Ben 91</span>
+<span class="cmt"># Cat 67</span></pre>
+      <div class="prob-think fragment">
+        <b>Each turn of the loop, <code>s</code> is one whole dictionary.</b> So inside the loop you
+        stop thinking about the list entirely — you just have "a student", and you ask it for its fields.
+      </div>
+      <p class="callout fragment">Name the loop variable after <em>one</em> of the things: <code>for s in students</code>,
+        <code>for song in playlist</code>. Never <code>for x in y</code>.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Filtering records</h2>
+      <pre class="code">robotics = []                       <span class="cmt"># empty</span>
+<span class="kw">for</span> s <span class="kw">in</span> students:                 <span class="cmt"># loop</span>
+    <span class="kw">if</span> s[<span class="str">"club"</span>] == <span class="str">"robotics"</span>:     <span class="cmt"># test — reach into the record</span>
+        robotics.append(s)          <span class="cmt"># keep the WHOLE record</span>
+
+<span class="kw">for</span> s <span class="kw">in</span> robotics:
+    print(s[<span class="str">"name"</span>])                <span class="cmt"># Ann, Cat</span></pre>
+      <div class="prob-think fragment">
+        <b>The same four-line skeleton from Part One.</b> Empty &rarr; loop &rarr; test &rarr; append.
+        The only change: the test reaches inside a dictionary, and you keep the whole record, not just a number.
+      </div>
+      <p class="callout fragment">Keep the whole record, not <code>s["name"]</code> — later you will want the other fields too.</p>
+    </section>
+
+    <section class="slide problem dense">
+      <h2>Read the roster</h2>
+      <div class="prob-q">
+        Using the same <code>students</code> list — <b>(1)</b> print Ben's club without looking at index 1
+        (search for him). &nbsp; <b>(2)</b> print the <b>average score</b> of the class.
+      </div>
+      <div class="prob-sol fragment">
+        <div class="label">ANSWER</div>
+        <pre class="code" style="margin:0;"><span class="kw">for</span> s <span class="kw">in</span> students:               <span class="cmt"># (1) search by field</span>
+    <span class="kw">if</span> s[<span class="str">"name"</span>] == <span class="str">"Ben"</span>:
+        print(s[<span class="str">"club"</span>])           <span class="cmt"># music</span>
+
+total = <span class="num">0</span>                          <span class="cmt"># (2) add up, then divide</span>
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    total = total + s[<span class="str">"score"</span>]
+print(total / len(students))       <span class="cmt"># 80.0</span></pre>
+      </div>
+      <div class="prob-twist fragment">
+        <b>Notice what (1) really is:</b> a list search by a <em>name</em>. If you do that a lot,
+        that is Python telling you the outer container maybe wanted to be a dictionary keyed by name.
+      </div>
+    </section>
+
+    <!-- ============ IV. MINI-PROJECT ============ -->
+    <section class="slide divider">
+      <div class="roman">IV</div>
+      <div>
+        <span class="day-tag">MINI-PROJECT &middot; 15 MIN</span>
+        <h1>Class <em>Report</em></h1>
+        <p class="sub">Three questions. Everything you learned today, in one program.</p>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Mini-project &mdash; the data</h2>
+      <pre class="code">students = [
+    {<span class="str">"name"</span>: <span class="str">"Ann"</span>,  <span class="str">"score"</span>: <span class="num">82</span>, <span class="str">"club"</span>: <span class="str">"robotics"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Ben"</span>,  <span class="str">"score"</span>: <span class="num">91</span>, <span class="str">"club"</span>: <span class="str">"music"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Cat"</span>,  <span class="str">"score"</span>: <span class="num">67</span>, <span class="str">"club"</span>: <span class="str">"robotics"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Dan"</span>,  <span class="str">"score"</span>: <span class="num">74</span>, <span class="str">"club"</span>: <span class="str">"art"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Eve"</span>,  <span class="str">"score"</span>: <span class="num">88</span>, <span class="str">"club"</span>: <span class="str">"music"</span>},
+]</pre>
+      <div class="prob-q" style="margin-top:14px;">
+        <b>Q1.</b> Who scored highest? &nbsp;&nbsp;
+        <b>Q2.</b> How many students in each club? &nbsp;&nbsp;
+        <b>Q3.</b> Add a new student, then print the class average.
+      </div>
+      <p class="callout fragment">Try it yourself first. Next three slides are the answers, one at a time.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Q1 &mdash; who scored highest?</h2>
+      <pre class="code">best = students[<span class="num">0</span>]                 <span class="cmt"># assume the first is the winner</span>
+
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    <span class="kw">if</span> s[<span class="str">"score"</span>] &gt; best[<span class="str">"score"</span>]:   <span class="cmt"># found someone better?</span>
+        best = s                    <span class="cmt"># they are the new champion</span>
+
+print(best[<span class="str">"name"</span>], best[<span class="str">"score"</span>])   <span class="cmt"># Ben 91</span></pre>
+      <div class="prob-think fragment">
+        <b>Why start at <code>students[0]</code> and not <code>0</code>?</b> Because <code>best</code> holds a whole
+        <em>record</em>, not a number — you need the name at the end, not just the score.
+        Starting from the first real student also works when scores are negative.
+      </div>
+      <div class="pitfall fragment">
+        <b>Empty list?</b> <code>students[0]</code> is an <code>IndexError</code>.
+        Real programs check <code>if len(students) &gt; 0:</code> first.
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Q2 &mdash; how many in each club?</h2>
+      <pre class="code">by_club = {}                                       <span class="cmt"># list &rarr; summary dict</span>
+
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    club = s[<span class="str">"club"</span>]
+    by_club[club] = by_club.get(club, <span class="num">0</span>) + <span class="num">1</span>
+
+print(by_club)   <span class="cmt"># {'robotics': 2, 'music': 2, 'art': 1}</span></pre>
+      <div class="prob-think fragment">
+        <b>You have written this exact loop three times today</b> — votes, letters, now clubs.
+        <code>.get(key, 0) + 1</code> is the counting pattern. It never changes.
+      </div>
+      <pre class="code fragment" style="margin-top:12px;"><span class="cmt"># want the NAMES in each club, not just the count?</span>
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    by_club.setdefault(s[<span class="str">"club"</span>], []).append(s[<span class="str">"name"</span>])
+<span class="cmt"># {'robotics': ['Ann', 'Cat'], 'music': ['Ben', 'Eve'], 'art': ['Dan']}</span></pre>
+    </section>
+
+    <section class="slide dense">
+      <h2>Q3 &mdash; add a student, print the average</h2>
+      <pre class="code">students.append({<span class="str">"name"</span>: <span class="str">"Fay"</span>, <span class="str">"score"</span>: <span class="num">95</span>, <span class="str">"club"</span>: <span class="str">"art"</span>})
+
+total = <span class="num">0</span>
+<span class="kw">for</span> s <span class="kw">in</span> students:
+    total = total + s[<span class="str">"score"</span>]
+
+average = total / len(students)
+print(<span class="str">"class size:"</span>, len(students))   <span class="cmt"># 6</span>
+print(<span class="str">"average:"</span>, round(average, <span class="num">1</span>))  <span class="cmt"># 82.8</span></pre>
+      <div class="prob-think fragment">
+        <b>Everything today, in nine lines:</b> a list that grows (<code>append</code>), records with
+        named fields (<code>s["score"]</code>), a loop that accumulates, and <code>len()</code> to size it.
+      </div>
+      <p class="callout fragment">Rerun it after adding Fay — the average changes by itself. That is why you never hard-code <code>5</code>.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Cheat sheet</h2>
+      <div class="cheat">
+        <div>
+          <h4>LIST &nbsp;<code>[ ]</code> &middot; ordered, by position</h4>
+          <table>
+            <tr><td>xs[0]</td><td>first item</td></tr>
+            <tr><td>xs[-1]</td><td>last item</td></tr>
+            <tr><td>xs[1:4]</td><td>items 1,2,3 (stop before 4)</td></tr>
+            <tr><td>xs[i] = v</td><td>change an item</td></tr>
+            <tr><td>xs.append(v)</td><td>add to the end</td></tr>
+            <tr><td>xs.insert(i, v)</td><td>add at position i</td></tr>
+            <tr><td>xs.remove(v)</td><td>delete by value</td></tr>
+            <tr><td>xs.pop() / pop(i)</td><td>delete by position, give it back</td></tr>
+            <tr><td>len(xs)</td><td>how many</td></tr>
+            <tr><td>v in xs</td><td>True / False</td></tr>
+            <tr><td>xs.sort()</td><td>sort in place</td></tr>
+            <tr><td>for x in xs:</td><td>each item</td></tr>
+          </table>
+        </div>
+        <div>
+          <h4>DICT &nbsp;<code>{ }</code> &middot; unordered, by key</h4>
+          <table>
+            <tr><td>d["k"]</td><td>look up (KeyError if missing)</td></tr>
+            <tr><td>d.get("k")</td><td>look up, None if missing</td></tr>
+            <tr><td>d.get("k", 0)</td><td>look up, fallback 0</td></tr>
+            <tr><td>d["k"] = v</td><td>add or overwrite</td></tr>
+            <tr><td>del d["k"]</td><td>delete the entry</td></tr>
+            <tr><td>"k" in d</td><td>checks KEYS only</td></tr>
+            <tr><td>len(d)</td><td>how many entries</td></tr>
+            <tr><td>d.keys()</td><td>all keys</td></tr>
+            <tr><td>d.values()</td><td>all values</td></tr>
+            <tr><td>d.items()</td><td>key + value pairs</td></tr>
+            <tr><td>for k, v in d.items():</td><td>each pair</td></tr>
+            <tr><td>d[k] = d.get(k,0)+1</td><td>the counting pattern</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="callout fragment"><b>records = [ { }, { }, { } ]</b> &nbsp;&rarr;&nbsp; <code>records[i]["field"]</code>. Index first, key second.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>The five things to remember</h2>
+      <ul class="checklist">
+        <li class="fragment"><b>Counting starts at 0.</b> The last index is <code>len(xs) - 1</code>, or just <code>-1</code>.</li>
+        <li class="fragment"><b>List = by position. Dictionary = by name.</b> Pick by asking what you will know when you look something up.</li>
+        <li class="fragment"><b>Empty &rarr; loop &rarr; test &rarr; append.</b> Filtering, counting, totalling — all the same skeleton.</li>
+        <li class="fragment"><b><code>.get(k, 0) + 1</code></b> counts anything, ever.</li>
+        <li class="fragment"><b>Real data is a list of dictionaries.</b> Rows are the list, columns are the keys.</li>
+      </ul>
+      <div class="box soft fragment" style="margin-top:18px;">
+        <h4>NEXT</h4>
+        <p style="font-size:14px;">Open the Colab notebook and do the TODOs. Then look up
+          <b>tuples</b> and <b>sets</b> (two more containers), and <b>list comprehensions</b>
+          (<code>[s["name"] for s in students]</code> — the four-line skeleton, on one line).</p>
+      </div>
+    </section>
+
+    <section class="slide title">
+      <h1>Go build<br/>something</h1>
+      <p class="subtitle">Lists hold many. Dictionaries name them.<br/>Everything else in Python is built on these two.</p>
+      <div class="author">Petkub :D</div>
+    </section>
+
+  </div>
+</div>
+
+<script src="../../shared/js/widgets/registry.js"></script>
+<script src="../../shared/js/draw-tool.js"></script>
+<script src="../../shared/js/deck.js"></script>
+
+<script>
+/* ============================================================
+   Inline widgets for this deck only (repo idiom: keep the deck
+   self-contained; shared/js/widgets/* is the unused legacy CP lib).
+   ============================================================ */
+(function () {
+  'use strict';
+
+  function el(tag, cls, html) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html !== undefined) n.innerHTML = html;
+    return n;
+  }
+  function pyList(arr) {
+    return '[' + arr.map(function (x) {
+      return typeof x === 'string' ? "'" + x + "'" : String(x);
+    }).join(', ') + ']';
+  }
+
+  /* ---------- W1 · index explorer ------------------------- */
+  (function () {
+    var root = document.querySelector('[data-idx-explorer]');
+    if (!root) return;
+
+    var songs = ['Levitating', 'Shape of You', 'Viva La Vida', 'Lose Yourself', 'Bohemian Rhapsody'];
+    var host    = root.querySelector('[data-cells]');
+    var out     = root.querySelector('[data-out]');
+    var hint    = root.querySelector('[data-hint]');
+    var sliders = root.querySelector('[data-sliders]');
+    var startI  = root.querySelector('[data-start]');
+    var endI    = root.querySelector('[data-end]');
+    var sv      = root.querySelector('[data-sv]');
+    var ev      = root.querySelector('[data-ev]');
+    var mode = 'index', sel = -1, lastSel = -1;
+
+    songs.forEach(function (s, i) {
+      var c = el('div', 'cell click');
+      c.appendChild(el('div', 'v', '"' + s + '"'));
+      c.appendChild(el('div', 'i', String(i)));
+      c.addEventListener('click', function () {
+        if (mode !== 'index') return;
+        lastSel = sel; sel = i; render();
+      });
+      host.appendChild(c);
+    });
+
+    function render() {
+      var cells = host.querySelectorAll('.cell');
+      var a = Math.min(+startI.value, +endI.value);
+      var b = Math.max(+startI.value, +endI.value);
+      for (var i = 0; i < cells.length; i++) {
+        cells[i].classList.remove('sel', 'range');
+        cells[i].querySelector('.i').textContent = String(i);
+        if (mode === 'index' && i === sel) cells[i].classList.add('sel');
+        if (mode === 'slice' && i >= a && i < b) cells[i].classList.add('range');
+      }
+      out.classList.remove('err');
+
+      if (mode === 'slice') {
+        sv.textContent = a; ev.textContent = b;
+        var piece = songs.slice(a, b);
+        out.innerHTML = 'playlist[' + a + ':' + b + ']  &rarr;  ' + pyList(piece) +
+                        '<br/><span style="font-size:12.5px;color:#444;">' + b + ' &minus; ' + a +
+                        ' = <b>' + (b - a) + '</b> item' + (b - a === 1 ? '' : 's') +
+                        ' &mdash; index ' + b + ' is NOT included.</span>';
+        hint.innerHTML = 'Drag both sliders. The stop index is always left out.';
+        return;
+      }
+      if (sel < 0) { out.textContent = 'Click a box above.'; return; }
+      var neg = sel - songs.length;
+      out.innerHTML = 'playlist[' + sel + ']  &rarr;  \'' + songs[sel] + '\'' +
+        (sel === lastSel
+          ? '<br/><span style="font-size:12.5px;color:#444;">same box from the back: playlist[<b>' +
+            neg + '</b>] &rarr; \'' + songs[sel] + '\'</span>'
+          : '');
+      hint.innerHTML = sel === songs.length - 1
+        ? 'That is the last one. playlist[' + songs.length + '] would raise <b>IndexError</b>.'
+        : 'Tip: click the same box twice to see its negative index.';
+    }
+
+    root.querySelectorAll('[data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        mode = b.dataset.mode;
+        root.querySelectorAll('[data-mode]').forEach(function (o) { o.classList.remove('on'); });
+        b.classList.add('on');
+        sliders.style.display = (mode === 'slice') ? 'inline' : 'none';
+        render();
+      });
+    });
+    startI.addEventListener('input', render);
+    endI.addEventListener('input', render);
+    startI.max = endI.max = String(songs.length);
+    render();
+  })();
+
+  /* ---------- W2 · method sandbox ------------------------- */
+  (function () {
+    var root = document.querySelector('[data-method-sandbox]');
+    if (!root) return;
+
+    var START = ['plum', 'apple', 'pear'];
+    var fruits = START.slice();
+    var host = root.querySelector('[data-cells]');
+    var out  = root.querySelector('[data-out]');
+
+    function draw(msg, isErr) {
+      host.innerHTML = '';
+      if (fruits.length === 0) {
+        host.appendChild(el('div', 'wg-hint', '(the list is empty)'));
+      }
+      fruits.forEach(function (f, i) {
+        var c = el('div', 'cell');
+        c.appendChild(el('div', 'v', "'" + f + "'"));
+        c.appendChild(el('div', 'i', String(i)));
+        host.appendChild(c);
+      });
+      out.classList.toggle('err', !!isErr);
+      out.innerHTML = 'fruits = ' + pyList(fruits) +
+        '<br/><span style="font-size:12.5px;color:' + (isErr ? '#d62828' : '#444') + ';">' +
+        msg + ' &nbsp;&middot;&nbsp; len(fruits) = ' + fruits.length + '</span>';
+    }
+
+    var ops = {
+      append:  function () { fruits.push('kiwi');     return "fruits.append('kiwi') &rarr; added at the END, index " + (fruits.length - 1); },
+      insert:  function () { fruits.unshift('fig');   return "fruits.insert(0, 'fig') &rarr; everything else shifted right by one"; },
+      remove:  function () {
+        var i = fruits.indexOf('plum');
+        if (i < 0) return { err: "ValueError: list.remove(x): x not in list &mdash; 'plum' is gone already" };
+        fruits.splice(i, 1);
+        return "fruits.remove('plum') &rarr; deleted by VALUE, returns nothing";
+      },
+      pop:     function () {
+        if (!fruits.length) return { err: 'IndexError: pop from empty list' };
+        var v = fruits.pop();  return "fruits.pop() &rarr; returned '" + v + "' (the last one) and removed it";
+      },
+      pop0:    function () {
+        if (!fruits.length) return { err: 'IndexError: pop from empty list' };
+        var v = fruits.shift(); return "fruits.pop(0) &rarr; returned '" + v + "' (the first one) and removed it";
+      },
+      sort:    function () { fruits.sort();    return 'fruits.sort() &rarr; alphabetical, IN PLACE. returns None'; },
+      reverse: function () { fruits.reverse(); return 'fruits.reverse() &rarr; flipped, IN PLACE'; },
+      reset:   function () { fruits = START.slice(); return 'back to the starting list'; }
+    };
+
+    root.querySelectorAll('[data-op]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var r = ops[b.dataset.op]();
+        if (r && r.err) draw(r.err, true); else draw(r, false);
+      });
+    });
+    draw('press a button', false);
+  })();
+
+  /* ---------- W3 · dict lookup machine -------------------- */
+  (function () {
+    var root = document.querySelector('[data-lookup]');
+    if (!root) return;
+
+    var prices = { 'pad thai': 60, 'green curry': 80, 'mango sticky rice': 45, 'tom yum': 70 };
+    var host  = root.querySelector('[data-kv]');
+    var input = root.querySelector('[data-key]');
+    var out   = root.querySelector('[data-out]');
+    var mode  = 'bracket';
+
+    Object.keys(prices).forEach(function (k) {
+      var c = el('div', 'kv');
+      c.style.cursor = 'pointer';
+      c.appendChild(el('div', 'k', '"' + k + '"'));
+      c.appendChild(el('div', 'val', String(prices[k])));
+      c.addEventListener('click', function () { input.value = k; render(); });
+      host.appendChild(c);
+    });
+
+    function render() {
+      var k = input.value.trim();
+      var hit = Object.prototype.hasOwnProperty.call(prices, k);
+
+      var cards = host.querySelectorAll('.kv');
+      Object.keys(prices).forEach(function (key, i) {
+        cards[i].style.background = (key === k) ? 'var(--cream-soft)' : '#fff';
+      });
+
+      out.classList.remove('err');
+      if (!k) { out.textContent = 'Type a dish name, or click a card above.'; return; }
+      var q = "'" + k + "'";
+
+      if (mode === 'in') {
+        out.innerHTML = q + ' in prices  &rarr;  <b>' + (hit ? 'True' : 'False') + '</b>' +
+          '<br/><span style="font-size:12.5px;color:#444;">`in` looks at KEYS only &mdash; never the prices.</span>';
+        return;
+      }
+      if (mode === 'bracket') {
+        if (hit) {
+          out.innerHTML = 'prices[' + q + ']  &rarr;  <b>' + prices[k] + '</b>';
+        } else {
+          out.classList.add('err');
+          out.innerHTML = 'prices[' + q + ']  &rarr;  <b>KeyError: ' + q + '</b>' +
+            '<br/><span style="font-size:12.5px;">The program stops here. Nothing after this line runs.</span>';
+        }
+        return;
+      }
+      var fallback = (mode === 'getdef') ? '0' : 'None';
+      var call = (mode === 'getdef') ? 'prices.get(' + q + ', 0)' : 'prices.get(' + q + ')';
+      out.innerHTML = call + '  &rarr;  <b>' + (hit ? prices[k] : fallback) + '</b>' +
+        '<br/><span style="font-size:12.5px;color:#444;">' +
+        (hit ? 'Found it &mdash; same answer as the brackets.'
+             : 'Missing key, but <b>no crash</b>. The program keeps going.') + '</span>';
+    }
+
+    root.querySelectorAll('[data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        mode = b.dataset.mode;
+        root.querySelectorAll('[data-mode]').forEach(function (o) { o.classList.remove('on'); });
+        b.classList.add('on');
+        render();
+      });
+    });
+    input.addEventListener('input', render);
+    render();
+  })();
+
+  /* ---------- W4 · record drill-down ---------------------- */
+  (function () {
+    var root = document.querySelector('[data-records]');
+    if (!root) return;
+
+    var students = [
+      { name: 'Ann', score: 82, club: 'robotics' },
+      { name: 'Ben', score: 91, club: 'music' },
+      { name: 'Cat', score: 67, club: 'robotics' },
+      { name: 'Dan', score: 74, club: 'art' }
+    ];
+    var keys = ['name', 'score', 'club'];
+    var tbl = root.querySelector('[data-tbl]');
+    var out = root.querySelector('[data-out]');
+
+    function pyDict(rec) {
+      return '{' + keys.map(function (k) {
+        var v = rec[k];
+        return "'" + k + "': " + (typeof v === 'string' ? "'" + v + "'" : v);
+      }).join(', ') + '}';
+    }
+    function clear() {
+      tbl.querySelectorAll('td').forEach(function (t) { t.classList.remove('sel'); });
+      tbl.querySelectorAll('tr').forEach(function (t) { t.classList.remove('selrow'); });
+    }
+
+    var head = el('tr');
+    head.appendChild(el('th', null, 'i'));
+    keys.forEach(function (k) { head.appendChild(el('th', null, '"' + k + '"')); });
+    tbl.appendChild(head);
+
+    students.forEach(function (rec, i) {
+      var tr = el('tr');
+      var idx = el('td', 'idx', String(i));
+      idx.addEventListener('click', function () {
+        clear(); tr.classList.add('selrow');
+        out.classList.remove('err');
+        out.innerHTML = 'students[' + i + ']  &rarr;  ' + pyDict(rec) +
+          '<br/><span style="font-size:12.5px;color:#444;">One bracket gives you the whole <b>record</b> &mdash; ' +
+          'a dictionary. Add a second bracket to pick a field.</span>';
+      });
+      tr.appendChild(idx);
+
+      keys.forEach(function (k) {
+        var v = rec[k];
+        var td = el('td', null, typeof v === 'string' ? "'" + v + "'" : String(v));
+        td.addEventListener('click', function () {
+          clear(); td.classList.add('sel');
+          out.classList.remove('err');
+          out.innerHTML = 'students[' + i + '][\'' + k + '\']  &rarr;  <b>' +
+            (typeof v === 'string' ? "'" + v + "'" : v) + '</b>' +
+            '<br/><span style="font-size:12.5px;color:#444;">[' + i + '] picks the <b>row</b> (a dictionary), ' +
+            "then ['" + k + "'] picks the <b>field</b>.</span>";
+        });
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+
+    var warn = el('div', 'wg-hint');
+    warn.innerHTML = 'Try in your head: <code>students["Ann"]</code> &rarr; <b style="color:#d62828;">TypeError</b> ' +
+      '&mdash; the outer container is a list, and lists only know numbers.';
+    root.appendChild(warn);
+  })();
+})();
+</script>
+
+</body>
+</html>
