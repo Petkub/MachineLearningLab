@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOAI Teacher Guide — How to Teach the 3-Day Track</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #fafaf6;
+    --ink: #111;
+    --ink-soft: #555;
+    --ink-mute: #999;
+    --cream: #fde9a3;
+    --cream-soft: #fff3c2;
+    --accent-red: #d62828;
+    --accent-blue: #1d3fb6;
+    --font-mono: 'JetBrains Mono', monospace;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  html, body {
+    background:
+      radial-gradient(circle at 10% -10%, rgba(253,233,163,0.5), transparent 35%),
+      radial-gradient(circle at 100% 110%, rgba(253,233,163,0.4), transparent 40%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame { max-width: 980px; margin: 0 auto; padding: 70px 56px 120px; position: relative; }
+
+  .pill-deco { position: fixed; background: var(--cream); border-radius: 60px; z-index: -1; }
+  .pill-deco.tl { top: -80px; left: 6%; width: 64px; height: 260px; }
+  .pill-deco.tr { top: -50px; right: 5%; width: 84px; height: 220px; }
+
+  .local-banner {
+    background: var(--accent-red); color: #fff; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 7px 14px; margin-bottom: 30px; display: inline-block;
+  }
+
+  header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 3px solid var(--ink); padding-bottom: 22px; margin-bottom: 40px;
+  }
+  header h1 { font-size: clamp(34px, 5vw, 60px); line-height: 1; letter-spacing: -0.02em; }
+  header h1 em { font-style: normal; background: var(--cream); padding: 0 6px; }
+  header .meta { font-size: 13px; color: var(--ink-soft); text-align: right; }
+
+  .lede { font-size: 18px; line-height: 1.6; max-width: 760px; margin-bottom: 40px; color: var(--ink-soft); }
+  .lede b { color: var(--ink); }
+
+  .section-label {
+    display: inline-block; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    background: var(--ink); color: var(--bg); padding: 4px 10px; margin: 56px 0 22px;
+  }
+  .section-label.first { margin-top: 8px; }
+
+  h2.day {
+    font-size: 28px; border-bottom: 2px solid var(--ink);
+    padding-bottom: 10px; margin: 14px 0 8px; letter-spacing: -0.01em;
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; }
+  h3 .pin { background: var(--cream); padding: 0 6px; }
+
+  p, li { font-size: 15px; line-height: 1.65; color: var(--ink-soft); }
+  p { margin: 10px 0; }
+  strong, b { color: var(--ink); }
+  ul, ol { margin: 8px 0 8px 22px; }
+  li { margin: 5px 0; }
+  a { color: var(--accent-blue); }
+
+  .toc {
+    border: 2px solid var(--ink); background: #fff; padding: 22px 26px; margin-bottom: 16px;
+  }
+  .toc h4 { font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 12px; }
+  .toc ol { margin-left: 18px; }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { background: var(--cream); }
+
+  .box {
+    border: 2px solid var(--ink); background: #fff; padding: 20px 24px; margin: 18px 0;
+  }
+  .box.tip   { border-left: 6px solid var(--accent-blue); }
+  .box.warn  { border-left: 6px solid var(--accent-red); }
+  .box.goal  { background: var(--cream-soft); }
+  .box .tag {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink); display: block; margin-bottom: 8px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  th, td { border: 1px solid var(--ink); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--ink); color: var(--bg); letter-spacing: 0.06em; }
+  td { color: var(--ink-soft); }
+  td b { color: var(--ink); }
+
+  code {
+    background: var(--cream-soft); border: 1px solid #e4d28a;
+    padding: 1px 5px; font-size: 13px; color: var(--ink);
+  }
+  pre {
+    background: var(--ink); color: #f5f5ef; padding: 16px 18px;
+    overflow-x: auto; font-size: 13px; line-height: 1.55; margin: 14px 0;
+  }
+  pre code { background: none; border: none; color: inherit; padding: 0; }
+
+  .pill {
+    display: inline-block; background: var(--cream); border: 1px solid var(--ink);
+    padding: 2px 9px; font-size: 12px; margin: 2px 4px 2px 0;
+  }
+  .checklist { list-style: none; margin-left: 0; }
+  .checklist li { padding-left: 26px; position: relative; }
+  .checklist li::before {
+    content: '☐'; position: absolute; left: 0; color: var(--ink); font-size: 16px;
+  }
+
+  footer {
+    display: flex; justify-content: space-between; border-top: 3px solid var(--ink);
+    padding-top: 18px; margin-top: 70px; color: var(--ink-soft); font-size: 12px;
+  }
+  .backtop { font-size: 12px; }
+  .backtop a { color: var(--ink-mute); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="pill-deco tl"></div>
+<div class="pill-deco tr"></div>
+
+<div class="frame" id="top">
+
+  <span class="local-banner">Local instructor copy · not on the public site</span>
+
+  <header>
+    <h1>NOAI <em>Teacher</em> Guide</h1>
+    <div class="meta">
+      How to teach the 3-day track + exercises<br/>
+      Stage 2 pre-camp · survival-focused
+    </div>
+  </header>
+
+  <p class="lede">
+    This is the <b>instructor's playbook</b> for the 3 NOAI days on the website.
+    For each day you get: <b>what the day is for</b>, <b>how to drive the slide deck</b>,
+    <b>how to run the in-class exercise notebook</b>, <b>how to assign + grade the homework</b>,
+    and a <b>checkpoint</b> you must clear before moving on. Read the philosophy first —
+    it changes how you teach every slide.
+  </p>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#philosophy">Teaching philosophy — read this first</a></li>
+      <li><a href="#how">How slides + notebooks fit together</a></li>
+      <li><a href="#day1">Day 1 — NumPy</a></li>
+      <li><a href="#day2">Day 2 — Pandas + Matplotlib + Seaborn</a></li>
+      <li><a href="#day3">Day 3 — scikit-learn</a></li>
+      <li><a href="#mistakes">Master list — mistakes to catch on sight</a></li>
+      <li><a href="#logistics">Logistics &amp; pre-camp setup</a></li>
+    </ol>
+  </div>
+
+  <!-- ============ PHILOSOPHY ============ -->
+  <span class="section-label first" id="philosophy">1 · Teaching philosophy</span>
+
+  <p>The goal is <b>not</b> to make ML experts. The goal is one sentence:</p>
+
+  <div class="box goal">
+    <span class="tag">The whole point</span>
+    <b>Make the student survive the official camp</b> — keep up with mentors,
+    read a baseline notebook without panic, and change code without breaking it.
+    Not: win the competition. Not: understand backprop math.
+  </div>
+
+  <p>Five rules. They override your instinct to "explain properly":</p>
+  <ul>
+    <li><b>80/20.</b> Teach the 20% of syntax that covers 80% of camp tasks. The decks already
+      cut to this — don't add the parts you miss.</li>
+    <li><b>Pattern over theory.</b> A reusable code template beats a derivation.
+      Students should leave with patterns memorized, not proofs.</li>
+    <li><b>Run first, understand later.</b> Make code run, see output, <em>then</em> explain.
+      Never explain a concept the student hasn't seen execute.</li>
+    <li><b>Live-code, type don't paste.</b> Typing slows you to student speed and
+      shows them debugging in real time — the single most useful skill.</li>
+    <li><b>Make mistakes on purpose.</b> Forget <code>plt.show()</code>. Misspell a column.
+      Recover visibly. They learn the fix by watching the fix.</li>
+  </ul>
+
+  <div class="box tip">
+    <span class="tag">Pacing rule</span>
+    Every ~10 minutes, stop and invite a question. If nobody runs the code, you went too fast.
+    A confused-but-running room beats a quiet-and-lost room.
+  </div>
+
+  <!-- ============ HOW IT FITS ============ -->
+  <span class="section-label" id="how">2 · How slides + notebooks fit together</span>
+
+  <p>Each day has <b>three</b> assets. Use them in this order:</p>
+
+  <table>
+    <tr><th>Asset</th><th>When</th><th>How to use it</th></tr>
+    <tr>
+      <td><b>Slide deck</b><br/><span class="pill">in class</span></td>
+      <td>First ~50–60 min</td>
+      <td>You drive it. Every "problem" slide and widget = stop, let students try,
+        then reveal. Don't read slides aloud — code them live alongside.</td>
+    </tr>
+    <tr>
+      <td><b>Exercise notebook</b><br/><span class="pill">in class</span></td>
+      <td>Last ~30–40 min</td>
+      <td>Students drive. You walk the room. Numbered problems + a final
+        "find the bugs" problem. Solutions are at the bottom — tell them not to scroll yet.</td>
+    </tr>
+    <tr>
+      <td><b>Homework notebook</b><br/><span class="pill">after class</span></td>
+      <td>Before next day</td>
+      <td>Less guidance, hints hidden, ends in a capstone. Review the capstone
+        at the start of the next day (5 min).</td>
+    </tr>
+  </table>
+
+  <div class="box warn">
+    <span class="tag">Non-negotiable</span>
+    Do not skip the exercise notebook to "finish the slides". A finished deck with
+    no hands-on time means zero retention. If short on time, cut slides, never the notebook.
+  </div>
+
+  <!-- ============ DAY 1 ============ -->
+  <span class="section-label" id="day1">3 · Day 1 — NumPy</span>
+  <h2 class="day">Day 1 — NumPy: arrays without loops</h2>
+
+  <div class="box goal">
+    <span class="tag">Survival outcome</span>
+    Student sees <code>arr[:, 1:]</code> or <code>arr.mean(axis=0)</code> in a camp
+    notebook and reads it correctly — "all rows, columns from 1 on" / "mean of each column".
+    They stop reaching for a <code>for</code> loop.
+  </div>
+
+  <h3><span class="pin">Deck</span> — 13 slides, the spine</h3>
+  <p>Arc: <em>list vs array → why arrays → create → shape/reshape → index/slice →
+    vectorized math → broadcasting → boolean masks → image is an array.</em>
+    Slides to slow down on:</p>
+  <ul>
+    <li><b>"Why arrays?"</b> — run the Python-list-loop version next to the NumPy
+      one. Speed difference is the whole motivation. Don't rush past it.</li>
+    <li><b>"Shape &amp; reshape" + "Image as numbers"</b> — shape confusion is the
+      #1 camp killer. Make them say the shape out loud before every operation.</li>
+    <li><b>"Broadcasting" + "Normalize each column"</b> — the hardest idea of the day.
+      Draw the stretch on the board. Expect blank faces; the exercise fixes it, not the slide.</li>
+    <li><b>"Boolean masks — filtering"</b> — bridge to Day 2. Same idea returns as
+      <code>df[df['x'] &gt; 5]</code> tomorrow; say so explicitly.</li>
+  </ul>
+  <p>"Problem" slides (Temperature buffer, Even-indexed students, Celsius→Fahrenheit,
+    Find the outliers, Best student/subject) — <b>stop, 60–90 s, let them try, then reveal.</b></p>
+
+  <h3><span class="pin">Concepts + code</span> — what to actually say while typing</h3>
+
+  <p><b>1 · List vs array — the motivation.</b> Type both. Run both. Let the speed
+    gap land before you say a word.</p>
+  <pre><code># Python list — manual loop
+nums = [1, 2, 3, 4]
+doubled = []
+for n in nums:
+    doubled.append(n * 2)
+
+# NumPy — no loop, runs in C
+import numpy as np
+arr = np.array([1, 2, 3, 4])
+doubled = arr * 2          # [2 4 6 8]</code></pre>
+  <p><em>Say:</em> "The loop is you doing the work. <code>arr * 2</code> is NumPy
+    doing the loop for you, in C, 100× faster. At camp, datasets are huge — loops
+    time out, NumPy doesn't."</p>
+
+  <p><b>2 · Shape is everything.</b> Every camp bug is a shape bug. Drill the habit
+    of printing <code>.shape</code> before any operation.</p>
+  <pre><code>a = np.arange(12)        # [0 1 2 ... 11]
+a.shape                  # (12,)   — 12 numbers, 1 dimension
+b = a.reshape(3, 4)      # 3 rows, 4 cols
+b.shape                  # (3, 4)
+# reshape(3, 5) -> ERROR: 12 != 15. Total elements must match.</code></pre>
+  <p><em>Say:</em> "<code>(3, 4)</code> reads as <b>rows, columns</b>. Reshape only
+    rearranges the same numbers — the total never changes. When sklearn or PyTorch
+    screams later, it is almost always two shapes that don't line up."</p>
+
+  <p><b>3 · Slicing — read it like a sentence.</b></p>
+  <pre><code>m = np.array([[10, 11, 12],
+              [20, 21, 22],
+              [30, 31, 32]])
+m[0]        # first row          -> [10 11 12]
+m[:, 0]     # every row, col 0   -> [10 20 30]
+m[1:, 1:]   # rows from 1, cols from 1 -> [[21 22],[31 32]]</code></pre>
+  <p><em>Say:</em> "Comma splits dimensions: <b>[rows, columns]</b>. Colon alone means
+    'all of them'. Read <code>m[:, 0]</code> out loud as 'all rows, column zero'.
+    Make the students say it before they run it."</p>
+
+  <p><b>4 · Vectorized math + broadcasting — the hard one.</b> Draw the stretch on
+    the board.</p>
+  <pre><code>temps_c = np.array([0, 20, 37, 100])
+temps_f = temps_c * 9/5 + 32        # whole array at once
+
+scores = np.array([[80, 90],
+                   [60, 70]])
+col_mean = scores.mean(axis=0)      # [70. 80.]  (per column)
+normalized = scores - col_mean      # shape (2,2) - shape (2,) -> broadcast</code></pre>
+  <p><em>Say:</em> "<code>axis=0</code> = the dimension that <b>disappears</b> — collapse
+    the rows, one number per column. Broadcasting = NumPy stretches the small array
+    to fit the big one so the shapes match. Expect confused faces here; the exercise
+    fixes it, not this slide."</p>
+
+  <p><b>5 · Boolean mask — the bridge to tomorrow.</b></p>
+  <pre><code>ages = np.array([12, 17, 25, 9, 40])
+ages > 18                 # [False False True False True]
+ages[ages > 18]           # [25 40]  — keep where True</code></pre>
+  <p><em>Say:</em> "A condition makes a True/False array. Index with it to keep only
+    the True rows. <b>Tomorrow this exact idea returns as
+    <code>df[df['age'] &gt; 18]</code> in Pandas.</b> Say that out loud — it pays off Day 2."</p>
+
+  <p><b>6 · np.where + build the matrix — straight into Day 3.</b></p>
+  <pre><code>ages = np.array([12, 17, 25, 9, 40])
+np.where(ages >= 18, 1, 0)        # [0 0 1 0 1]  vectorized if/else
+
+age = np.array([17, 16, 18]); height = np.array([170, 165, 180])
+X = np.column_stack([age, height])    # shape (3, 2): rows=samples, cols=features
+X_train, X_test = X[:2], X[2:]        # split = slice rows</code></pre>
+  <p><em>Say:</em> "Mask <b>picks</b> rows; <code>np.where</code> <b>transforms</b> them —
+    that's how you turn <code>Sex</code> into 0/1 for a model. <code>column_stack</code>
+    glues feature arrays into one <code>X</code>; slicing splits it. <b>Day 3,
+    <code>train_test_split(X, y)</code> is literally this — they'll recognize it
+    instead of fearing it.</b>"</p>
+
+  <h3><span class="pin">Exercise notebook</span> — noai_day1_numpy</h3>
+  <table>
+    <tr><th>Problem</th><th>Teaching note</th></tr>
+    <tr><td>1 — make 4 arrays</td><td>Warm-up. Everyone gets it. Use it to confirm the notebook runs.</td></tr>
+    <tr><td>2 — reshape</td><td>Watch for "total elements must match" errors — that's the lesson, let them hit it.</td></tr>
+    <tr><td>3 — slicing</td><td>The core skill. If a student stalls here, stop them and re-teach 1:1.</td></tr>
+    <tr><td>4 — vectorized math</td><td>If anyone wrote a loop, that's the teachable moment — show the one-liner.</td></tr>
+    <tr><td>5 — aggregate along axis</td><td><code>axis=0</code> vs <code>axis=1</code> always confuses. "axis = the one that disappears."</td></tr>
+    <tr><td>6 — boolean mask filter</td><td>Direct setup for Day 2 filtering. Call that out.</td></tr>
+    <tr><td>7 — np.where (if/else)</td><td>Mask <em>filters</em>, where <em>transforms</em>. Stress: this is how you encode labels 0/1 for sklearn on Day 3.</td></tr>
+    <tr><td>8 — build &amp; split a feature matrix</td><td>The "make X, split it" move. Tell them: Day 3 <code>train_test_split</code> automates exactly this.</td></tr>
+    <tr><td>9 — find the bugs</td><td>Do this together on the projector if &gt;5 min left. Reading broken code = the real camp skill.</td></tr>
+    <tr><td>10 — challenge: mini exam pipeline</td><td>The integrative finale. Synthesizes mask + where + axis + broadcast + argsort + split. Strong students solo; walk the rest through it. This is the closest in-class taste of a camp task.</td></tr>
+  </table>
+
+  <h3><span class="pin">Homework</span> — noai_day1_homework</h3>
+  <p>6 problems, capstone = <b>class rankings</b> (Problem 6). Problem 5 (build a
+    model-ready dataset: <code>column_stack</code> + <code>np.where</code> label +
+    row-slice split) is the camp-relevant one — review it at the start of Day 2.
+    Problem 4 (block averages) is in-vocab; no loops, just <code>reshape</code> + axis mean.</p>
+
+  <ul class="checklist">
+    <li>Every student loaded a CSV-free array and printed its <code>.shape</code></li>
+    <li>Every student sliced rows and columns without a loop</li>
+    <li>Every student ran one boolean-mask filter</li>
+    <li>Nobody is silently stuck — confused-but-running is OK to proceed</li>
+  </ul>
+
+  <!-- ============ DAY 2 ============ -->
+  <span class="section-label" id="day2">4 · Day 2 — Pandas + Matplotlib + Seaborn</span>
+  <h2 class="day">Day 2 — Pandas: any CSV → clean → look</h2>
+
+  <div class="box goal">
+    <span class="tag">Survival outcome</span>
+    Hand the student an unknown CSV. In 60 seconds they run
+    <code>head / info / describe / isnull().sum()</code>, filter rows, group, and
+    plot one chart — without asking what to do first.
+  </div>
+
+  <h3><span class="pin">Deck</span> — 19 slides, the biggest day</h3>
+  <p>Real datasets: <b>Penguins</b> (clean) and <b>Titanic</b> (messy, missing values).
+    Arc: <em>why pandas → DataFrame → read CSV → first-60-seconds ritual →
+    select → filter → new columns / feature engineering → missing values →
+    groupby → sort/unique/top-N.</em></p>
+  <ul>
+    <li><b>"First 60 seconds with a new CSV"</b> — the most important slide of the day.
+      Make it a recited ritual: <code>head → info → describe → isnull().sum()</code>.
+      They'll use this on race day before touching anything.</li>
+    <li><b>"Fill Age — but how?"</b> — teach the <em>decision</em>, not just <code>fillna</code>.
+      Mean vs median vs drop, and why it matters. Camp datasets are always messy.</li>
+    <li><b>"Feature engineering — Title from Name"</b> — first taste of "make a feature".
+      Don't over-explain; show it works, move on.</li>
+    <li><b>"Who actually survived?" / "Class summary, one shot"</b> — groupby is the
+      payoff slide. Connect it back to Day 1 aggregations.</li>
+  </ul>
+  <div class="box warn">
+    <span class="tag">Watch</span>
+    <code>df[df['x'] = 5]</code> (single <code>=</code>) will be written by someone.
+    It's a syntax error. Show the correct <code>==</code> version more than once.
+    Also: someone will forget <code>plt.show()</code> — let a blank cell happen, then fix it.
+  </div>
+
+  <h3><span class="pin">Concepts + code</span> — what to actually say while typing</h3>
+
+  <p><b>1 · DataFrame = a spreadsheet Python can compute on.</b> Open Penguins live.</p>
+  <pre><code>import seaborn as sns
+df = sns.load_dataset('penguins')   # real data, has missing values
+df.shape                            # (344, 7)  rows, columns</code></pre>
+  <p><em>Say:</em> "Rows = records. Columns = features. <code>.shape</code> is the
+    same idea as NumPy yesterday — always check it first."</p>
+
+  <p><b>2 · The 60-second ritual.</b> The single most important habit of camp.
+    Make them recite the four lines.</p>
+  <pre><code>df.head()              # what does a row look like?
+df.info()              # column types + how many non-null
+df.describe()          # min/max/mean of numeric columns
+df.isnull().sum()      # how many missing, per column</code></pre>
+  <p><em>Say:</em> "On race day you get a CSV you've never seen. Before any modelling,
+    you run these four. <code>info()</code> and <code>isnull().sum()</code> together
+    tell you exactly what's broken. This ritual buys you the whole task."</p>
+
+  <p><b>3 · Select &amp; filter — boolean mask, Pandas edition.</b> Tie back to Day 1.</p>
+  <pre><code>df['species']                          # one column
+df[['species', 'body_mass_g']]         # several columns (double brackets!)
+df[df['body_mass_g'] > 4000]           # filter rows by condition
+df[(df['sex'] == 'Female') & (df['island'] == 'Dream')]   # & not 'and'</code></pre>
+  <p><em>Say:</em> "Yesterday: <code>arr[arr &gt; 5]</code>. Today: same idea,
+    <code>df[df['x'] &gt; 5]</code>. Two conditions use <code>&amp;</code> and each
+    side needs parentheses. Single <code>=</code> is a crash — it's always written by someone."</p>
+
+  <p><b>4 · Missing values — teach the decision, not the function.</b></p>
+  <pre><code>df['body_mass_g'].isnull().sum()       # how bad is it?
+df['body_mass_g'].fillna(df['body_mass_g'].median())   # median: robust to outliers
+df.dropna()                            # drop rows — only if few are missing</code></pre>
+  <p><em>Say:</em> "Mean is dragged by outliers; median isn't — for body mass, use
+    median. Drop rows only when missing count is tiny. <b>There is no default — you
+    decide and you justify it.</b> Camp datasets are always messy on purpose."</p>
+
+  <p><b>5 · Groupby — the payoff. Same as Day 1 aggregation, by category.</b></p>
+  <pre><code>df.groupby('species')['body_mass_g'].mean()
+# Titanic: who survived?
+titanic.groupby('class')['survived'].mean()   # survival rate per class</code></pre>
+  <p><em>Say:</em> "Split by a column, compute per group. <code>groupby('class')['survived'].mean()</code>
+    reads as 'survival rate for each class'. This one line answers most EDA questions
+    a mentor will ask you."</p>
+
+  <p><b>6 · Plot — goal is 'a chart appears', not beauty.</b></p>
+  <pre><code>import matplotlib.pyplot as plt
+df['body_mass_g'].plot.hist(bins=20)
+plt.show()                             # FORGET THIS = blank. On purpose, once.</code></pre>
+  <p><em>Say:</em> "One distribution → histogram. Two numbers → scatter. A category
+    count → bar. Always end with <code>plt.show()</code>. Don't style anything —
+    at camp you plot to <em>understand</em>, not to present."</p>
+
+  <h3><span class="pin">Exercise notebook</span> — noai_day2_pandas</h3>
+  <table>
+    <tr><th>Problem</th><th>Teaching note</th></tr>
+    <tr><td>1 — first look at Penguins</td><td>The 60-second ritual, applied. Everyone does it cold.</td></tr>
+    <tr><td>2 — filter + select</td><td>Boolean filter from Day 1 returns. Point that out.</td></tr>
+    <tr><td>3 — groupby</td><td>Core. Most will need a hint on the aggregation function — that's fine.</td></tr>
+    <tr><td>4 — handle missing values</td><td>The real-world skill. Ask "why median not mean here?"</td></tr>
+    <tr><td>5 — histogram / 6 — subplots / 7 — Seaborn heatmap</td><td>Plotting. Goal is "a chart appears", not beauty. Don't tune styling.</td></tr>
+    <tr><td>8 — find the bugs</td><td>Project it, solve together. Classic bugs: missing <code>==</code>, no <code>plt.show()</code>.</td></tr>
+  </table>
+
+  <h3><span class="pin">Homework</span> — noai_day2_homework</h3>
+  <p>Capstone = <b>Titanic 3-panel mini-EDA</b>. This is the first "do a real analysis
+    end to end" task. Review one student's 3 panels on the projector at the start of Day 3.</p>
+
+  <ul class="checklist">
+    <li>Every student ran the 60-second ritual unaided on Penguins</li>
+    <li>Every student filtered + grouped a real DataFrame</li>
+    <li>Every student produced at least one chart that rendered</li>
+    <li>Every student handled a missing-value column without crashing</li>
+  </ul>
+
+  <!-- ============ DAY 3 ============ -->
+  <span class="section-label" id="day3">5 · Day 3 — scikit-learn</span>
+  <h2 class="day">Day 3 — scikit-learn: one API, every model</h2>
+
+  <div class="box goal">
+    <span class="tag">Survival outcome</span>
+    Student reads any sklearn notebook and predicts what each block does, and can
+    swap <code>LogisticRegression</code> for <code>RandomForestClassifier</code>
+    with the rest of the code unchanged.
+  </div>
+
+  <h3><span class="pin">Deck</span> — 24 slides, biggest payoff</h3>
+  <p>Real datasets: <b>Iris</b> + <b>Titanic-like</b>. The deck's spine is the
+    <b>5-step pipeline mantra</b> — make them recite it:</p>
+  <pre><code>1. LOAD     →  pd.read_csv()
+2. SPLIT    →  train_test_split(X, y)
+3. FIT      →  model.fit(X_train, y_train)
+4. PREDICT  →  preds = model.predict(X_test)
+5. EVALUATE →  accuracy_score(y_test, preds)</code></pre>
+  <ul>
+    <li><b>"sklearn — one API for every model"</b> — the thesis of the whole day.
+      Same <code>.fit/.predict</code> on every model. If they get only this, the day worked.</li>
+    <li><b>"Why split?" + "The imbalanced split"</b> — explain conceptually (estimate
+      generalization), no math. The imbalanced-split slide shows <em>why</em>
+      <code>random_state</code> / stratify matters.</li>
+    <li><b>"Why sklearn screams"</b> — the shape/NaN errors they'll actually hit at camp.
+      This is survival gold; spend real time here.</li>
+    <li><b>"Model 1 LogReg" → "Model 2 Random Forest"</b> — teach by <em>diffing</em>:
+      change two lines, same pipeline, better score. That's the entire mental model.</li>
+    <li><b>"Decision boundaries — interactive"</b> — let them play 2–3 min. Intuition
+      for what a model "learns" without a single equation.</li>
+  </ul>
+
+  <h3><span class="pin">Concepts + code</span> — what to actually say while typing</h3>
+
+  <p><b>1 · Supervised ML in one breath.</b> No math.</p>
+  <p><em>Say:</em> "We have <b>X</b> (features, what we know) and <b>y</b> (label,
+    what we want to predict). <code>fit</code> = the model looks at X and y and finds
+    a pattern. <code>predict</code> = apply that pattern to new X. That's all 'learning'
+    is at this level."</p>
+
+  <p><b>2 · The full pipeline — type it once, top to bottom.</b> This is the day.</p>
+  <pre><code>from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+X, y = load_iris(return_X_y=True)                       # 1. LOAD
+X_tr, X_te, y_tr, y_te = train_test_split(              # 2. SPLIT
+        X, y, test_size=0.2, random_state=42)
+model = LogisticRegression(max_iter=200)
+model.fit(X_tr, y_tr)                                   # 3. FIT
+preds = model.predict(X_te)                             # 4. PREDICT
+print(accuracy_score(y_te, preds))                      # 5. EVALUATE</code></pre>
+  <p><em>Say:</em> "Five steps, every time, every task. Make them point at each line
+    and name the step. They should be able to write this skeleton from memory by the
+    end of the day."</p>
+
+  <p><b>3 · Why split — conceptual, no formula.</b></p>
+  <p><em>Say:</em> "If you test on the data you trained on, the model just memorized —
+    score means nothing. Hold out 20% it never saw. <code>random_state=42</code> makes
+    the split repeatable so your score isn't luck. The 'imbalanced split' slide shows
+    why this matters."</p>
+
+  <p><b>4 · One API for every model — teach by diffing.</b> Change two lines, rerun.</p>
+  <pre><code>from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_tr, y_tr)                  # SAME line
+preds = model.predict(X_te)            # SAME line</code></pre>
+  <p><em>Say:</em> "Only the import and the class name changed. <code>.fit / .predict</code>
+    are identical. <b>This is the single most useful fact for camp</b> — to try a
+    different model you swap two lines, nothing else."</p>
+
+  <p><b>5 · Read the output — not just the accuracy number.</b></p>
+  <pre><code>from sklearn.metrics import classification_report
+print(classification_report(y_te, preds))</code></pre>
+  <p><em>Say:</em> "Precision = 'when it said class A, was it right?'. Recall = 'of all
+    real class A, how many did it catch?'. On imbalanced data, accuracy lies — this
+    table tells the truth. You don't compute these, you read them."</p>
+
+  <p><b>6 · Cross-validation — 'one split can lie'.</b> Concept only.</p>
+  <pre><code>from sklearn.model_selection import cross_val_score
+cross_val_score(model, X, y, cv=5).mean()   # 5 splits, average score</code></pre>
+  <p><em>Say:</em> "One split might be a lucky or unlucky 20%. CV does it 5 times and
+    averages — a score you can trust. Don't go deep; just the why."</p>
+
+  <p><b>7 · The integration task = the real exam.</b> Day 2 cleaning + Day 3 pipeline
+    on Titanic. If a student does this unaided, they survive camp. Say that to them.</p>
+
+  <h3><span class="pin">Exercise notebook</span> — noai_day3_sklearn</h3>
+  <table>
+    <tr><th>Problem</th><th>Teaching note</th></tr>
+    <tr><td>1 — load Iris / 2 — split</td><td>Steps 1–2 of the mantra. Fast.</td></tr>
+    <tr><td>3 — LogReg + score</td><td>First full pipeline. Celebrate the first accuracy number.</td></tr>
+    <tr><td>4 — RandomForest + compare</td><td>The "swap the model" moment. Make them notice only 2 lines changed.</td></tr>
+    <tr><td>5 — classification report</td><td>Reading output, not writing code. Ask what precision/recall mean in plain words.</td></tr>
+    <tr><td>6 — cross-validation</td><td>Concept: "one split can lie". Don't go deep, just the why.</td></tr>
+    <tr><td>7 — Titanic-like full pipeline</td><td>The integration task: Day 2 cleaning + Day 3 modelling. The real exam.</td></tr>
+    <tr><td>8 — find the bugs</td><td>Together. Classic: forgot the split, wrong X/y, NaN into <code>.fit()</code>.</td></tr>
+  </table>
+
+  <h3><span class="pin">Homework</span> — noai_day3_homework</h3>
+  <p>Capstone = <b>Titanic end-to-end</b> (clean → split → fit two → CV the winner).
+    This is the closest thing to an actual camp task in the whole track. If a student
+    can do this unaided, they will survive.</p>
+
+  <ul class="checklist">
+    <li>Every student recited the 5-step pipeline from memory</li>
+    <li>Every student trained one model and read its accuracy</li>
+    <li>Every student swapped models with the pipeline unchanged</li>
+    <li>At least the strong students completed the Titanic integration (Problem 7)</li>
+  </ul>
+
+  <!-- ============ MISTAKES ============ -->
+  <span class="section-label" id="mistakes">6 · Mistakes to catch on sight</span>
+  <p>Memorize these. When you see one while walking the room, fix it on the spot —
+    these are exactly the errors that lose camp time.</p>
+  <table>
+    <tr><th>Mistake</th><th>Day</th><th>Fix / what to say</th></tr>
+    <tr><td><code>arr.reshape</code> with wrong element count</td><td>1</td><td>"Total elements must match. Count them."</td></tr>
+    <tr><td>Loop where vectorized math works</td><td>1</td><td>Show the one-liner. "NumPy does the loop for you."</td></tr>
+    <tr><td><code>axis</code> off by one in aggregations</td><td>1,3</td><td>"axis = the dimension that disappears."</td></tr>
+    <tr><td><code>df[df['x'] = 5]</code> single <code>=</code></td><td>2</td><td>Syntax error. Use <code>==</code>. Show it twice.</td></tr>
+    <tr><td>Forgot <code>plt.show()</code></td><td>2</td><td>Let the blank happen once, then add it.</td></tr>
+    <tr><td>Filling missing values blindly</td><td>2</td><td>"Mean or median? Why?" Make them justify.</td></tr>
+    <tr><td>No train/test split</td><td>3</td><td>Show with-split vs without side by side.</td></tr>
+    <tr><td>NaN passed into <code>.fit()</code></td><td>3</td><td>Read the last line of the traceback, not the first.</td></tr>
+    <tr><td>Changing many things, score moved, can't tell why</td><td>3</td><td>"One change, then re-run. Always."</td></tr>
+  </table>
+
+  <div class="box tip">
+    <span class="tag">Debugging mantra to drill</span>
+    Teach this on Day 1, repeat every day: <b>read the LAST line of the error</b>,
+    then <code>print(df.head())</code> / <code>print(arr.shape)</code> /
+    <code>print(len(x))</code> at every step. This single habit is worth more than
+    any model.
+  </div>
+
+  <!-- ============ LOGISTICS ============ -->
+  <span class="section-label" id="logistics">7 · Logistics &amp; pre-camp setup</span>
+  <ul>
+    <li><b>One week before:</b> send the Colab links. Colab is recommended over local
+      installs — it removes every setup failure. Verify each student can open and run
+      one cell before Day 1.</li>
+    <li><b>Each day:</b> deck open on the projector, exercise notebook link in chat,
+      homework link given at the end.</li>
+    <li><b>Start of each day:</b> 5 minutes reviewing one student's previous-day
+      capstone on the projector. This is the highest-value review you can do.</li>
+    <li><b>Time budget per day (~90 min):</b> deck 50–60 min · exercise notebook
+      30–40 min · homework assigned, not done in class.</li>
+    <li><b>If you run short:</b> cut deck slides (the "problem" slides can be self-study),
+      never cut hands-on notebook time.</li>
+  </ul>
+
+  <div class="box goal">
+    <span class="tag">If you remember one thing</span>
+    A student who can do the Day 3 Titanic end-to-end capstone <b>unaided</b> will
+    survive the camp. Everything in these 3 days exists to get them there. Optimize
+    the room toward that, not toward finishing slides.
+  </div>
+
+  <footer>
+    <span>NOAI Teacher Guide · local instructor copy</span>
+    <span class="backtop"><a href="#top">↑ back to top</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
