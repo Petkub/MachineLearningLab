@@ -313,8 +313,9 @@
           <div style="margin-top: 8px;"><b style="background:#ffe3a8;padding:2px 8px;">y</b> — label vector, shape <code>(n_rows,)</code></div>
         </div>
       </div>
-      <pre class="code" style="margin-top: 16px;">X = df.drop(<span class="str">'Survived'</span>, axis=<span class="num">1</span>)   <span class="cmt"># everything except target</span>
-y = df[<span class="str">'Survived'</span>]                <span class="cmt"># the target column</span></pre>
+      <pre class="code" style="margin-top: 16px;">X = df[[<span class="str">'Pclass'</span>, <span class="str">'Sex'</span>, <span class="str">'Age'</span>, <span class="str">'Fare'</span>]]   <span class="cmt"># pick numeric features</span>
+y = df[<span class="str">'Survived'</span>]                       <span class="cmt"># the target column</span></pre>
+      <p style="font-size: 13px; color: var(--ink-soft);"><code>df.drop('Survived', axis=1)</code> also works — but <b>only if every other column is already numeric</b>. Raw titanic.csv has <code>Name</code>, <code>Ticket</code>, <code>Cabin</code> (strings) → crash.</p>
       <p class="callout fragment"><b class="tk-red">Convention</b>: capital <code>X</code> (matrix), lowercase <code>y</code> (vector). Universal in ML code.</p>
     </section>
 
@@ -383,7 +384,7 @@ X = df[[<span class="str">'Pclass'</span>, <span class="str">'Sex'</span>, <span
 y = df[<span class="str">'Survived'</span>]
 
 <span class="cmt"># 2. SPLIT</span>
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>, stratify=y)
 
 <span class="cmt"># 3. FIT</span>
 model = LogisticRegression(max_iter=<span class="num">1000</span>)
@@ -436,6 +437,27 @@ model = GradientBoostingClassifier()</pre>
       <p class="callout fragment" style="margin-top: 12px;">Rest of the pipeline (<code>.fit / .predict / accuracy_score</code>) <b>does not change</b>.</p>
     </section>
 
+    <!-- 9b. Scaling + Pipeline -->
+    <section class="slide dense">
+      <h2>Scaling — and why <code>Pipeline</code></h2>
+      <p>Distance models (KNN, SVM) need features on one scale. Age 0–80 vs Fare 0–500 $\Rightarrow$ Fare dominates the distance.</p>
+      <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.pipeline <span class="kw">import</span> Pipeline
+
+pipe = Pipeline([
+    (<span class="str">'scaler'</span>, StandardScaler()),
+    (<span class="str">'model'</span>,  KNeighborsClassifier(n_neighbors=<span class="num">5</span>)),
+])
+pipe.fit(X_train, y_train)        <span class="cmt"># scaler fit on TRAIN only</span>
+preds = pipe.predict(X_test)      <span class="cmt"># same scaling reapplied to test</span></pre>
+      <ul style="margin-top: 14px;">
+        <li class="fragment"><b class="tk-red">Leak trap</b>: scale BEFORE split $\Rightarrow$ test stats bleed into train. Cheating.</li>
+        <li class="fragment"><b class="tk-blue">Pipeline</b> fits scaler on X_train only, reapplies to X_test for you.</li>
+        <li class="fragment">Whole <code>pipe</code> still has <code>.fit / .predict</code> — same 5-step shape.</li>
+      </ul>
+      <p class="callout fragment">Tree models (RandomForest, GradientBoosting) don't need scaling. KNN / SVM / LogReg benefit.</p>
+    </section>
+
     <!-- 10. Confusion matrix -->
     <section class="slide">
       <h2>Confusion matrix — beyond accuracy</h2>
@@ -463,36 +485,140 @@ confusion_matrix(y_test, preds)
             </tr>
             <tr>
               <th>actual 0</th>
-              <td class="tn"><span class="lbl">TN</span><span class="num-big">98</span></td>
-              <td class="fp"><span class="lbl">FP</span><span class="num-big">12</span></td>
+              <td class="tn"><span class="lbl">TN</span><span class="num-big">97</span></td>
+              <td class="fp"><span class="lbl">FP</span><span class="num-big">13</span></td>
             </tr>
             <tr>
               <th>actual 1</th>
-              <td class="fn"><span class="lbl">FN</span><span class="num-big">18</span></td>
-              <td class="tp"><span class="lbl">TP</span><span class="num-big">51</span></td>
+              <td class="fn"><span class="lbl">FN</span><span class="num-big">21</span></td>
+              <td class="tp"><span class="lbl">TP</span><span class="num-big">48</span></td>
             </tr>
           </table>
-          <div style="font-size: 12px; color: var(--ink-soft); margin-top: 6px;">accuracy = (98+51)/179 = <b>0.83</b></div>
+          <div style="font-size: 12px; color: var(--ink-soft); margin-top: 6px;">accuracy = (97+48)/179 = <b>0.81</b></div>
         </div>
       </div>
     </section>
 
-    <!-- 11. Accuracy trap -->
-    <section class="slide">
-      <h2>Accuracy ≠ truth</h2>
-      <ul>
-        <li class="fragment">Cancer dataset: 99% healthy, 1% sick.</li>
-        <li class="fragment">Model: <b class="tk-red">"always predict healthy"</b> $\Rightarrow$ accuracy 99%.</li>
-        <li class="fragment">Useless. Catches zero patients.</li>
-      </ul>
+    <!-- 10b. FP vs FN — which hurts more -->
+    <section class="slide dense">
+      <h2>FP vs FN — which one hurts more?</h2>
+      <p>Same 4 boxes, totally different stakes. Domain decides which error to fear.</p>
+      <table class="param-tbl">
+        <tr><th>situation</th><th>FP = false alarm</th><th>FN = missed</th><th>worse one</th></tr>
+        <tr>
+          <td>Cancer screening</td>
+          <td>extra biopsy, scare patient</td>
+          <td>tumor missed, patient dies</td>
+          <td><b class="tk-red">FN</b></td>
+        </tr>
+        <tr>
+          <td>Spam filter</td>
+          <td>real email lost in spam</td>
+          <td>spam reaches inbox</td>
+          <td><b class="tk-red">FP</b></td>
+        </tr>
+        <tr>
+          <td>Fraud detection</td>
+          <td>card declined, customer angry</td>
+          <td>money stolen, bank pays</td>
+          <td><b class="tk-red">FN</b></td>
+        </tr>
+        <tr>
+          <td>Court verdict</td>
+          <td>innocent person jailed</td>
+          <td>guilty walks free</td>
+          <td><b class="tk-red">FP</b></td>
+        </tr>
+        <tr>
+          <td>Self-driving brake</td>
+          <td>phantom stop, rear-ended</td>
+          <td>hit pedestrian</td>
+          <td><b class="tk-red">FN</b></td>
+        </tr>
+        <tr>
+          <td>Smoke alarm</td>
+          <td>beeps from burnt toast</td>
+          <td>silent during real fire</td>
+          <td><b class="tk-red">FN</b></td>
+        </tr>
+        <tr>
+          <td>Job résumé screen</td>
+          <td>good candidate rejected</td>
+          <td>bad hire, fired later</td>
+          <td>depends on cost</td>
+        </tr>
+      </table>
+      <p class="callout fragment"><b>Always ask first</b>: in this problem, is FP or FN worse? Then pick the metric.</p>
+    </section>
 
-      <pre class="code" style="margin-top: 12px;"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> precision_score, recall_score, f1_score
+    <!-- 11. Each metric alone lies -->
+    <section class="slide dense">
+      <h2>Every metric, alone, can lie</h2>
+      <p>Each one game-able. Cheat model passes — useless in real life.</p>
+      <table class="param-tbl">
+        <tr><th>metric</th><th>cheat strategy</th><th>score</th><th>why useless</th></tr>
+        <tr>
+          <td><b>Accuracy</b> only</td>
+          <td>Cancer data 99% healthy. Model: "always healthy".</td>
+          <td><b class="tk-green">99%</b></td>
+          <td><b class="tk-red">Catches zero patients.</b> Skips every sick person.</td>
+        </tr>
+        <tr>
+          <td><b>Precision</b> only</td>
+          <td>Spam filter. Flag only one obvious "VIAGRA $$$" email.</td>
+          <td><b class="tk-green">100%</b></td>
+          <td><b class="tk-red">All other spam in inbox.</b> Recall ≈ 0.</td>
+        </tr>
+        <tr>
+          <td><b>Recall</b> only</td>
+          <td>Fraud detector. Flag <b>every</b> transaction as fraud.</td>
+          <td><b class="tk-green">100%</b></td>
+          <td><b class="tk-red">Every customer card declined.</b> Precision tiny.</td>
+        </tr>
+        <tr>
+          <td><b>Accuracy</b> only (again)</td>
+          <td>Earthquake predictor. "No quake tomorrow" — every day.</td>
+          <td><b class="tk-green">~99.9%</b></td>
+          <td><b class="tk-red">Misses every quake.</b> Whole point of model.</td>
+        </tr>
+        <tr>
+          <td><b>Precision</b> only (again)</td>
+          <td>Cancer screen. Only flag clearest tumors, skip uncertain.</td>
+          <td><b class="tk-green">99%</b></td>
+          <td><b class="tk-red">Half real cancers missed.</b> Patients die.</td>
+        </tr>
+      </table>
+      <p class="callout fragment" style="margin-top: 12px;"><b class="tk-blue">Rule</b>: never one metric. Check pair (precision + recall) or <b>F1</b>. Imbalanced data $\Rightarrow$ accuracy lies hardest.</p>
+    </section>
 
-precision_score(y_test, preds)   <span class="cmt"># of those flagged sick, how many really sick</span>
-recall_score(y_test, preds)      <span class="cmt"># of all sick, how many we caught</span>
-f1_score(y_test, preds)          <span class="cmt"># harmonic mean — single number</span></pre>
+    <!-- 11b. classification_report -->
+    <section class="slide dense">
+      <h2><code>classification_report</code> — every metric, one call</h2>
+      <p>Don't hand-compute precision/recall. sklearn prints the whole table per class.</p>
+      <div class="tight-split">
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> classification_report
 
-      <p class="callout fragment" style="margin-top: 12px;"><b class="tk-blue">Rule</b>: imbalanced data $\Rightarrow$ check <b>F1, recall, ROC-AUC</b>, not just accuracy.</p>
+<span class="kw">print</span>(classification_report(y_test, preds))</pre>
+          <ul style="margin-top: 12px; font-size: 14px;">
+            <li class="fragment"><b>per class</b> — row 0 and row 1 get their own precision/recall.</li>
+            <li class="fragment"><b>support</b> — real rows of that class. Spot imbalance here.</li>
+            <li class="fragment"><b>macro</b> = plain class mean. <b>weighted</b> = mean weighted by support.</li>
+          </ul>
+        </div>
+        <div>
+          <pre class="code" style="font-size:12px; line-height:1.5;">              precision  recall  f1   support
+
+           0       0.82    0.88  0.85     110
+           1       0.79    0.70  0.74      69
+
+    accuracy                     0.81     179
+   macro avg       0.80    0.79  0.79     179
+weighted avg       0.81    0.81  0.81     179</pre>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Same LogReg run as the confusion matrix: TN 97, FP 13, FN 21, TP 48.</div>
+        </div>
+      </div>
+      <p class="callout fragment">One call replaces accuracy_score + precision + recall + f1 — split per class.</p>
     </section>
 
     <!-- 12. Widget — pipeline stepper -->
@@ -540,6 +666,31 @@ f1_score(y_test, preds)          <span class="cmt"># harmonic mean — single nu
       </table>
     </section>
 
+    <!-- 13b. Cross-validation -->
+    <section class="slide dense">
+      <h2>Cross-validation — one split lies too</h2>
+      <p>A single 80/20 split is one lucky (or unlucky) draw. Score swings with <code>random_state</code>.</p>
+      <pre class="code"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score
+
+scores = cross_val_score(model, X, y, cv=<span class="num">5</span>)   <span class="cmt"># 5 folds</span>
+<span class="kw">print</span>(scores)                       <span class="cmt"># [0.79 0.83 0.80 0.81 0.78]</span>
+<span class="kw">print</span>(scores.mean(), scores.std()) <span class="cmt"># 0.802  0.018</span></pre>
+      <div class="split-bar" style="grid-template-columns: repeat(5,1fr); margin-top:14px;">
+        <div class="split-test">fold 1 = test</div>
+        <div class="split-train">fold 2</div>
+        <div class="split-train">fold 3</div>
+        <div class="split-train">fold 4</div>
+        <div class="split-train">fold 5</div>
+      </div>
+      <p style="font-size: 13px; color: var(--ink-soft);">Each fold takes a turn as test (red), trains on the other 4. Average the 5 scores.</p>
+      <ul>
+        <li class="fragment"><b class="tk-blue">cv=5</b> $\Rightarrow$ 5 train/test rounds, every row tested exactly once.</li>
+        <li class="fragment">Report <b>mean ± std</b>, not one number. std shows stability.</li>
+        <li class="fragment">Feed full <code>X, y</code> — CV does the splitting internally.</li>
+      </ul>
+      <p class="callout fragment">Final score = cross-val mean. Single split = quick dev check only.</p>
+    </section>
+
     <!-- 14. Recap -->
     <section class="slide">
       <h2>Recap — the 5-step mantra</h2>
@@ -554,6 +705,7 @@ f1_score(y_test, preds)          <span class="cmt"># harmonic mean — single nu
         <li class="fragment"><b class="tk-blue">Same shape</b> for every sklearn model — swap one import line.</li>
         <li class="fragment"><b class="tk-red">Never fit on test</b>. <b class="tk-red">Never put target in X</b>.</li>
         <li class="fragment"><b class="tk-purple">Imbalanced</b> $\Rightarrow$ F1 / recall, not accuracy.</li>
+        <li class="fragment"><b class="tk-green">Scale</b> for KNN/SVM (use <code>Pipeline</code>). <b class="tk-green">Trust the cross-val mean</b>.</li>
       </ul>
       <p class="callout fragment">Next: classification hands-on with Random Forest on Titanic.</p>
     </section>
@@ -609,7 +761,7 @@ f1_score(y_test, preds)          <span class="cmt"># harmonic mean — single nu
       ['',  ''],
       ['2', 'from sklearn.model_selection import train_test_split'],
       ['2', 'X_train, X_test, y_train, y_test = train_test_split('],
-      ['2', '    X, y, test_size=0.2, random_state=42)'],
+      ['2', '    X, y, test_size=0.2, random_state=42, stratify=y)'],
       ['',  ''],
       ['3', M.imp],
       ['3', `model = ${M.ctor}`],
