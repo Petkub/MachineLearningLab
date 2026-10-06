@@ -375,6 +375,15 @@
   .deck .slide .name-grid p { font-size: 14.5px; line-height: 1.45; }
   .decode { border: 2px dashed var(--ink); background: #fff; padding: 8px 14px; margin: 14px auto 0; max-width: 820px; font-size: 14.5px; line-height: 1.7; }
   .decode i { font-style: normal; background: var(--cream); padding: 0 5px; }
+  .hidden-flow { display: grid; gap: 12px; font-family: var(--font-mono); }
+  .hf-row { display: flex; align-items: center; gap: 8px; }
+  .hf-box { border: 2px solid var(--ink); padding: 6px 10px; font-weight: 800; font-size: 14px; text-align: center; min-width: 110px; background: #fff; }
+  .hf-box small { display: block; font-weight: 400; font-size: 11px; color: var(--ink-soft); }
+  .hf-box.q { background: #c8e6ff; } .hf-box.m { background: #d6f5dd; min-width: 70px; }
+  .hf-box.g { background: #ffd6cc; } .hf-box.a { background: var(--cream); border-style: dashed; }
+  .hf-box.c { background: #e6d2ff; }
+  .hf-arrow { font-weight: 800; color: var(--accent-blue); }
+  .hf-arrow.dim { color: var(--ink-mute); font-size: 12px; flex: 1; text-align: center; }
 </style>
 </head>
 <body>
@@ -1058,14 +1067,90 @@ boundary = -model.intercept_[<span class="num">0</span>] / model.coef_[<span cla
     </section>
 
     <section class="slide dense">
-      <h2>Step 4 — ask about one new student. Why <code>[[6.5]]</code>?</h2>
+      <h2>Step 4 — predict for the 12 test students</h2>
+      <pre class="code">proba = model.<span class="fn">predict_proba</span>(X_test)   <span class="cmt"># the chances, for all 12 test students</span>
+proba.shape                            <span class="cmt"># (12, 2)</span>
+
+preds = model.<span class="fn">predict</span>(X_test)         <span class="cmt"># the decisions: 12 zeros and ones</span></pre>
+      <div class="split-2" style="margin-top:14px;">
+        <div class="hidden-flow fragment">
+          <div class="hf-row"><span class="hf-box q">X_test<small>12 questions (hours)</small></span><span class="hf-arrow">→</span><span class="hf-box m">model</span><span class="hf-arrow">→</span><span class="hf-box g">guesses<small>proba, preds</small></span></div>
+          <div class="hf-row"><span class="hf-box a">🔒 y_test<small>12 real answers</small></span><span class="hf-arrow dim">· · · stays hidden · · ·</span><span class="hf-box c">Step 5<small>check the guesses</small></span></div>
+        </div>
+        <div class="analogy fragment">
+          <h4>THINK: THE REAL EXAM</h4>
+          <p>Students get the <b>question paper</b> (<code>X_test</code>). They never see the <b>answer key</b>
+            (<code>y_test</code>).</p>
+          <p style="margin-top:8px;">The teacher uses the answer key <b>afterwards</b>, to mark the papers. That's Step 5.</p>
+        </div>
+      </div>
+      <p class="pitfall fragment"><b>The model only ever gets <code>X</code>.</b> <code>predict(X_test, y_test)</code> is wrong —
+        giving it the answers would be cheating. <code>y_test</code> only appears in Step 5.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>What <code>predict_proba</code> gives back</h2>
+      <div class="split-2" style="grid-template-columns: 1.1fr 0.9fr;">
+        <div>
+          <table class="pd-table tight">
+            <tr><th>X_test row</th><th>hours</th><th class="r">column 0<br/>P(fail)</th><th class="r">column 1<br/>P(pass)</th></tr>
+            <tr><td class="idx">1st</td><td class="xcol">2.7</td><td class="r y0">0.972</td><td class="r y1">0.028</td></tr>
+            <tr><td class="idx">2nd</td><td class="xcol">7.6</td><td class="r y0">0.016</td><td class="r y1">0.984</td></tr>
+            <tr><td class="idx">3rd</td><td class="xcol">8.8</td><td class="r y0">0.003</td><td class="r y1">0.997</td></tr>
+            <tr><td class="idx">…</td><td class="xcol">…</td><td class="r">…</td><td class="r">…</td></tr>
+            <tr><td class="idx">12th</td><td class="xcol">1.9</td><td class="r y0">0.992</td><td class="r y1">0.008</td></tr>
+          </table>
+          <p class="wgt-note">The hours column is shown just for reading — <code>proba</code> itself only has the 2 coloured columns.</p>
+        </div>
+        <ul style="font-size:14.5px;">
+          <li class="fragment"><b>One row per test student</b>, in the <b>same order</b> as <code>X_test</code>. 12 in → 12 out.</li>
+          <li class="fragment"><b>One column per class</b>, in <code>model.classes_</code> order: column 0 = fail, column 1 = pass.
+            Each row adds up to 1.</li>
+          <li class="fragment"><code>proba[:, 1]</code> = "<b>every row, column 1</b>" → the 12 chances of passing.</li>
+          <li class="fragment">Why two columns if one would do? So the same shape works for <b>3+ classes</b> — iris
+            flowers get 3 columns in Part VIII.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2><code>predict</code> vs <code>predict_proba</code> — three test students</h2>
       <div class="split-2">
         <div>
-          <p style="font-size:15px;">The model studied from <code>X_train</code>: a <b>table</b> with rows (students)
-            and columns (features). So it only accepts questions <b>in the same shape</b> — a table.</p>
+          <table class="pd-table tight">
+            <tr><th>hours</th><th>P(pass)<br/><code>proba[:, 1]</code></th><th>decision<br/><code>preds</code></th></tr>
+            <tr><td>3.2</td><td>0.060</td><td class="y0">0 · fail</td></tr>
+            <tr class="hot"><td>5.1</td><td>0.551</td><td class="y1">1 · pass</td></tr>
+            <tr><td>7.5</td><td>0.981</td><td class="y1">1 · pass</td></tr>
+          </table>
+          <ul style="font-size:14.5px;margin-top:12px;">
+            <li class="fragment"><code>predict</code> = "is P(pass) at least 50%?" → 1, else 0.</li>
+            <li class="fragment">55% and 98% both become "1". <code>predict</code> <b>throws away</b> how sure the model was.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="box fragment">
+            <h4><code>predict_proba</code> = THE FORECAST</h4>
+            <p style="font-size:14px;">"55% chance of pass." Use it to <b>rank</b> students by risk, or to choose your own
+              cut-off (Part VII).</p>
+          </div>
+          <div class="box fragment" style="margin-top:14px;">
+            <h4><code>predict</code> = THE DECISION</h4>
+            <p style="font-size:14px;">"Pass." Use it when you just need an answer — and to compute accuracy in Step 5.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>A brand-new student? Shape it like <code>X_test</code> — <code>[[6.5]]</code></h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size:15px;"><code>X_test</code> was a <b>table</b>: rows = students, columns = features. A new question
+            must be <b>the same shape</b> — a table, even with just one row.</p>
           <div class="shape-row fragment">
-            <div><p class="shape-cap">X_train — 48 rows</p>
-              <table class="pd-table"><tr><th>hours_studied</th></tr><tr><td class="xcol">3.2</td></tr><tr><td class="xcol">7.6</td></tr><tr><td class="xcol">…</td></tr></table></div>
+            <div><p class="shape-cap">X_test — 12 rows</p>
+              <table class="pd-table"><tr><th>hours_studied</th></tr><tr><td class="xcol">2.7</td></tr><tr><td class="xcol">7.6</td></tr><tr><td class="xcol">…</td></tr></table></div>
             <div class="shape-arrow">same<br/>shape →</div>
             <div><p class="shape-cap">one new student — 1 row</p>
               <table class="pd-table"><tr><th>hours_studied</th></tr><tr><td class="xcol">6.5</td></tr></table></div>
@@ -1086,59 +1171,9 @@ boundary = -model.intercept_[<span class="num">0</span>] / model.coef_[<span cla
             <li class="fragment"><code>[6.5]</code> alone is just a list of numbers — sklearn can't tell rows from columns →
               <em>"Expected 2D array"</em>.</li>
           </ul>
-          <pre class="code fragment" style="margin-top:8px;"><span class="cmt"># tidier: a 1-row DataFrame with the same column name</span>
+          <pre class="code fragment" style="margin-top:8px;"><span class="cmt"># tidier: a 1-row DataFrame, same column name as X</span>
 new = pd.<span class="fn">DataFrame</span>({<span class="str">'hours_studied'</span>: [<span class="num">6.5</span>]})
-model.<span class="fn">predict_proba</span>(new)</pre>
-        </div>
-      </div>
-    </section>
-
-    <section class="slide dense">
-      <h2>What <code>predict_proba</code> gives back</h2>
-      <pre class="code">model.<span class="fn">predict_proba</span>(new)      <span class="cmt"># array([[0.084, 0.916]])</span></pre>
-      <div class="proba-anat fragment">
-        <div class="pa-row"><span class="pa-lbl"></span><span class="pa-col">column 0</span><span class="pa-col">column 1</span></div>
-        <div class="pa-row"><span class="pa-lbl">student 1 →</span><span class="pa-cell f">0.084</span><span class="pa-cell p">0.916</span></div>
-        <div class="pa-row"><span class="pa-lbl"></span><span class="pa-col">chance of <b>fail</b> (class 0)</span><span class="pa-col">chance of <b>pass</b> (class 1)</span></div>
-      </div>
-      <ul style="font-size:15px;margin-top:12px;">
-        <li class="fragment">The answer is <b>also a table</b>: one row per student you asked about, one column per class.</li>
-        <li class="fragment">Each row adds up to 1 (8.4% + 91.6% = 100%). Column order follows <code>model.classes_</code> = <code>[0, 1]</code>.</li>
-        <li class="fragment">To grab just "chance of pass": <code>model.predict_proba(new)[:, 1]</code> —
-          read <code>[:, 1]</code> as "<b>every row, column 1</b>".</li>
-        <li class="fragment">Why two columns if one would do? So the same shape works with <b>3 or more classes</b> —
-          you'll see 3 columns for iris flowers in Part VIII.</li>
-      </ul>
-    </section>
-
-    <section class="slide dense">
-      <h2>Many students at once — n rows in, n rows out</h2>
-      <div class="split-2">
-        <div>
-          <pre class="code">three = pd.<span class="fn">DataFrame</span>({<span class="str">'hours_studied'</span>: [<span class="num">3.0</span>, <span class="num">5.0</span>, <span class="num">8.0</span>]})
-
-model.<span class="fn">predict_proba</span>(three)
-<span class="cmt"># [[0.955 0.045]</span>
-<span class="cmt">#  [0.487 0.513]</span>
-<span class="cmt">#  [0.009 0.991]]</span>
-
-model.<span class="fn">predict</span>(three)
-<span class="cmt"># [0 1 1]</span></pre>
-          <p class="callout fragment" style="font-size:16px;margin-top:12px;">So <code>model.predict(X_test)</code> gives
-            <b>12 answers</b> — one for each of the 12 test students.</p>
-        </div>
-        <div>
-          <table class="pd-table tight fragment">
-            <tr><th>hours</th><th>P(fail)</th><th>P(pass)</th><th>predict</th></tr>
-            <tr><td>3.0</td><td>0.955</td><td>0.045</td><td class="y0">0 · fail</td></tr>
-            <tr class="hot"><td>5.0</td><td>0.487</td><td>0.513</td><td class="y1">1 · pass</td></tr>
-            <tr><td>8.0</td><td>0.009</td><td>0.991</td><td class="y1">1 · pass</td></tr>
-          </table>
-          <ul style="font-size:14px;margin-top:12px;">
-            <li class="fragment"><code>predict</code> = "is P(pass) at least 50%?" → 1, else 0.</li>
-            <li class="fragment">5 hours: 51% and 99% both become "1". <code>predict</code> <b>throws away</b> how sure the model was.</li>
-            <li class="fragment">Need a ranking ("who is most at risk?") → use <code>predict_proba</code>.</li>
-          </ul>
+model.<span class="fn">predict_proba</span>(new)   <span class="cmt"># [[0.084 0.916]] → 1 row out</span></pre>
         </div>
       </div>
     </section>
@@ -1164,11 +1199,12 @@ model.<span class="fn">predict</span>(three)
           </table>
         </div>
         <div>
-          <pre class="code">preds = model.<span class="fn">predict</span>(X_test)
+          <pre class="code"><span class="cmt"># preds came from Step 4</span>
 <span class="fn">accuracy_score</span>(y_test, preds)
 <span class="cmt"># 0.917</span></pre>
           <ul style="font-size:14.5px;margin-top:10px;">
-            <li class="fragment">These are the 12 hidden test students, sorted by hours.</li>
+            <li class="fragment">🔓 Now the answer key <code>y_test</code> comes out — for the first time.</li>
+            <li class="fragment">These are the 12 test students, sorted by hours.</li>
             <li class="fragment"><b>Accuracy</b> = correct ÷ total = <b>11 ÷ 12 = 0.917</b>.</li>
             <li class="fragment">Argument order: <b>real answers first</b>, guesses second.</li>
             <li class="fragment">The one miss: <b>5.1 hours, failed</b> — the model said 55% pass. It was barely leaning.</li>
