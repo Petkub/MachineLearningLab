@@ -660,7 +660,7 @@ plt.<span class="fn">show</span>()</pre>
       <h2>Score a curve: add up everyone's penalty</h2>
       <div class="split-2">
         <div>
-          <p style="font-size:14px;color:var(--ink-soft);">the best curve, five of the 60 students:</p>
+          <p style="font-size:14px;color:var(--ink-soft);">the best curve (fitted on all 60, no leash), five of the 60 students:</p>
           <table class="pd-table" style="margin-top:8px;">
             <tr><th>hours</th><th>really</th><th>model says P(pass)</th><th>penalty</th></tr>
             <tr><td>1.0</td><td class="y0">fail</td><td>0%</td><td>0.00</td></tr>
@@ -673,7 +673,7 @@ plt.<span class="fn">show</span>()</pre>
         </div>
         <ul style="font-size:15px;">
           <li class="fragment">Easy students — 1 hour and failed, 8 hours and passed — cost <b>almost nothing</b>.</li>
-          <li class="fragment">The student who studied <b>6.1 hours and still failed</b> costs the most: the
+          <li class="fragment">One of the two 6.1-hour students <b>failed</b> — and costs the most: the
             model was 91% sure they'd pass, and was wrong.</li>
           <li class="fragment">Almost all the penalty comes from the <b>overlap zone</b> around 5&ndash;6 hours.
             Training is mostly an argument about those few students.</li>
@@ -700,7 +700,7 @@ plt.<span class="fn">show</span>()</pre>
           <hr style="border:none;border-top:2px solid var(--ink);margin:10px 0;">
           <div class="wgt-stat"><span>Your penalty</span><b id="w1-loss">—</b></div>
           <div class="wgt-stat"><span>Your accuracy</span><b id="w1-acc">—</b></div>
-          <div class="wgt-stat"><span>Best possible</span><b class="badge-good">0.188 · 88.3%</b></div>
+          <div class="wgt-stat"><span>Best curve</span><b class="badge-good">0.188 · 88.3%</b></div>
           <button class="wgt-btn" id="w1-show">Show the best curve</button>
           <button class="wgt-btn" id="w1-reset">Reset</button>
           <p class="wgt-note">Drag the circle left/right to slide the boundary. Use the slider to change
@@ -802,7 +802,7 @@ plt.<span class="fn">show</span>()</pre>
     </section>
 
     <section class="slide dense">
-      <h2>For the curious: the whole hike in 8 lines of NumPy</h2>
+      <h2>For the curious: the whole hike in a few lines of NumPy</h2>
       <pre class="code"><span class="kw">import</span> numpy <span class="kw">as</span> np
 
 x = df[<span class="str">'hours_studied'</span>].values
@@ -815,7 +815,7 @@ slope, shift = <span class="num">0.0</span>, <span class="num">0.0</span>       
     slope -= <span class="num">0.3</span> * np.<span class="fn">mean</span>(error * x)     <span class="cmt"># nudge both knobs downhill</span>
     shift -= <span class="num">0.3</span> * np.<span class="fn">mean</span>(error)
 
-<span class="fn">print</span>(slope, shift)   <span class="cmt"># 2.21  -11.16   -&gt; boundary 11.16 / 2.21 = 5.04 hours</span></pre>
+<span class="fn">print</span>(slope, shift)   <span class="cmt"># 2.21  -11.16   -&gt; boundary ≈ 5.04 hours</span></pre>
       <ul style="font-size:15px;margin-top:10px;">
         <li class="fragment">Each round: guess → see the error → nudge. The nudge is "<b>error × input</b>",
           averaged over all students.</li>
@@ -1013,7 +1013,8 @@ model.<span class="fn">fit</span>(X_train, y_train)                <span class="
           <h4>LINE 1 · CREATE</h4>
           <p style="font-size:14px;">Like a new student on the first day: knows nothing yet. Its knobs aren't set.</p>
           <p style="font-size:14px;margin-top:6px;"><code>max_iter=1000</code> = "you may take up to 1000 steps downhill".
-            The default (100) is sometimes too few → <code>ConvergenceWarning</code>.</p>
+            The default (100) is sometimes too few → <code>ConvergenceWarning</code>. (If more steps don't fix it, the features need
+            scaling — Part VI.)</p>
         </div>
         <div class="box fragment">
           <h4>LINE 2 · FIT</h4>
@@ -1171,9 +1172,9 @@ preds = model.<span class="fn">predict</span>(X_test)         <span class="cmt">
             <li class="fragment"><code>[6.5]</code> alone is just a list of numbers — sklearn can't tell rows from columns →
               <em>"Expected 2D array"</em>.</li>
           </ul>
-          <pre class="code fragment" style="margin-top:8px;"><span class="cmt"># tidier: a 1-row DataFrame, same column name as X</span>
-new = pd.<span class="fn">DataFrame</span>({<span class="str">'hours_studied'</span>: [<span class="num">6.5</span>]})
-model.<span class="fn">predict_proba</span>(new)   <span class="cmt"># [[0.084 0.916]] → 1 row out</span></pre>
+          <pre class="code fragment" style="margin-top:8px;">model.<span class="fn">predict_proba</span>([[<span class="num">6.5</span>]])   <span class="cmt"># [[0.084 0.916]]  1 row in → 1 row out</span>
+model.<span class="fn">predict</span>([[<span class="num">6.5</span>]])         <span class="cmt"># [1]</span>
+<span class="cmt"># may print "X does not have valid feature names" — harmless</span></pre>
         </div>
       </div>
     </section>
@@ -1332,16 +1333,16 @@ preds = model.<span class="fn">predict</span>(X_test)                           
         Working on <code>study_hours_pass.csv</code>:<br/>
         <b>1.</b> Load the data. Print <code>value_counts()</code> of <code>passed</code>.<br/>
         <b>2.</b> Build <code>X</code> and <code>y</code>. Print both shapes — check for <code>(60, 1)</code> and <code>(60,)</code>.<br/>
-        <b>3.</b> Split 80/20 with <code>random_state=0</code> and <code>stratify=y</code>.<br/>
-        <b>4.</b> Fit, then print <code>coef_</code> and <code>intercept_</code>. Work out the boundary in hours.<br/>
-        <b>5.</b> For a student who studied <b>6.5 hours</b>, print <code>predict_proba</code> and <code>predict</code>. Report accuracy.
+        <b>3.</b> Split 80/20 with <code>random_state=42</code> and <code>stratify=y</code>. Fit the model; print <code>coef_</code>, <code>intercept_</code> and the boundary.<br/>
+        <b>4.</b> Predict for <code>X_test</code>, then compare with the answer key: <code>accuracy_score</code> and <code>confusion_matrix</code>.<br/>
+        <b>5.</b> For a brand-new student who studied <b>6.5 hours</b>, print <code>predict_proba([[6.5]])</code> and <code>predict([[6.5]])</code>.
       </div>
       <div class="prob-think fragment">
         <b>Bonus, if you finish early:</b> re-run step 3 <em>without</em> <code>stratify=y</code> for five different
         <code>random_state</code> values. How much does test accuracy jump around?
       </div>
       <div class="prob-twist fragment">
-        <b>Expected answer for step 5:</b> around <b>90% chance of pass</b> — your exact number depends on your split.
+        <b>Expected answers:</b> boundary ≈ 4.97 h · accuracy 0.917 · <code>[[5 1] [0 6]]</code> · step 5 ≈ <b>91.6% chance of pass</b>.
         If <code>predict_proba</code> throws an error, check you passed <code>[[6.5]]</code>, not <code>[6.5]</code>.
       </div>
     </section>
@@ -1364,14 +1365,15 @@ X = df[[<span class="str">'hours_studied'</span>]]   <span class="cmt"># ✓</sp
         <div class="box fragment">
           <h4>3 · <code>predict</code> when you wanted <code>predict_proba</code></h4>
           <pre class="code"><span class="cmt"># "how sure?" answered with 0/1</span>
-model.<span class="fn">predict</span>(X)         <span class="cmt"># ✗ for ranking/risk</span>
-model.<span class="fn">predict_proba</span>(X)   <span class="cmt"># ✓</span></pre>
+model.<span class="fn">predict</span>(X_test)         <span class="cmt"># ✗ for ranking/risk</span>
+model.<span class="fn">predict_proba</span>(X_test)   <span class="cmt"># ✓</span></pre>
         </div>
         <div class="box fragment">
           <h4>4 · Ignored <code>ConvergenceWarning</code></h4>
-          <pre class="code"><span class="cmt"># default max_iter=100 too low</span>
-<span class="fn">LogisticRegression</span>()                 <span class="cmt"># ✗ may warn</span>
-<span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)   <span class="cmt"># ✓</span></pre>
+          <pre class="code"><span class="cmt"># "ran out of steps" -- give it more:</span>
+<span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)
+<span class="cmt"># still warns? the features use very</span>
+<span class="cmt"># different rulers -&gt; scale (Part VI)</span></pre>
         </div>
       </div>
       <p class="callout fragment">Error 2 is the sneaky one — <b>nothing crashes</b>, your accuracy number is
@@ -1395,7 +1397,11 @@ model.<span class="fn">predict_proba</span>(X)   <span class="cmt"># ✓</span><
 data = <span class="fn">load_breast_cancer</span>(as_frame=<span class="kw">True</span>)   <span class="cmt"># built into sklearn, no download</span>
 X, y = data.data, data.target
 <span class="fn">print</span>(X.shape)          <span class="cmt"># (569, 30)</span>
-<span class="fn">print</span>(data.target_names) <span class="cmt"># ['malignant' 'benign']</span></pre>
+<span class="fn">print</span>(data.target_names) <span class="cmt"># ['malignant' 'benign']</span>
+
+<span class="cmt"># same split as always; "c" for cancer, so we don't overwrite the study-hours names</span>
+Xc_train, Xc_test, yc_train, yc_test = <span class="fn">train_test_split</span>(
+    X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>, stratify=y)</pre>
       <ul style="font-size:15px;margin-top:8px;">
         <li class="fragment">One row = one tumour, measured from a microscope image: size, texture, shape…</li>
         <li class="fragment"><b>Malignant</b> = cancer, dangerous. <b>Benign</b> = not cancer. 212 malignant, 357 benign.</li>
@@ -1412,11 +1418,11 @@ X, y = data.data, data.target
         <div>
           <pre class="code">cols = [<span class="str">'mean radius'</span>, <span class="str">'mean texture'</span>]
 
-m2 = <span class="fn">LogisticRegression</span>()
-m2.<span class="fn">fit</span>(X_train[cols], y_train)
+m2 = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)   <span class="cmt"># m2 = "model with 2 features"</span>
+m2.<span class="fn">fit</span>(Xc_train[cols], yc_train)
 
 m2.coef_        <span class="cmt"># [[-1.062 -0.203]]</span>
-m2.<span class="fn">score</span>(X_test[cols], y_test)   <span class="cmt"># 0.877</span></pre>
+m2.<span class="fn">score</span>(Xc_test[cols], yc_test)   <span class="cmt"># 0.877</span></pre>
           <ul style="font-size:14.5px;margin-top:8px;">
             <li class="fragment">One feature → the boundary was a <b>point</b> (5 hours). Two features → it's a
               <b>straight line</b> across the plot.</li>
@@ -1453,17 +1459,17 @@ m2.<span class="fn">score</span>(X_test[cols], y_test)   <span class="cmt"># 0.8
           <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
 
 scaler = <span class="fn">StandardScaler</span>()
-X_train_s = scaler.<span class="fn">fit_transform</span>(X_train)  <span class="cmt"># learn the ruler</span>
-X_test_s  = scaler.<span class="fn">transform</span>(X_test)       <span class="cmt"># reuse it</span>
+Xc_train_s = scaler.<span class="fn">fit_transform</span>(Xc_train)  <span class="cmt"># learn the ruler</span>
+Xc_test_s  = scaler.<span class="fn">transform</span>(Xc_test)       <span class="cmt"># reuse it</span>
 
 cancer = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)
-cancer.<span class="fn">fit</span>(X_train_s, y_train)
-cancer.<span class="fn">score</span>(X_test_s, y_test)
+cancer.<span class="fn">fit</span>(Xc_train_s, yc_train)
+cancer.<span class="fn">score</span>(Xc_test_s, yc_test)
 <span class="cmt"># 0.982 — and no warning</span></pre>
         </div>
       </div>
       <p class="pitfall fragment"><b>Learn the ruler from training rows only:</b> <code>fit_transform</code> on
-        <code>X_train</code>, plain <code>transform</code> on <code>X_test</code>. Fitting the scaler on the test rows
+        <code>Xc_train</code>, plain <code>transform</code> on <code>Xc_test</code>. Fitting the scaler on the test rows
         lets the model peek at the exam.</p>
     </section>
 
@@ -1481,8 +1487,8 @@ cancer.<span class="fn">score</span>(X_test_s, y_test)
       <h2>Two kinds of wrong</h2>
       <div class="split-2">
         <div>
-          <pre class="code">preds = cancer.<span class="fn">predict</span>(X_test_s)
-<span class="fn">confusion_matrix</span>(y_test, preds)
+          <pre class="code">preds_c = cancer.<span class="fn">predict</span>(Xc_test_s)
+<span class="fn">confusion_matrix</span>(yc_test, preds_c)
 <span class="cmt"># [[41  1]</span>
 <span class="cmt">#  [ 1 71]]</span></pre>
           <ul style="font-size:15px;margin-top:10px;">
@@ -1529,8 +1535,8 @@ cancer.<span class="fn">score</span>(X_test_s, y_test)
         </div>
       </div>
       <pre class="code fragment" style="margin-top:12px;"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> recall_score, precision_score
-<span class="fn">recall_score</span>(y_test, preds, pos_label=<span class="num">0</span>)      <span class="cmt"># 0.976   pos_label=0 → "the class I care about is malignant"</span>
-<span class="fn">precision_score</span>(y_test, preds, pos_label=<span class="num">0</span>)   <span class="cmt"># 0.976</span></pre>
+<span class="fn">recall_score</span>(yc_test, preds_c, pos_label=<span class="num">0</span>)      <span class="cmt"># 0.976   pos_label=0 → "the class I care about is malignant"</span>
+<span class="fn">precision_score</span>(yc_test, preds_c, pos_label=<span class="num">0</span>)   <span class="cmt"># 0.976</span></pre>
       <p class="pitfall fragment"><b>Cancer screening cares most about recall</b> — missing a sick patient is the
         worst outcome. A spam filter cares most about precision — binning a real email is the worst outcome.</p>
     </section>
@@ -1538,7 +1544,7 @@ cancer.<span class="fn">score</span>(X_test_s, y_test)
     <section class="slide dense">
       <h2><code>classification_report</code> — everything at once</h2>
       <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> classification_report
-<span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, preds, target_names=data.target_names))
+<span class="fn">print</span>(<span class="fn">classification_report</span>(yc_test, preds_c, target_names=data.target_names))
 
               precision    recall  f1-score   support
 
@@ -1585,7 +1591,7 @@ cancer.<span class="fn">score</span>(X_test_s, y_test)
       <h2>The threshold, in code</h2>
       <div class="split-2">
         <div>
-          <pre class="code">p_mal = cancer.<span class="fn">predict_proba</span>(X_test_s)[:, <span class="num">0</span>]
+          <pre class="code">p_mal = cancer.<span class="fn">predict_proba</span>(Xc_test_s)[:, <span class="num">0</span>]
 <span class="cmt">#  every row, column 0 = chance of malignant</span>
 
 flag = p_mal &gt;= <span class="num">0.09</span>      <span class="cmt"># our own threshold</span></pre>
@@ -1705,14 +1711,16 @@ scores = <span class="fn">cross_val_score</span>(<span class="fn">LogisticRegres
 
     <section class="slide tighter">
       <h2>The sklearn cheat sheet</h2>
-      <pre class="code"><span class="cmt"># ---- 1 load · 2 split ----------------------------------------------------</span>
+      <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, confusion_matrix, classification_report
+<span class="cmt"># ---- 1 load · 2 split ----------------------------------------------------</span>
 X = df[[<span class="str">'feature_1'</span>, <span class="str">'feature_2'</span>]]          <span class="cmt"># table → double brackets</span>
 y = df[<span class="str">'target'</span>]
 X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>, stratify=y)
 
 <span class="cmt"># ---- (only if features use very different rulers) -------------------------</span>
 scaler = <span class="fn">StandardScaler</span>()
-X_train = scaler.<span class="fn">fit_transform</span>(X_train);  X_test = scaler.<span class="fn">transform</span>(X_test)
+X_train_s = scaler.<span class="fn">fit_transform</span>(X_train);  X_test_s = scaler.<span class="fn">transform</span>(X_test)   <span class="cmt"># then use the _s versions</span>
 
 <span class="cmt"># ---- 3 fit · 4 predict ----------------------------------------------------</span>
 model = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>).<span class="fn">fit</span>(X_train, y_train)
@@ -1723,7 +1731,7 @@ proba = model.<span class="fn">predict_proba</span>(X_test)[:, <span class="num"
 <span class="fn">accuracy_score</span>(y_test, preds)                  <span class="cmt"># real answers first!</span>
 tn, fp, fn, tp = <span class="fn">confusion_matrix</span>(y_test, preds).<span class="fn">ravel</span>()
 <span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, preds))</pre>
-      <p class="callout fragment">Swap <code>LogisticRegression</code> for almost any other sklearn classifier and every
+      <p class="callout fragment" style="font-size:16px;padding:10px 16px;">Swap <code>LogisticRegression</code> for almost any other sklearn classifier and every
         line still runs.</p>
     </section>
 
@@ -2082,7 +2090,7 @@ tn, fp, fn, tp = <span class="fn">confusion_matrix</span>(y_test, preds).<span c
     draw();
   })();
 
-  // ================= two-feature boundary (Part VII) =======================
+  // ================= two-feature boundary (Part VI) =======================
   // 114 test tumours: [mean radius, mean texture, class]   class 0 = malignant, 1 = benign
   const F2 = [[19.55,28.77,0],[11.13,16.62,1],[13.82,24.49,0],[16.5,18.29,1],[21.56,22.39,0],[13.17,18.22,1],[8.88,15.49,1],[19.68,21.68,0],[18.31,20.58,0],[20.6,29.33,0],[12.95,16.02,1],[14.45,20.22,0],[12.34,12.27,1],[18.66,17.12,0],[15.08,25.74,0],[14.87,20.21,1],[14.47,24.99,1],[11.69,24.44,1],[13.5,12.71,1],[11.3,18.19,1],[15.75,20.25,0],[17.35,23.06,0],[9.67,18.1,1],[11.26,19.96,1],[10.82,24.21,1],[16.14,14.86,1],[21.16,23.04,0],[11.89,21.17,1],[10.6,18.95,1],[9.44,18.32,1],[12.89,14.11,1],[11.14,14.07,1],[12.0,28.23,1],[13.94,13.17,1],[18.46,18.52,0],[10.95,21.35,0],[11.7,19.11,1],[11.89,17.36,1],[13.46,18.75,1],[18.82,21.97,0],[10.2,17.48,1],[12.06,12.74,1],[13.59,21.84,1],[15.5,21.08,0],[12.68,23.84,0],[14.42,16.54,1],[9.0,14.4,1],[9.88,17.27,1],[16.17,16.07,1],[17.99,20.66,0],[12.89,15.7,1],[14.74,25.42,1],[11.06,17.12,1],[13.8,15.79,0],[13.0,20.78,1],[12.4,17.68,1],[12.18,14.08,1],[16.78,18.8,0],[17.47,24.68,0],[11.99,24.89,1],[11.8,17.26,1],[9.33,21.94,1],[13.77,13.27,1],[14.03,21.25,1],[18.05,16.15,0],[14.6,23.29,0],[14.96,19.1,1],[13.08,15.71,1],[12.88,18.22,1],[12.65,18.17,1],[11.32,27.08,1],[13.3,21.57,1],[9.74,11.97,1],[17.6,23.33,0],[16.27,20.71,0],[20.48,21.46,0],[14.86,23.21,0],[14.02,15.66,1],[10.71,20.39,1],[14.86,16.94,1],[12.47,18.6,1],[10.49,19.29,1],[18.94,21.31,0],[11.54,14.44,1],[15.12,16.68,0],[13.64,16.34,1],[13.7,17.64,1],[7.76,24.54,1],[12.23,19.56,1],[13.71,18.68,1],[13.66,19.13,1],[12.75,16.7,1],[20.55,20.86,0],[20.16,19.66,0],[19.1,26.29,0],[10.91,12.35,1],[20.57,17.77,0],[11.71,15.45,1],[13.81,23.75,0],[14.26,18.17,1],[19.0,18.91,0],[16.65,21.38,0],[13.73,22.61,0],[12.18,20.52,1],[27.22,21.87,0],[27.42,26.27,0],[13.2,17.43,1],[19.18,22.49,0],[9.27,12.87,1],[20.26,23.03,0],[15.1,16.39,1],[15.32,17.27,0],[12.62,23.97,1],[11.68,16.17,1]];
   // LogisticRegression() on the 455 training rows, unscaled:  z = W2R*r + W2T*t + B2
