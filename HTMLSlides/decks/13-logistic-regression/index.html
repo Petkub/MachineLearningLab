@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Logistic Regression — From a Line to a Probability</title>
+<title>Logistic Regression — Yes-or-No Questions</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,7 +113,7 @@
   .prob-twist b { color: var(--accent-red); }
   .slide.problem pre.code { font-size: 13px; line-height: 1.4; }
 
-  /* ===== pipeline flow ===== */
+  /* ===== 5-step flow ===== */
   .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
   .flow-box {
     border: 2px solid var(--ink); background: #fff; padding: 10px 14px;
@@ -187,7 +187,8 @@
   }
   .wgt-btn:hover { background: var(--cream-soft); transform: translateY(-2px); }
   .wgt-btn.on { background: var(--cream); }
-  .wgt-note { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
+  /* `.deck .slide` prefix: theme.css sets `.slide p` to 22px, which outranks a bare class */
+  .deck .slide .wgt-note { font-size: 13px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; }
   .wgt-svg { border: 2px solid var(--ink); background: #fff; touch-action: none; }
   .wgt-svg .grid-l { stroke: #e8e8e8; stroke-width: 1; }
   .wgt-svg .axis-l { stroke: var(--ink); stroke-width: 2; }
@@ -211,6 +212,169 @@
   .curve-card { border: 2px solid var(--ink); background: #fff; padding: 8px; text-align: center; }
   .curve-card svg { width: 100%; height: auto; }
   .curve-card p { font-size: 12.5px; margin-top: 4px; }
+
+  /* ===== compact tables (API reference, worked numbers) ===== */
+  .pd-table.tight th, .pd-table.tight td { padding: 7px 12px; font-size: 14px; }
+  .pd-table td.l { text-align: left; }
+  .pd-table td.r, .pd-table th.r { text-align: right; }
+  .pd-table tr.hot td { background: var(--cream-soft); font-weight: 700; }
+  .pd-table td.good { background: #d6f5dd; }
+  .pd-table td.bad  { background: #ffd6cc; }
+  .pd-table code { font-weight: 700; }
+
+  /* ===== confusion matrix ===== */
+  .cm {
+    display: grid; grid-template-columns: 96px 1fr 1fr; gap: 0;
+    font-family: var(--font-mono); border: 2px solid var(--ink); background: #fff;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .cm > div { padding: 8px 10px; border: 1px solid var(--ink); text-align: center; font-size: 12.5px; line-height: 1.35; }
+  .cm .hd { background: var(--ink); color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 1px; }
+  .cm .rh { background: var(--cream); font-weight: 800; display: grid; place-items: center; }
+  .cm .ok  { background: #d6f5dd; }
+  .cm .err { background: #ffd6cc; }
+  .cm b.n { display: block; font-size: 26px; line-height: 1.1; }
+  .deck .slide .cm-cap { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; font-family: var(--font-mono); }
+
+  /* ===== k-fold diagram ===== */
+  .kfold { display: grid; gap: 5px; margin-top: 6px; font-family: var(--font-mono); }
+  .kfold .row { display: grid; grid-template-columns: 58px repeat(5, 1fr) 62px; gap: 3px; align-items: center; }
+  .kfold .row span { font-size: 12px; font-weight: 700; }
+  .kfold .row i {
+    display: block; height: 24px; border: 1.5px solid var(--ink); background: #d6f5dd;
+    font-style: normal; font-size: 10.5px; font-weight: 800; text-align: center; line-height: 22px;
+  }
+  .kfold .row i.t { background: var(--cream); }
+  .kfold .row b { font-size: 13px; text-align: right; }
+
+  /* ===== widget extras ===== */
+  .wgt-svg .pt-err { stroke: var(--accent-red); stroke-width: 2.5; }
+  .wgt-svg .thr { stroke: var(--accent-purple); stroke-width: 3; }
+  .wgt-svg .zone-l { fill: #d6f5dd; opacity: .35; }
+  .wgt-svg .zone-r { fill: #ffd6cc; opacity: .35; }
+  .wgt-svg .roc { fill: none; stroke: var(--accent-purple); stroke-width: 3; }
+  .wgt-svg .roc-fill { fill: var(--accent-purple); opacity: .12; }
+  .wgt-svg .lbl { font-family: var(--font-mono); font-size: 12px; font-weight: 800; fill: var(--ink); }
+  .wgt-cm { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 6px 0 8px; }
+  .wgt-cm div { border: 1.5px solid var(--ink); padding: 4px 6px; font-size: 11px; text-align: center; line-height: 1.3; }
+  .wgt-cm div b { display: block; font-size: 20px; }
+  .wgt-cm .ok { background: #d6f5dd; }
+  .wgt-cm .err { background: #ffd6cc; }
+
+  /* ===== everyday examples ===== */
+  .ex-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+  .ex-card {
+    border: 2px solid var(--ink); background: #fff; padding: 14px 12px;
+    box-shadow: 4px 4px 0 var(--ink); text-align: center;
+  }
+  .ex-card .ico { font-size: 46px; line-height: 1.15; }
+  .deck .slide .ex-card p { font-size: 14px; line-height: 1.45; margin-top: 6px; }
+  .ex-card .ans {
+    display: inline-block; margin-top: 8px; font-weight: 800; font-size: 13px;
+    background: var(--cream); border: 1.5px solid var(--ink); padding: 2px 8px;
+  }
+
+  /* ===== probability gauge + verdict (squash / penalty / +1 hour widgets) ===== */
+  .gauge { height: 30px; border: 2px solid var(--ink); background: #fff; position: relative; margin: 6px 0 4px; }
+  .gauge > i { position: absolute; left: 0; top: 0; bottom: 0; background: #66bb6a; }
+  .gauge.pen > i { background: var(--accent-red); opacity: .8; }
+  .gauge > span { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+  .gauge-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-soft); }
+  .verdict {
+    font-size: 15px; font-weight: 800; text-align: center; padding: 8px 6px;
+    border: 2px dashed var(--ink); margin-top: 10px; background: var(--cream-soft);
+  }
+  .wgt-svg .sq-guide { stroke: var(--ink-mute); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .wgt-svg .pen-curve { fill: none; stroke: var(--accent-red); stroke-width: 3.5; }
+  .wgt-svg .jump { stroke: var(--accent-blue); stroke-width: 4; }
+  .wgt-svg .dot-a { fill: var(--cream); stroke: var(--ink); stroke-width: 2.5; }
+  .wgt-svg .dot-b { fill: var(--accent-blue); stroke: var(--ink); stroke-width: 2.5; }
+  .wgt-svg .bad-zone { fill: var(--accent-red); opacity: .10; }
+  .wgt-svg .linreg { stroke: var(--accent-blue); stroke-width: 3.5; }
+
+  /* ===== dot grids (precision / recall) ===== */
+  .dotgrid { display: grid; grid-template-columns: repeat(14, 18px); gap: 5px; margin: 10px 0 6px; }
+  .dotgrid i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink); background: #ff8a65; display: block; }
+  .dotgrid i.miss { background: #fff; border: 2.5px dashed var(--accent-red); }
+  .dotgrid i.fa { background: #66bb6a; box-shadow: 0 0 0 3px var(--accent-red); }
+  .deck .slide .big-frac { font-size: 30px; font-weight: 800; margin-top: 6px; }
+  .deck .slide .big-frac small { font-size: 15px; color: var(--ink-soft); font-weight: 700; }
+
+  /* ===== coloured blocks (stratify) ===== */
+  .blocks { display: flex; gap: 5px; margin: 6px 0 4px; }
+  .blocks i { width: 32px; height: 32px; border: 2px solid var(--ink); display: block; }
+  .blocks i.f { background: #ff8a65; }
+  .blocks i.p { background: #66bb6a; }
+  .deck .slide .blocks-cap { font-size: 13.5px; margin-bottom: 12px; }
+
+  /* ===== horizontal bars (multiclass, scaling) ===== */
+  .hbar {
+    display: grid; grid-template-columns: 170px 1fr 84px; align-items: center; gap: 10px;
+    margin: 7px 0; font-family: var(--font-mono); font-size: 14px;
+  }
+  .hbar .track { height: 26px; border: 2px solid var(--ink); background: #fff; position: relative; }
+  .hbar .fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent-purple); opacity: .75; }
+  .hbar .fill.alt { background: var(--accent-blue); }
+  .hbar b { text-align: right; }
+
+  /* ===== big analogy cards ===== */
+  .analogy {
+    border: 3px solid var(--ink); background: #fff; padding: 16px 18px;
+    box-shadow: 4px 4px 0 var(--ink); font-size: 16px; line-height: 1.55;
+  }
+  .analogy h4 { font-size: 13px; letter-spacing: 1px; font-weight: 800; margin-bottom: 6px; color: var(--ink-soft); }
+  .deck .slide .analogy p { font-size: 16px; line-height: 1.55; }
+  .deck .slide .box p { line-height: 1.5; }
+  .curious { border: 2px dashed var(--accent-purple); background: #f5efff; padding: 8px 12px; font-size: 13.5px; margin-top: 10px; }
+  .curious b { color: var(--accent-purple); }
+  /* ===== sklearn step-by-step (Part IV) ===== */
+  .recipe { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
+  .recipe .flow-box { min-width: 0; }
+  .deck .slide .recipe p { font-size: 14px; line-height: 1.45; margin-top: 8px; }
+  .xy-table th.xh { background: #c8e6ff; }
+  .xy-table th.yh { background: #ffd6cc; }
+  .xy-table td.tag-x, .xy-table td.tag-y {
+    border: none; background: none; text-align: center; font-weight: 800; font-size: 18px;
+  }
+  .xy-table td.tag-x { color: var(--accent-blue); }
+  .xy-table td.tag-y { color: var(--accent-red); }
+  .shape-row { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+  .deck .slide .shape-cap { font-size: 12.5px; font-weight: 800; color: var(--ink-soft); margin-bottom: 4px; }
+  .shape-arrow { font-family: var(--font-mono); font-weight: 800; font-size: 13px; color: var(--accent-blue); text-align: center; }
+  .brackets { font-family: var(--font-mono); font-weight: 800; font-size: 54px; text-align: center; margin: 4px 0 10px; letter-spacing: 2px; }
+  .brackets .br-outer { color: var(--accent-blue); }
+  .brackets .br-inner { color: var(--accent-purple); }
+  .brackets .br-val { background: #c8e6ff; border: 2px solid var(--ink); padding: 0 10px; margin: 0 4px; font-size: 40px; }
+  .proba-anat { font-family: var(--font-mono); margin: 16px 0 4px 40px; display: grid; gap: 6px; }
+  .pa-row { display: grid; grid-template-columns: 140px 260px 260px; gap: 10px; align-items: center; }
+  .pa-lbl { font-size: 14px; font-weight: 800; text-align: right; }
+  .pa-col { font-size: 13px; text-align: center; color: var(--ink-soft); }
+  .pa-cell { border: 2.5px solid var(--ink); text-align: center; font-size: 26px; font-weight: 800; padding: 8px; box-shadow: 4px 4px 0 var(--ink); }
+  .pa-cell.f { background: #ffd6cc; }
+  .pa-cell.p { background: #d6f5dd; }
+  .check-table td { padding: 3px 12px !important; font-size: 13px !important; }
+  .check-table tr.miss td { background: #ffd6cc; font-weight: 800; }
+  .cm-build {
+    display: grid; grid-template-columns: 92px 1fr 1fr; border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink); background: #fff; font-family: var(--font-mono);
+  }
+  .cm-build > div { border: 1px solid var(--ink); padding: 8px; min-height: 40px; }
+  .cm-build .hd { background: var(--ink); color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 1px; text-align: center; }
+  .cm-build .rh { background: var(--cream); font-weight: 800; font-size: 12px; display: grid; place-items: center; text-align: center; }
+  .cm-build .ok, .cm-build .err { min-height: 150px; position: relative; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; }
+  .cm-build .ok { background: #d6f5dd; }
+  .cm-build .err { background: #ffd6cc; }
+  .cm-build b { position: absolute; right: 8px; bottom: 4px; font-size: 32px; }
+  .chip { border: 2px solid var(--ink); background: #fff; border-radius: 999px; padding: 1px 8px; font-size: 13px; font-weight: 700; height: fit-content; }
+  .cm-build .none { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 820px; margin: 6px auto 0; font-family: var(--font-mono); }
+  .name-grid > div { border: 2.5px solid var(--ink); padding: 10px 14px; box-shadow: 4px 4px 0 var(--ink); }
+  .name-grid .ok { background: #d6f5dd; }
+  .name-grid .err { background: #ffd6cc; }
+  .name-grid h4 { font-size: 15px; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px; }
+  .deck .slide .name-grid p { font-size: 14.5px; line-height: 1.45; }
+  .decode { border: 2px dashed var(--ink); background: #fff; padding: 8px 14px; margin: 14px auto 0; max-width: 820px; font-size: 14.5px; line-height: 1.7; }
+  .decode i { font-style: normal; background: var(--cream); padding: 0 5px; }
 </style>
 </head>
 <body>
@@ -220,82 +384,161 @@
 
     <section class="slide title">
       <h1>Logistic<br/>Regression</h1>
-      <p class="subtitle">From a line to a probability.<br/>90 minutes · scikit-learn</p>
+      <p class="subtitle">Teaching a computer to answer yes-or-no questions.<br/>3 hours · ideas + pictures + scikit-learn lab</p>
       <div class="author">Petkub :D</div>
     </section>
 
-    <!-- ============ I. FROM A LINE TO A BOUNDARY ============ -->
+    <!-- ============ I. YES / NO QUESTIONS ============ -->
     <section class="slide divider">
       <div class="roman">I</div>
       <div>
-        <span class="day-tag">PART ONE · 12 MIN</span>
-        <h1>From a Line to a <em>Boundary</em></h1>
-        <p class="sub">Last time you predicted a number.<br/>Today: a category.</p>
-      </div>
-    </section>
-
-    <section class="slide problem">
-      <h2>Where we left off</h2>
-      <div class="prob-q">
-        Linear regression gave you $\hat{y} = wx + b$ — a straight line, trained by minimising MSE, solved in
-        closed form. Now: <b>hours studied &rarr; pass or fail.</b> The target isn't a number on a scale anymore.
-        <b>Can you reuse the line as-is?</b>
-      </div>
-      <div class="prob-sol fragment">
-        <div class="label">TRY IT</div>
-        Code <code>passed</code> as 0/1 and fit <code>LinearRegression</code> anyway:
-        $\hat{y} = 0.157x - 0.288$. At <b>0 hours</b> it predicts <b class="tk-red">&minus;0.29</b>.
-        At <b>9.5 hours</b> it predicts <b class="tk-red">1.21</b>.
-      </div>
-      <div class="prob-twist fragment">
-        <b>Neither is a probability.</b> A line has no floor and no ceiling — it will happily predict "120%
-        chance of passing." We need a function that takes any real number in and always returns something
-        between 0 and 1.
+        <span class="day-tag">PART ONE · 20 MIN</span>
+        <h1>Yes-or-No <em>Questions</em></h1>
+        <p class="sub">Last time you predicted a number.<br/>Today: pick a side.</p>
       </div>
     </section>
 
     <section class="slide">
-      <h2>Squash it: the sigmoid</h2>
-      <div class="split-2">
-        <div>
-          <p style="font-size:17px;">Keep the linear part exactly as before:</p>
-          <p style="font-size:19px;margin-top:8px;">$$z = wx + b$$</p>
-          <p style="font-size:17px;margin-top:16px;">then squash it through the <b class="tk-purple">sigmoid</b>:</p>
-          <p style="font-size:20px;margin-top:8px;">$$\hat{p} = \sigma(z) = \frac{1}{1 + e^{-z}}$$</p>
+      <h2>You already meet classifiers every day</h2>
+      <div class="ex-grid">
+        <div class="ex-card fragment">
+          <div class="ico">📧</div>
+          <p>Is this email <b>spam</b>?</p>
+          <span class="ans">spam / not spam</span>
         </div>
-        <div class="box soft">
-          <h4>WHY THIS FUNCTION</h4>
-          <ul style="font-size:14px;">
-            <li class="fragment">$z \to -\infty \Rightarrow \sigma(z) \to 0$. $z \to +\infty \Rightarrow \sigma(z) \to 1$.</li>
-            <li class="fragment">Always between 0 and 1 — a legal probability, whatever $z$ is.</li>
-            <li class="fragment">$\sigma(0) = 0.5$ exactly. Smooth and S-shaped everywhere.</li>
+        <div class="ex-card fragment">
+          <div class="ico">💳</div>
+          <p>Is this card payment <b>fraud</b>?</p>
+          <span class="ans">fraud / normal</span>
+        </div>
+        <div class="ex-card fragment">
+          <div class="ico">🩺</div>
+          <p>Is this tumour <b>dangerous</b>?</p>
+          <span class="ans">malignant / benign</span>
+        </div>
+        <div class="ex-card fragment">
+          <div class="ico">📚</div>
+          <p>Will this student <b>pass</b>?</p>
+          <span class="ans">pass / fail</span>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top:22px;">The answer is a <b>category</b>, not a number on a scale.
+        This job is called <b>classification</b>. Logistic regression is the simplest, most famous way to do it —
+        and it still powers real systems today.</p>
+    </section>
+
+    <section class="slide">
+      <h2>A good classifier says <em>how sure</em> it is</h2>
+      <div class="split-2">
+        <div class="analogy fragment">
+          <h4>THINK: THE WEATHER FORECAST</h4>
+          <p>The forecast doesn't say "it will rain." It says <b>"70% chance of rain."</b></p>
+          <p style="margin-top:8px;">You decide: 70% → take an umbrella. 10% → leave it at home.</p>
+        </div>
+        <div class="analogy fragment">
+          <h4>OUR MODEL DOES THE SAME</h4>
+          <p>It doesn't just say "pass". It says <b>"92% chance of pass."</b></p>
+          <p style="margin-top:8px;">Then we turn that into a decision: above 50% → predict <b class="tk-green">pass</b>,
+            below → predict <b class="tk-red">fail</b>.</p>
+        </div>
+      </div>
+      <p class="callout fragment" style="margin-top:22px;">Two steps, always: <b>① a probability</b> (between 0% and 100%)
+        &nbsp;→&nbsp; <b>② a decision</b>. Keep this picture in your head all day.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Can we just reuse the straight line?</h2>
+      <div class="split-2" style="grid-template-columns: 1fr 470px;">
+        <div>
+          <p style="font-size:16px;">Write <code>pass = 1</code>, <code>fail = 0</code>, and fit the straight line from
+            last lesson anyway. The blue line is what <code>LinearRegression</code> gives.</p>
+          <ul style="font-size:15px;margin-top:10px;">
+            <li class="fragment">At <b>0 hours</b> it predicts <b class="tk-red">&minus;0.29</b>. A <em>negative</em> chance of passing?</li>
+            <li class="fragment">At <b>9.5 hours</b> it predicts <b class="tk-red">1.21</b>. A 121% chance?</li>
+            <li class="fragment">A straight line has <b>no floor and no ceiling</b>. It walks right out of the
+              red zones, where no probability can live.</li>
           </ul>
         </div>
+        <div>
+          <svg id="line-svg" class="wgt-svg" width="470" height="360" viewBox="0 0 470 360" aria-label="a straight line fitted to pass/fail data escapes below 0 and above 1"></svg>
+          <p class="wgt-note" style="margin-top:4px;">red zones = impossible as a probability</p>
+        </div>
       </div>
-      <p class="callout fragment">Same $w, b$ as before. Same "find good parameters" training story. Only the
-        <b>last step</b> changed — a squash, not a straight readout.</p>
+      <p class="callout fragment">We need something that takes <b>any</b> number in, and always gives back a number
+        between 0 and 1. Next slide.</p>
+    </section>
+
+    <!-- ===== WIDGET: SQUASH MACHINE ===== -->
+    <section class="slide">
+      <h2>The squash machine — the <em>sigmoid</em></h2>
+      <div class="wgt">
+        <svg id="sq-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
+        <div class="wgt-panel">
+          <h4>FEED IT ANY SCORE</h4>
+          <div class="wgt-row">
+            <label>score</label>
+            <input id="sq-z" type="range" min="-10" max="10" step="0.1" value="0">
+            <span class="wgt-val" id="sq-zv">0.0</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;margin-top:6px;">chance of pass</div>
+          <div class="gauge"><i id="sq-bar"></i><span id="sq-p">50%</span></div>
+          <div class="gauge-ends"><span>0%</span><span>100%</span></div>
+          <div class="verdict" id="sq-verdict">—</div>
+          <button class="wgt-btn" data-z="-1000">score = &minus;1000</button>
+          <button class="wgt-btn" data-z="1000">score = +1000</button>
+          <p class="wgt-note">Big negative score → close to 0%. Big positive → close to 100%. Score 0 → exactly 50%.
+            Even a score of 1000 can never push it past 100%.</p>
+        </div>
+      </div>
     </section>
 
     <section class="slide">
-      <h2>Decision boundary</h2>
-      <ul>
-        <li class="fragment">$\hat{p}$ is a probability. To get a class, pick a <b>threshold</b> — by default, <b>0.5</b>.</li>
-        <li class="fragment">$\hat{p} \geq 0.5 \Rightarrow$ predict <b class="tk-green">pass (1)</b>. &nbsp;
-          $\hat{p} < 0.5 \Rightarrow$ predict <b class="tk-red">fail (0)</b>.</li>
-        <li class="fragment">Because $\sigma(0)=0.5$, that threshold is exactly $z = 0$, i.e. $wx + b = 0$
-          $\Rightarrow x = -b/w$. <b>One point on the hours axis</b> — the decision boundary.</li>
+      <h2>So the whole model is just two steps</h2>
+      <div class="flow" style="justify-content:center;margin-top:20px;">
+        <div class="flow-box load" style="min-width:150px;">hours studied</div><div class="flow-arrow">→</div>
+        <div class="flow-box split" style="min-width:210px;">① straight line<br/><span style="font-weight:400;font-size:12px;">gives a score</span></div><div class="flow-arrow">→</div>
+        <div class="flow-box fit" style="min-width:210px;">② squash<br/><span style="font-weight:400;font-size:12px;">score → 0%…100%</span></div><div class="flow-arrow">→</div>
+        <div class="flow-box pred" style="min-width:150px;">P(pass)</div>
+      </div>
+      <ul style="margin-top:18px;">
+        <li class="fragment">Step ① is the same straight line as linear regression. It has two knobs: a
+          <b>slope</b> (sklearn calls it <code>coef_</code>) and a <b>shift</b> (<code>intercept_</code>).</li>
+        <li class="fragment">Step ② is the squash machine you just played with. It has <b>no knobs</b> — it never changes.</li>
+        <li class="fragment">"Training" means: <b>find the two knob settings</b> that fit the data best.</li>
       </ul>
-      <p class="callout fragment">Everything left of that point gets classified fail; everything right, pass.
-        Moving $w$ or $b$ slides or tilts that boundary. That's the whole model.</p>
+      <div class="curious fragment"><b>For the curious:</b> the squash is the formula $\sigma(z) = \dfrac{1}{1+e^{-z}}$.
+        You never need to type it — sklearn does it for you.</div>
+    </section>
+
+    <section class="slide">
+      <h2>Where it flips: the decision boundary</h2>
+      <div class="split-2">
+        <div>
+          <ul style="font-size:17px;">
+            <li class="fragment">The squash gives exactly <b>50%</b> when the score is 0.</li>
+            <li class="fragment">So there is <b>one number of hours</b> where the model is perfectly unsure.
+              Below it → fail. Above it → pass.</li>
+            <li class="fragment">That point is the <b class="tk-purple">decision boundary</b>. On our data it lands
+              at about <b>5 hours</b>.</li>
+          </ul>
+        </div>
+        <div class="analogy fragment">
+          <h4>TWO KNOBS, TWO JOBS</h4>
+          <p><b>Shift</b> moves the S-curve left or right → moves the boundary.</p>
+          <p style="margin-top:8px;"><b>Slope</b> makes the S-curve steeper or gentler → how quickly the
+            model goes from "unsure" to "certain".</p>
+          <p style="margin-top:8px;">You'll grab both knobs yourself in Part III.</p>
+        </div>
+      </div>
     </section>
 
     <!-- ============ II. THE DATASET ============ -->
     <section class="slide divider">
       <div class="roman">II</div>
       <div>
-        <span class="day-tag">PART TWO · 8 MIN</span>
+        <span class="day-tag">PART TWO · 10 MIN</span>
         <h1>The <em>Dataset</em></h1>
-        <p class="sub">60 students, one exam.<br/>Same story, binary answer.</p>
+        <p class="sub">60 students, one exam.<br/>Same story, yes-or-no answer.</p>
       </div>
     </section>
 
@@ -320,37 +563,16 @@ df[<span class="str">'passed'</span>].<span class="fn">value_counts</span>()  <s
         </table>
       </div>
       <ul class="fragment" style="font-size:15px;margin-top:10px;">
-        <li>60 students, self-reported study hours, and whether they passed a 50%-cutoff exam.</li>
-        <li><b>Feature (X):</b> <code>hours_studied</code> &nbsp;·&nbsp; <b>Target (y):</b> <code>passed</code> — 0 or 1, not a scale.</li>
+        <li>60 students: how many hours they studied, and whether they passed the exam.</li>
+        <li><b>Feature (X):</b> <code>hours_studied</code> &nbsp;·&nbsp; <b>Target (y):</b> <code>passed</code> — 0 = fail, 1 = pass.</li>
       </ul>
-      <p class="callout fragment">Sibling of <code>study_hours.csv</code> from last time — same students, a stricter question.</p>
+      <p class="pitfall fragment"><b>New habit:</b> when the target is categories, check it with
+        <code>value_counts()</code>, not <code>describe()</code>. Here: <b>31 fail, 29 pass</b> — nicely balanced.
+        (The "mean" of a 0/1 column is a number that doesn't mean much.)</p>
     </section>
 
     <section class="slide dense">
-      <h2>Look at it first — but differently now</h2>
-      <div class="split-2">
-        <div>
-          <pre class="code">df[<span class="str">'hours_studied'</span>].<span class="fn">describe</span>()</pre>
-          <table class="pd-table" style="margin-top:8px;">
-            <tr><th></th><th>hours_studied</th></tr>
-            <tr><td class="idx">count</td><td>60.0</td></tr>
-            <tr><td class="idx">mean</td><td>4.90</td></tr>
-            <tr><td class="idx">std</td><td>2.62</td></tr>
-            <tr><td class="idx">min / max</td><td>0.5 / 9.5</td></tr>
-          </table>
-        </div>
-        <ul style="font-size:14px;">
-          <li class="fragment"><code>describe()</code> still works on <code>hours_studied</code> — it's a real scale.</li>
-          <li class="fragment">Running it on <code>passed</code> gives a mean of "0.483" — technically true, meaningless.
-            For a 0/1 target, check <code>value_counts()</code> instead: <b>31 fail, 29 pass</b>. Nicely balanced.</li>
-        </ul>
-      </div>
-      <p class="pitfall fragment"><b>Habit to build now:</b> the moment your target is categories, swap
-        <code>describe()</code> for <code>value_counts()</code>. A "mean" of a category column is a number that lies.</p>
-    </section>
-
-    <section class="slide dense">
-      <h2>Then plot it</h2>
+      <h2>Always plot it first</h2>
       <div class="split-2">
         <div>
           <pre class="code"><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
@@ -366,74 +588,91 @@ plt.<span class="fn">show</span>()</pre>
           <svg id="eda-svg" class="wgt-svg" width="440" height="300" viewBox="0 0 440 300" aria-label="scatter plot of study hours vs pass/fail"></svg>
         </div>
       </div>
-      <p class="callout fragment">Low hours cluster at the bottom row, high hours at the top — but around
-        <b>5&ndash;6 hours the two rows overlap</b>. That overlap is the whole reason we need a probability,
-        not a promise.</p>
+      <p class="callout fragment">Few hours → bottom row (fail). Many hours → top row (pass). But around
+        <b>5&ndash;6 hours the two rows overlap</b> — some students passed with less, some failed with more.
+        That overlap is exactly why we want a <b>probability</b>, not a promise.</p>
     </section>
 
-    <!-- ============ III. THE IDEA ============ -->
+    <!-- ============ III. FINDING THE BEST CURVE ============ -->
     <section class="slide divider">
       <div class="roman">III</div>
       <div>
-        <span class="day-tag">PART THREE · 20 MIN</span>
-        <h1>The <em>Idea</em></h1>
-        <p class="sub">Draw a curve. Measure how wrong it is.<br/>Make it less wrong.</p>
+        <span class="day-tag">PART THREE · 35 MIN</span>
+        <h1>Finding the <em>Best</em> Curve</h1>
+        <p class="sub">Draw a curve. Score how wrong it is.<br/>Make it less wrong.</p>
       </div>
     </section>
 
     <section class="slide dense">
-      <h2>Infinitely many curves. Which one?</h2>
+      <h2>Infinitely many S-curves. Which one?</h2>
       <div class="curve-grid">
         <div class="curve-card fragment">
-          <svg viewBox="0 0 200 110"><path d="M10,20 C60,20 80,90 190,90" fill="none" stroke="#d62828" stroke-width="3"/></svg>
-          <p><b>too eager</b> — boundary near 2h, calls most students passes</p>
+          <svg viewBox="0 0 200 110"><path d="M10,95 C40,95 50,10 90,10 L190,10" fill="none" stroke="#d62828" stroke-width="3"/></svg>
+          <p><b>too eager</b> — boundary near 2h, calls almost everyone a pass</p>
         </div>
         <div class="curve-card fragment">
-          <svg viewBox="0 0 200 110"><path d="M10,95 C90,95 110,10 190,10" fill="none" stroke="#d62828" stroke-width="3"/></svg>
-          <p><b>too strict</b> — boundary near 8h, calls most students fails</p>
+          <svg viewBox="0 0 200 110"><path d="M10,95 L110,95 C150,95 160,10 190,10" fill="none" stroke="#d62828" stroke-width="3"/></svg>
+          <p><b>too strict</b> — boundary near 8h, calls almost everyone a fail</p>
         </div>
         <div class="curve-card fragment">
           <svg viewBox="0 0 200 110"><path d="M10,95 C85,95 115,10 190,10" fill="none" stroke="#2f9e44" stroke-width="3"/></svg>
-          <p><b>looks about right</b> — but "looks right" isn't a definition</p>
+          <p><b>looks about right</b> — but "looks right" isn't something a computer can check</p>
         </div>
       </div>
-      <p class="callout fragment">Same problem as linear regression: we need a <b>number</b> that scores a
-        curve, so "best" means "the number is smallest".</p>
+      <p class="callout fragment">Same problem as linear regression: we need <b>one number</b> that scores a curve —
+        a <b>penalty</b>. Then "best curve" simply means "the curve with the smallest penalty".</p>
+    </section>
+
+    <!-- ===== WIDGET: PENALTY METER ===== -->
+    <section class="slide">
+      <h2>The penalty: how <em>surprised</em> should the model be?</h2>
+      <div class="wgt">
+        <svg id="pen-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
+        <div class="wgt-panel">
+          <h4>ONE STUDENT, ONE GUESS</h4>
+          <div style="font-size:13px;font-weight:800;margin-bottom:4px;">what really happened:</div>
+          <button class="wgt-btn pen-y on" data-y="1">✓ passed</button>
+          <button class="wgt-btn pen-y" data-y="0">✗ failed</button>
+          <div class="wgt-row" style="margin-top:12px;">
+            <label>model says</label>
+            <input id="pen-p" type="range" min="0.01" max="0.99" step="0.01" value="0.7">
+            <span class="wgt-val" id="pen-pv">70%</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;">penalty for this student</div>
+          <div class="gauge pen"><i id="pen-bar"></i><span id="pen-val">—</span></div>
+          <div class="verdict" id="pen-verdict">—</div>
+          <p class="wgt-note">Slide the guess towards the wrong answer and watch the penalty explode.
+            Being <b>confident and wrong</b> is punished the hardest.</p>
+        </div>
+      </div>
     </section>
 
     <section class="slide dense">
-      <h2>Why not just reuse squared error?</h2>
+      <h2>Score a curve: add up everyone's penalty</h2>
       <div class="split-2">
-        <div class="box fragment">
-          <h4>SQUARED ERROR ON $\hat p$</h4>
-          <p style="font-size:14px;">$(y - \hat p)^2$ technically runs. But plugged through a sigmoid it's
-            <b class="tk-red">not convex</b> — the loss surface can have more than one valley, and gradient
-            descent can get stuck in the wrong one.</p>
+        <div>
+          <p style="font-size:14px;color:var(--ink-soft);">the best curve, five of the 60 students:</p>
+          <table class="pd-table" style="margin-top:8px;">
+            <tr><th>hours</th><th>really</th><th>model says P(pass)</th><th>penalty</th></tr>
+            <tr><td>1.0</td><td class="y0">fail</td><td>0%</td><td>0.00</td></tr>
+            <tr><td>4.7</td><td class="y1">pass</td><td>32%</td><td>1.14</td></tr>
+            <tr><td>5.1</td><td class="y0">fail</td><td>53%</td><td>0.76</td></tr>
+            <tr class="hot"><td>6.1</td><td>fail</td><td>91%</td><td>2.43</td></tr>
+            <tr><td>8.0</td><td class="y1">pass</td><td>99.9%</td><td>0.00</td></tr>
+          </table>
+          <p class="wgt-note">Average over all 60 students: <b>0.188</b>. That average is the curve's score.</p>
         </div>
-        <div class="box fragment">
-          <h4>CROSS-ENTROPY (LOG-LOSS)</h4>
-          <p style="font-size:14px;">Built from $-\log(\hat p)$. <b class="tk-green">Convex</b> for logistic
-            regression — one bottom, guaranteed. And it punishes a <b>confident wrong</b> prediction far harder
-            than a timid one.</p>
-        </div>
+        <ul style="font-size:15px;">
+          <li class="fragment">Easy students — 1 hour and failed, 8 hours and passed — cost <b>almost nothing</b>.</li>
+          <li class="fragment">The student who studied <b>6.1 hours and still failed</b> costs the most: the
+            model was 91% sure they'd pass, and was wrong.</li>
+          <li class="fragment">Almost all the penalty comes from the <b>overlap zone</b> around 5&ndash;6 hours.
+            Training is mostly an argument about those few students.</li>
+        </ul>
       </div>
-      <p class="pitfall fragment"><b>Feel the asymmetry:</b> predicting $\hat p = 0.01$ for a student who
-        actually passed costs $-\log(0.01) \approx 4.6$. Predicting $\hat p = 0.4$ for the same student costs
-        only $-\log(0.4) \approx 0.92$. Being confidently wrong is expensive.</p>
-    </section>
-
-    <section class="slide">
-      <h2>Cross-entropy — the score of a curve</h2>
-      <p style="font-size:18px;margin-top:8px;">
-        $$L(w,b) = -\frac{1}{n}\sum_{i=1}^{n}\Big[y_i \log \hat p_i + (1-y_i)\log(1-\hat p_i)\Big], \quad \hat p_i=\sigma(wx_i+b)$$
-      </p>
-      <ul style="font-size:15px;margin-top:14px;">
-        <li class="fragment">If $y_i=1$, only the first term survives: cost is $-\log \hat p_i$ — small when $\hat p_i$ is close to 1.</li>
-        <li class="fragment">If $y_i=0$, only the second term survives: cost is $-\log(1-\hat p_i)$ — small when $\hat p_i$ is close to 0.</li>
-        <li class="fragment"><b>Lower is better</b>, exactly like MSE. Same word for it: the <b>loss function</b>.</li>
-      </ul>
-      <p class="callout fragment">This has a name too: <b>log-loss</b>, or <b>binary cross-entropy</b>. It's the
-        default loss for every binary classifier you'll meet, sklearn's LogisticRegression included.</p>
+      <p class="callout fragment">The proper name for this penalty is <b>log-loss</b> (or <b>cross-entropy</b>).
+        Lower is better. It can't reach 0 here: no single boundary can put a 6.1-hour fail and a 4.7-hour pass
+        both on the right side.</p>
     </section>
 
     <!-- ===== WIDGET 1 ===== -->
@@ -444,19 +683,19 @@ plt.<span class="fn">show</span>()</pre>
         <div class="wgt-panel">
           <h4>YOUR CURVE</h4>
           <div class="wgt-row">
-            <label>steepness w</label>
+            <label>steepness</label>
             <input id="w1-w" type="range" min="0.1" max="5" step="0.05" value="1">
             <span class="wgt-val" id="w1-wv">1.00</span>
           </div>
           <div class="wgt-stat"><span>boundary (hours)</span><b id="w1-boundary">—</b></div>
           <hr style="border:none;border-top:2px solid var(--ink);margin:10px 0;">
-          <div class="wgt-stat"><span>Your loss</span><b id="w1-loss">—</b></div>
+          <div class="wgt-stat"><span>Your penalty</span><b id="w1-loss">—</b></div>
           <div class="wgt-stat"><span>Your accuracy</span><b id="w1-acc">—</b></div>
-          <div class="wgt-stat"><span>Best possible</span><b class="badge-good">0.188 loss · 88.3%</b></div>
-          <button class="wgt-btn" id="w1-show">Show sklearn's curve</button>
+          <div class="wgt-stat"><span>Best possible</span><b class="badge-good">0.188 · 88.3%</b></div>
+          <button class="wgt-btn" id="w1-show">Show the best curve</button>
           <button class="wgt-btn" id="w1-reset">Reset</button>
-          <p class="wgt-note">Drag the circle on the curve left/right to slide the boundary. Use the slider to
-            change steepness. Orange dots = failed, green dots = passed.</p>
+          <p class="wgt-note">Drag the circle left/right to slide the boundary. Use the slider to change
+            steepness. Orange dots = failed, green dots = passed.</p>
         </div>
       </div>
     </section>
@@ -464,264 +703,564 @@ plt.<span class="fn">show</span>()</pre>
     <section class="slide">
       <h2>What you just felt</h2>
       <ul>
-        <li class="fragment">Sliding the boundary was easy. Getting the loss all the way down to <b>0.188</b>, by hand, was not.</li>
-        <li class="fragment">Steepness matters too — too gentle and the curve hedges everywhere; too steep and a
-          couple of points near the boundary get punished hard.</li>
-        <li class="fragment">There's exactly <b>one</b> best $(w,b)$ pair for this loss. No ties.</li>
+        <li class="fragment">Sliding the boundary to ~5 hours was easy. Getting the penalty all the way down to
+          <b>0.188</b> by hand was not.</li>
+        <li class="fragment"><b>Too gentle</b> and the curve is unsure about everyone. <b>Too steep</b> and it's
+          over-confident — the students in the overlap zone get punished hard.</li>
+        <li class="fragment">There's exactly <b>one</b> best setting of the two knobs. The computer's job is to find it.</li>
       </ul>
-      <p class="callout fragment">Same question as last time: what does the loss look like as a function of $w$?</p>
+      <p class="callout fragment">But how does a computer "find" it? It can't see the picture. It does what a
+        hiker does in thick fog…</p>
+    </section>
+
+    <section class="slide">
+      <h2>Learning = walking downhill in the fog</h2>
+      <div class="split-2">
+        <div class="analogy fragment">
+          <h4>THE HIKER</h4>
+          <p>You're on a hillside in thick fog. You want the bottom of the valley. You can't see it.</p>
+          <p style="margin-top:8px;">But you <b>can feel the slope under your feet</b>. So: take a step downhill.
+            Feel again. Step again. Repeat until the ground is flat.</p>
+        </div>
+        <div class="analogy fragment">
+          <h4>THE COMPUTER</h4>
+          <p>Height of the hill = the <b>penalty</b>. Where you stand = the current <b>knob settings</b>.</p>
+          <p style="margin-top:8px;">Measure the slope → nudge the knobs downhill → repeat thousands of times.
+            This is called <b class="tk-purple">gradient descent</b>.</p>
+        </div>
+      </div>
+      <p class="callout fragment">It's the same idea that trains almost every AI model you've heard of —
+        including the giant neural networks. You're learning the real thing today.</p>
     </section>
 
     <!-- ===== WIDGET 2 ===== -->
     <section class="slide">
-      <h2>The loss surface — a valley with one bottom</h2>
+      <h2>The penalty valley — roll the ball downhill</h2>
       <div class="wgt">
         <svg id="w2-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
         <div class="wgt-panel">
-          <h4>LOSS AS A FUNCTION OF w</h4>
+          <h4>PENALTY FOR EACH STEEPNESS</h4>
           <div class="wgt-row">
-            <label>w</label>
+            <label>steepness</label>
             <input id="w2-w" type="range" min="0.1" max="5" step="0.02" value="0.5">
             <span class="wgt-val" id="w2-wv">0.50</span>
           </div>
-          <div class="wgt-stat"><span>L(w)</span><b id="w2-loss">—</b></div>
-          <div class="wgt-stat"><span>slope $\frac{dL}{dw}$</span><b id="w2-slope">—</b></div>
-          <div class="wgt-stat"><span>minimum at w =</span><b class="badge-good">2.212</b></div>
-          <button class="wgt-btn" id="w2-tan">Hide tangent</button>
+          <div class="wgt-stat"><span>penalty</span><b id="w2-loss">—</b></div>
+          <div class="wgt-stat"><span>slope here</span><b id="w2-slope">—</b></div>
+          <div class="wgt-stat"><span>bottom at</span><b class="badge-good">2.21</b></div>
+          <div class="wgt-row" style="margin:8px 0 2px;">
+            <label>step size</label>
+            <button class="wgt-btn w2-lr" data-lr="0.05" style="margin-top:0;">tiny</button>
+            <button class="wgt-btn w2-lr on" data-lr="0.4" style="margin-top:0;">good</button>
+            <button class="wgt-btn w2-lr" data-lr="1.6" style="margin-top:0;">huge</button>
+          </div>
+          <div class="wgt-stat"><span>steps taken</span><b id="w2-steps">0</b></div>
+          <button class="wgt-btn" id="w2-tan">Hide slope line</button>
           <button class="wgt-btn" id="w2-step">Roll downhill ▸</button>
-          <p class="wgt-note">$b$ is held at its best value &minus;11.16. Convex — one bottom, no false valleys.
-            The ball is your current $w$; the purple line is the tangent.</p>
+          <p class="wgt-note">One bowl, one bottom. Drag the ball somewhere, pick a step size, roll.
+            Try all three step sizes.</p>
         </div>
       </div>
     </section>
 
-    <section class="slide">
-      <h2>Read the gradient</h2>
-      <ul>
-        <li class="fragment">Ball on the <b>left</b> of the valley $\Rightarrow$ tangent points down-right $\Rightarrow$ gradient <b class="tk-red">negative</b> $\Rightarrow$ increase $w$.</li>
-        <li class="fragment">Ball on the <b>right</b> $\Rightarrow$ gradient <b class="tk-blue">positive</b> $\Rightarrow$ decrease $w$.</li>
-        <li class="fragment">At the <b>bottom</b> the tangent is flat $\Rightarrow$ gradient is <b class="tk-green">exactly 0</b>.</li>
-      </ul>
-      <p class="callout fragment">Identical rule to linear regression's tangent. What's different is what happens
-        <em>next</em> — and that's the whole next section.</p>
-    </section>
-
-    <!-- ============ IV. WHY IT WORKS ============ -->
-    <section class="slide divider">
-      <div class="roman">IV</div>
-      <div>
-        <span class="day-tag">PART FOUR · 15 MIN · SKIPPABLE</span>
-        <h1>Why It <em>Works</em></h1>
-        <p class="sub">Cross-entropy, derived.<br/>And why there's no shortcut this time.</p>
+    <section class="slide dense">
+      <h2>Step size matters</h2>
+      <div class="split-3" style="margin-top:10px;">
+        <div class="box fragment">
+          <h4>TINY STEPS</h4>
+          <p style="font-size:14px;">Gets there — after <b>47 steps</b>. On a huge dataset every step is slow, so
+            this could take hours.</p>
+          <p style="font-size:30px;text-align:center;margin-top:8px;">🐌</p>
+        </div>
+        <div class="box fragment">
+          <h4>GOOD STEPS</h4>
+          <p style="font-size:14px;">Reaches the bottom in <b class="tk-green">4 steps</b>. Big strides while the
+            hill is steep, smaller ones as it flattens out.</p>
+          <p style="font-size:30px;text-align:center;margin-top:8px;">🎯</p>
+        </div>
+        <div class="box fragment">
+          <h4>HUGE STEPS</h4>
+          <p style="font-size:14px;">Jumps right over the bottom to the other side. Then back. It
+            <b class="tk-red">bounces forever</b> and never settles.</p>
+          <p style="font-size:30px;text-align:center;margin-top:8px;">🦘</p>
+        </div>
       </div>
-    </section>
-
-    <section class="slide">
-      <h2>The problem, stated exactly</h2>
-      <p style="font-size:16px;">Find the $w$ and $b$ that make this as small as possible:</p>
-      <p style="font-size:18px;">
-        $$J(w,b) = -\frac{1}{n}\sum_{i=1}^{n}\Big[y_i\log\sigma(wx_i+b) + (1-y_i)\log\big(1-\sigma(wx_i+b)\big)\Big]$$
-      </p>
-      <ul style="font-size:15px;margin-top:12px;">
-        <li class="fragment">$x_i, y_i$ are fixed data. $w, b$ are what we solve for — same setup as before.</li>
-        <li class="fragment">$J$ is convex in 2 dimensions. At its lowest point, both partial derivatives are zero.</li>
-        <li class="fragment">One extra ingredient this time: $\dfrac{d\sigma}{dz} = \sigma(z)\big(1-\sigma(z)\big)$ — the sigmoid's own derivative.</li>
-      </ul>
-      <p class="callout fragment">Same plan as linear regression: differentiate w.r.t. $b$, then w.r.t. $w$, set both to $0$.</p>
-    </section>
-
-    <section class="slide dense">
-      <h2>Step 1 — differentiate with respect to $b$</h2>
-      <p style="font-size:15px;">Chain rule through $\sigma$, writing $p_i = \sigma(wx_i+b)$:</p>
-      <p style="font-size:16px;">
-        $$\frac{\partial J}{\partial b} = -\frac{1}{n}\sum_{i=1}^n\left[\frac{y_i}{p_i}\cdot p_i(1-p_i) - \frac{1-y_i}{1-p_i}\cdot p_i(1-p_i)\right]$$
-      </p>
-      <p style="font-size:15px;" class="fragment">The $p_i(1-p_i)$ cancels cleanly against each denominator:</p>
-      <p style="font-size:16px;" class="fragment">
-        $$= -\frac{1}{n}\sum_{i=1}^n\Big[y_i(1-p_i) - (1-y_i)p_i\Big] = -\frac{1}{n}\sum_{i=1}^n(y_i - p_i)$$
-      </p>
-      <p style="font-size:17px;" class="fragment">
-        $$\boxed{\ \frac{\partial J}{\partial b} = \frac{1}{n}\sum_{i=1}^n\big(p_i - y_i\big)\ }$$
-      </p>
-      <p class="callout fragment">The messy sigmoid derivative <b>vanished entirely</b>. The gradient is just
-        "average prediction error" — astonishingly clean for how complicated $J$ looked.</p>
-    </section>
-
-    <section class="slide dense">
-      <h2>Step 2 — differentiate with respect to $w$</h2>
-      <p style="font-size:15px;">Identical algebra, with one extra factor from $\frac{\partial z}{\partial w}=x_i$
-        picked up by the chain rule:</p>
-      <p style="font-size:18px;">
-        $$\boxed{\ \frac{\partial J}{\partial w} = \frac{1}{n}\sum_{i=1}^n\big(p_i - y_i\big)\,x_i\ }$$
-      </p>
-      <ul style="font-size:15px;margin-top:14px;" class="fragment">
-        <li>Same shape as linear regression's gradient — <code>(prediction &minus; truth) &times; input</code>,
-          averaged. Only $p_i$ now comes from a sigmoid instead of a raw line.</li>
-        <li>This "prediction minus truth" gradient is why cross-entropy + sigmoid are always paired together —
-          the two "cancel" into this shape by design.</li>
+      <ul style="font-size:15px;margin-top:16px;">
+        <li class="fragment">The step size is called the <b>learning rate</b>.</li>
+        <li class="fragment">Good news: sklearn's <code>LogisticRegression</code> picks its own step sizes, so you
+          never set it. You'll meet the learning rate again — for real — in neural networks.</li>
       </ul>
     </section>
 
-    <section class="slide">
-      <h2>No closed form — gradient descent is the whole story</h2>
-      <ul>
-        <li class="fragment">Set both gradients to $0$: $\sum(p_i-y_i)=0$ and $\sum(p_i-y_i)x_i=0$. But $p_i =
-          \sigma(wx_i+b)$ has $w,b$ trapped <b>inside an exponential, inside a sum</b>.</li>
-        <li class="fragment">There is no algebra move that isolates $w$ or $b$. Unlike linear regression,
-          <b class="tk-red">this equation has no formula solution.</b></li>
-        <li class="fragment">The only way in: start somewhere, compute the gradient, step downhill, repeat —
-          exactly the "roll downhill" you just watched in Widget 2.</li>
-      </ul>
-      <p class="callout fragment">Linear regression was the one model with a shortcut. Logistic regression is
-        where you meet the <b>real</b>, ordinary story of how models are trained.</p>
-    </section>
-
     <section class="slide dense">
-      <h2>Prove it yourself in 10 lines of NumPy</h2>
+      <h2>For the curious: the whole hike in 8 lines of NumPy</h2>
       <pre class="code"><span class="kw">import</span> numpy <span class="kw">as</span> np
 
 x = df[<span class="str">'hours_studied'</span>].values
-y = df[<span class="str">'passed'</span>].values.astype(<span class="kw">float</span>)
+y = df[<span class="str">'passed'</span>].values
 
-w, b = <span class="num">0.0</span>, <span class="num">0.0</span>
-lr = <span class="num">0.3</span>
-<span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="num">20_000</span>):
-    p = <span class="num">1</span> / (<span class="num">1</span> + np.<span class="fn">exp</span>(-(w * x + b)))
-    w -= lr * np.<span class="fn">mean</span>((p - y) * x)
-    b -= lr * np.<span class="fn">mean</span>(p - y)
+slope, shift = <span class="num">0.0</span>, <span class="num">0.0</span>          <span class="cmt"># start anywhere</span>
+<span class="kw">for</span> step <span class="kw">in</span> <span class="fn">range</span>(<span class="num">20_000</span>):          <span class="cmt"># take lots of small steps</span>
+    p = <span class="num">1</span> / (<span class="num">1</span> + np.<span class="fn">exp</span>(-(slope * x + shift)))   <span class="cmt"># line, then squash</span>
+    error = p - y                        <span class="cmt"># how far off is each guess?</span>
+    slope -= <span class="num">0.3</span> * np.<span class="fn">mean</span>(error * x)     <span class="cmt"># nudge both knobs downhill</span>
+    shift -= <span class="num">0.3</span> * np.<span class="fn">mean</span>(error)
 
-<span class="fn">print</span>(w, b)   <span class="cmt"># 2.2124  -11.1581   (loss 0.1881, 88.3% accuracy on all 60)</span></pre>
-      <p class="callout fragment">20,000 tiny steps instead of one algebra shortcut — and it lands almost exactly
-        where the theory says it should.</p>
-      <p class="pitfall fragment"><b>Now fit sklearn on the same 60 points</b> —
-        <code>LogisticRegression().fit(X, y)</code> — and you'll get <code>w=1.643, b=-8.270</code>. Different!
-        Not a bug: sklearn <b>regularises by default</b> (L2 penalty, <code>C=1.0</code>), which pulls weights
-        toward zero. Pass <code>LogisticRegression(penalty=None)</code> to match our from-scratch numbers
-        (<code>w=2.204, b=-11.113</code>, close to our 20,000-step estimate). Defaults matter — read them.</p>
+<span class="fn">print</span>(slope, shift)   <span class="cmt"># 2.21  -11.16   -&gt; boundary 11.16 / 2.21 = 5.04 hours</span></pre>
+      <ul style="font-size:15px;margin-top:10px;">
+        <li class="fragment">Each round: guess → see the error → nudge. The nudge is "<b>error × input</b>",
+          averaged over all students.</li>
+        <li class="fragment">You don't have to understand every symbol. The point: <b>no magic</b>. It's a loop.</li>
+      </ul>
+      <p class="callout fragment">Try it in the notebook (Part B) — and watch the penalty drop as the loop runs.</p>
     </section>
 
-    <!-- ============ V. SCIKIT-LEARN ============ -->
+    <!-- ===== WIDGET 3 ===== -->
+    <section class="slide dense">
+      <h2>Keeping the model humble — the <code>C</code> knob</h2>
+      <div class="split-2">
+        <div>
+          <ul style="font-size:15.5px;">
+            <li class="fragment">sklearn adds a rule: <b>"don't get too steep unless the data really insists."</b>
+              A steep curve = a very confident model.</li>
+            <li class="fragment">Why? With lots of features and few rows, a model can memorise noise and become
+              <b>over-confident</b>. This is called <b>overfitting</b>. A little humility helps on new data.</li>
+            <li class="fragment">The knob for this is <code>C</code>. It's <b>backwards</b>:
+              <b>small C = very humble</b> (gentle curve), <b>big C = bold</b> (steep curve). Default: <code>C=1</code>.</li>
+          </ul>
+        </div>
+        <div class="analogy fragment">
+          <h4>THINK: A DOG ON A LEASH</h4>
+          <p>The data pulls the curve towards steep. The leash pulls it back.</p>
+          <p style="margin-top:8px;"><b>Small C</b> = short leash. <b>Big C</b> = long leash.
+            <code>C=np.inf</code> = no leash at all.</p>
+        </div>
+      </div>
+      <p class="callout fragment">That's why sklearn's answer is a bit gentler than our NumPy loop: sklearn keeps a
+        leash on by default. Next slide: pull the leash yourself.</p>
+    </section>
+
+    <section class="slide">
+      <h2>Turn the C knob</h2>
+      <div class="wgt">
+        <svg id="w3-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
+        <div class="wgt-panel">
+          <h4>REFIT LIVE AS C CHANGES</h4>
+          <div class="wgt-row">
+            <label>C</label>
+            <input id="w3-c" type="range" min="-3" max="3" step="0.05" value="0">
+            <span class="wgt-val" id="w3-cv">1.00</span>
+          </div>
+          <div class="wgt-stat"><span>steepness</span><b id="w3-w">—</b></div>
+          <div class="wgt-stat"><span>shift</span><b id="w3-b">—</b></div>
+          <div class="wgt-stat"><span>boundary</span><b id="w3-bd">—</b></div>
+          <hr style="border:none;border-top:2px solid var(--ink);margin:10px 0;">
+          <div class="wgt-stat"><span>penalty</span><b id="w3-loss">—</b></div>
+          <div class="wgt-stat"><span>accuracy</span><b id="w3-acc">—</b></div>
+          <button class="wgt-btn" id="w3-def">C = 1 (default)</button>
+          <p class="wgt-note">Slider goes 0.001 &rarr; 1000. Dashed green = no leash at all.
+            Watch the <b>steepness</b> change while the <b>boundary</b> barely moves.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ IV. SCIKIT-LEARN ============ -->
     <section class="slide divider">
-      <div class="roman">V</div>
+      <div class="roman">IV</div>
       <div>
-        <span class="day-tag">PART FIVE · 15 MIN</span>
+        <span class="day-tag">PART FOUR · 45 MIN</span>
         <h1>Doing it in <em>scikit-learn</em></h1>
-        <p class="sub">The same five steps.<br/>One new import, one new caution.</p>
+        <p class="sub">The same five steps you already know.<br/>One step at a time.</p>
       </div>
     </section>
 
     <section class="slide">
-      <h2>The 5-step mantra, unchanged</h2>
-      <div class="flow">
-        <div class="flow-box load">1 · LOAD</div><div class="flow-arrow">→</div>
-        <div class="flow-box split">2 · SPLIT</div><div class="flow-arrow">→</div>
-        <div class="flow-box fit">3 · FIT</div><div class="flow-arrow">→</div>
-        <div class="flow-box pred">4 · PREDICT</div><div class="flow-arrow">→</div>
-        <div class="flow-box eval">5 · EVALUATE</div>
+      <h2>The recipe — 5 steps, always in this order</h2>
+      <div class="recipe">
+        <div class="fragment"><div class="flow-box load">1 · LOAD</div><p>Read the data. Pick the question (<b>X</b>) and the answer (<b>y</b>).</p></div>
+        <div class="fragment"><div class="flow-box split">2 · SPLIT</div><p>Hide some rows as a <b>test</b>, like keeping exam questions secret.</p></div>
+        <div class="fragment"><div class="flow-box fit">3 · FIT</div><p>The model <b>studies</b> the training rows and learns its two knobs.</p></div>
+        <div class="fragment"><div class="flow-box pred">4 · PREDICT</div><p>Ask the model about rows it has <b>never seen</b>.</p></div>
+        <div class="fragment"><div class="flow-box eval">5 · EVALUATE</div><p>Compare its guesses with the <b>real answers</b>.</p></div>
       </div>
-      <pre class="code">df    = pd.<span class="fn">read_csv</span>(...)                                       <span class="cmt"># 1 LOAD</span>
-X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, stratify=y)  <span class="cmt"># 2 SPLIT</span>
-model.<span class="fn">fit</span>(X_train, y_train)                                     <span class="cmt"># 3 FIT</span>
-preds = model.<span class="fn">predict</span>(X_test)                                   <span class="cmt"># 4 PREDICT</span>
-<span class="fn">accuracy_score</span>(y_test, preds)                                 <span class="cmt"># 5 EVALUATE</span></pre>
-      <p class="callout fragment">Swap <code>LinearRegression</code> for <code>LogisticRegression</code>. One new
-        keyword argument (<code>stratify</code>), one new metric. Everything else you already know.</p>
+      <p class="callout fragment" style="margin-top:22px;">This is the same recipe as linear regression. Only one word changes:
+        <code>LinearRegression</code> → <code>LogisticRegression</code>. We'll walk through it step by step.</p>
     </section>
 
     <section class="slide dense">
-      <h2>Split now needs <code>stratify</code></h2>
+      <h2>Step 0 — get the tools out of the box</h2>
+      <pre class="code"><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.linear_model   <span class="kw">import</span> LogisticRegression
+<span class="kw">from</span> sklearn.metrics        <span class="kw">import</span> accuracy_score, confusion_matrix</pre>
+      <table class="pd-table tight" style="width:100%;margin-top:14px;">
+        <tr><th>tool</th><th>what it does</th><th>used in step</th></tr>
+        <tr class="fragment"><td class="l"><code>pd</code> (pandas)</td><td class="l">reads the CSV into a table</td><td>1 · LOAD</td></tr>
+        <tr class="fragment"><td class="l"><code>train_test_split</code></td><td class="l">cuts the rows into a training part and a test part</td><td>2 · SPLIT</td></tr>
+        <tr class="fragment"><td class="l"><code>LogisticRegression</code></td><td class="l">the model itself — line + squash</td><td>3 · FIT &amp; 4 · PREDICT</td></tr>
+        <tr class="fragment"><td class="l"><code>accuracy_score</code>, <code>confusion_matrix</code></td><td class="l">the scorekeepers</td><td>5 · EVALUATE</td></tr>
+      </table>
+      <p class="callout fragment">Put the imports once, at the top of your notebook. Then you never have to think about them again.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 1 — load the data, choose X and y</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">df = pd.<span class="fn">read_csv</span>(<span class="str">'data/study_hours_pass.csv'</span>)
+
+X = df[[<span class="str">'hours_studied'</span>]]   <span class="cmt"># the question</span>
+y = df[<span class="str">'passed'</span>]            <span class="cmt"># the answer</span>
+
+<span class="fn">print</span>(X.shape)   <span class="cmt"># (60, 1)  60 rows, 1 column</span>
+<span class="fn">print</span>(y.shape)   <span class="cmt"># (60,)    60 answers</span></pre>
+          <ul style="font-size:14.5px;margin-top:10px;">
+            <li class="fragment"><b>X is a table</b> — rows = students, columns = features. Tables need
+              <b>double brackets</b> <code>[[ ]]</code>.</li>
+            <li class="fragment"><b>y is one list of answers</b> — single brackets <code>[ ]</code>.</li>
+            <li class="fragment">Why a table? Later you might add more columns (sleep hours, homework score…).
+              sklearn always expects room for that.</li>
+          </ul>
+        </div>
+        <div>
+          <table class="pd-table xy-table">
+            <tr><th></th><th class="xh">hours_studied</th><th class="yh">passed</th></tr>
+            <tr><td class="idx">0</td><td class="xcol">0.5</td><td class="ycol">0</td></tr>
+            <tr><td class="idx">1</td><td class="xcol">0.5</td><td class="ycol">0</td></tr>
+            <tr><td class="idx">…</td><td class="xcol">…</td><td class="ycol">…</td></tr>
+            <tr><td class="idx">58</td><td class="xcol">9.4</td><td class="ycol">1</td></tr>
+            <tr><td class="idx">59</td><td class="xcol">9.5</td><td class="ycol">1</td></tr>
+            <tr><td></td><td class="tag-x">X</td><td class="tag-y">y</td></tr>
+          </table>
+          <p class="pitfall fragment"><b>Classic error:</b> <code>X = df['hours_studied']</code> (single brackets)
+            → <em>"Expected 2D array, got 1D array"</em>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 2 — split into training and test</h2>
       <div class="split-2">
         <div>
           <pre class="code">X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
     X, y,
-    test_size=<span class="num">0.2</span>,
-    random_state=<span class="num">42</span>,
-    stratify=y      <span class="cmt"># NEW — keep the class ratio</span>
+    test_size=<span class="num">0.2</span>,      <span class="cmt"># 20% goes to the test</span>
+    random_state=<span class="num">42</span>,   <span class="cmt"># same "shuffle" every time</span>
+    stratify=y         <span class="cmt"># keep the pass/fail mix</span>
 )</pre>
+          <div class="split-bar" style="margin-top:14px;">
+            <div class="train">TRAIN · 48 students</div>
+            <div class="test">TEST · 12</div>
+          </div>
+          <p class="wgt-note">The model studies the 48. The 12 stay hidden until the very end.</p>
         </div>
-        <ul style="font-size:14px;">
-          <li class="fragment">Linear regression never needed this — a "ratio" of exam scores means nothing.</li>
-          <li class="fragment">For classes, a plain random split can get <b>unlucky</b>: one bad seed
-            (<code>random_state=21</code>, no <code>stratify</code>) hands the 12-student test set
-            <b>9 fails / 3 passes</b> — nowhere near the true ~50/50 split.</li>
-          <li class="fragment"><code>stratify=y</code> forces every split to keep that ~50/50 ratio, train and test alike.</li>
+        <div>
+          <table class="pd-table tight fragment">
+            <tr><th>you get</th><th>what it holds</th><th>shape</th></tr>
+            <tr><td class="l"><code>X_train</code></td><td class="l">hours of the 48 training students</td><td>(48, 1)</td></tr>
+            <tr><td class="l"><code>X_test</code></td><td class="l">hours of the 12 test students</td><td>(12, 1)</td></tr>
+            <tr><td class="l"><code>y_train</code></td><td class="l">pass/fail of the 48</td><td>(48,)</td></tr>
+            <tr><td class="l"><code>y_test</code></td><td class="l">pass/fail of the 12</td><td>(12,)</td></tr>
+          </table>
+          <div class="analogy fragment" style="margin-top:14px;">
+            <h4>THINK: PRACTICE vs EXAM</h4>
+            <p>Train = practice questions with the answers. Test = the real exam. If the model sees the exam
+              questions while studying, its score means nothing.</p>
+          </div>
+        </div>
+      </div>
+      <p class="pitfall fragment"><b>Order matters:</b> it's always <code>X_train, X_test, y_train, y_test</code>. Swap two names
+        and everything after is quietly wrong.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 2, continued — why <code>stratify=y</code>?</h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size:15px;font-weight:800;">Unlucky random split (12 test students):</p>
+          <div class="blocks"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="p"></i><i class="p"></i><i class="p"></i></div>
+          <p class="blocks-cap tk-red">9 fails, 3 passes — nothing like the real ~50/50.</p>
+          <p style="font-size:15px;font-weight:800;">With <code>stratify=y</code>:</p>
+          <div class="blocks"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></div>
+          <p class="blocks-cap tk-green">6 fails, 6 passes — same mix as the whole class.</p>
+        </div>
+        <div class="analogy fragment">
+          <h4>THINK: A FAIR EXAM</h4>
+          <p>An exam with only easy questions tells you nothing about how good a student is.</p>
+          <p style="margin-top:8px;">The test set should look like the real world — so it needs the same mix of
+            passes and fails. <code>stratify=y</code> guarantees that.</p>
+        </div>
+      </div>
+      <p class="pitfall fragment"><b>Rule:</b> classification → always add <code>stratify=y</code>. (Linear regression never
+        needed it: there were no classes to keep balanced.)</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 3 — create the model, then let it study</h2>
+      <pre class="code">model = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)   <span class="cmt"># create: a brand-new, empty model</span>
+model.<span class="fn">fit</span>(X_train, y_train)                <span class="cmt"># fit: learn from the 48 training students</span></pre>
+      <div class="split-2" style="margin-top:14px;">
+        <div class="box fragment">
+          <h4>LINE 1 · CREATE</h4>
+          <p style="font-size:14px;">Like a new student on the first day: knows nothing yet. Its knobs aren't set.</p>
+          <p style="font-size:14px;margin-top:6px;"><code>max_iter=1000</code> = "you may take up to 1000 steps downhill".
+            The default (100) is sometimes too few → <code>ConvergenceWarning</code>.</p>
+        </div>
+        <div class="box fragment">
+          <h4>LINE 2 · FIT</h4>
+          <p style="font-size:14px;">The model gets the <b>questions</b> (<code>X_train</code>) <b>and</b> the
+            <b>answers</b> (<code>y_train</code>) and walks downhill on the penalty — exactly Part III —
+            until it finds the best slope and shift.</p>
+        </div>
+      </div>
+      <p class="callout fragment">Nothing is printed. <code>fit</code> just changes the model. To see what it learned, you
+        have to ask — next slide.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>What did it learn? Read the model in plain English</h2>
+      <pre class="code"><span class="fn">print</span>(model.coef_)         <span class="cmt"># [[1.5574]]   ← slope</span>
+<span class="fn">print</span>(model.intercept_)    <span class="cmt"># [-7.7366]    ← shift</span>
+
+boundary = -model.intercept_[<span class="num">0</span>] / model.coef_[<span class="num">0</span>][<span class="num">0</span>]   <span class="cmt"># 4.97</span></pre>
+      <ul style="font-size:15px;margin-top:10px;">
+        <li class="fragment">The names end in <code>_</code> → "learned by <code>fit</code>". They don't exist before you fit.</li>
+        <li class="fragment"><b>Slope is positive</b> → more hours push the prediction towards pass. A negative slope
+          would mean the opposite. <b>Read the sign first.</b></li>
+        <li class="fragment"><b>Boundary ≈ 4.97 hours</b> — where the model is exactly 50/50.
+          "Study more than ~5 hours → the model predicts pass."</li>
+      </ul>
+      <p class="pitfall fragment"><b>Careful:</b> the slope 1.557 is <em>not</em> "percent per hour". Because of the S-shape,
+        one extra hour matters a lot near the boundary and barely at all far from it. See for yourself →</p>
+    </section>
+
+    <!-- ===== WIDGET: +1 HOUR ===== -->
+    <section class="slide">
+      <h2>What is one extra hour worth?</h2>
+      <div class="wgt">
+        <svg id="oh-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
+        <div class="wgt-panel">
+          <h4>STUDY ONE MORE HOUR</h4>
+          <div class="wgt-row">
+            <label>hours now</label>
+            <input id="oh-h" type="range" min="0" max="9" step="0.1" value="5">
+            <span class="wgt-val" id="oh-hv">5.0</span>
+          </div>
+          <div class="wgt-stat"><span>chance now</span><b id="oh-p0">—</b></div>
+          <div class="wgt-stat"><span>after +1 hour</span><b id="oh-p1">—</b></div>
+          <div style="font-size:13px;font-weight:800;margin-top:6px;">gain from that one hour</div>
+          <div class="gauge"><i id="oh-bar" style="background:var(--accent-blue);opacity:.7;"></i><span id="oh-gain">—</span></div>
+          <div class="verdict" id="oh-verdict">—</div>
+          <p class="wgt-note">Same model you just fitted. Try 5 hours, then 8 hours, then 1 hour.
+            Where does one extra hour help the most?</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 4 — ask about one new student. Why <code>[[6.5]]</code>?</h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size:15px;">The model studied from <code>X_train</code>: a <b>table</b> with rows (students)
+            and columns (features). So it only accepts questions <b>in the same shape</b> — a table.</p>
+          <div class="shape-row fragment">
+            <div><p class="shape-cap">X_train — 48 rows</p>
+              <table class="pd-table"><tr><th>hours_studied</th></tr><tr><td class="xcol">3.2</td></tr><tr><td class="xcol">7.6</td></tr><tr><td class="xcol">…</td></tr></table></div>
+            <div class="shape-arrow">same<br/>shape →</div>
+            <div><p class="shape-cap">one new student — 1 row</p>
+              <table class="pd-table"><tr><th>hours_studied</th></tr><tr><td class="xcol">6.5</td></tr></table></div>
+          </div>
+          <div class="analogy fragment" style="margin-top:16px;">
+            <h4>MORE STUDENTS = MORE ROWS</h4>
+            <p>Two students: <code>[[6.5], [3.0]]</code> — two rows, one column each.</p>
+            <p style="margin-top:6px;">Two features (hours, sleep): <code>[[6.5, 8]]</code> — one row, two columns.</p>
+          </div>
+        </div>
+        <div>
+          <div class="brackets fragment">
+            <span class="br-outer">[</span><span class="br-inner">[</span><span class="br-val">6.5</span><span class="br-inner">]</span><span class="br-outer">]</span>
+          </div>
+          <ul style="font-size:14px;">
+            <li class="fragment"><b class="tk-blue">outer brackets</b> = the list of <b>rows</b> (students). Here: 1 student.</li>
+            <li class="fragment"><b class="tk-purple">inner brackets</b> = one row's <b>columns</b> (features). Here: 1 feature.</li>
+            <li class="fragment"><code>[6.5]</code> alone is just a list of numbers — sklearn can't tell rows from columns →
+              <em>"Expected 2D array"</em>.</li>
+          </ul>
+          <pre class="code fragment" style="margin-top:8px;"><span class="cmt"># tidier: a 1-row DataFrame with the same column name</span>
+new = pd.<span class="fn">DataFrame</span>({<span class="str">'hours_studied'</span>: [<span class="num">6.5</span>]})
+model.<span class="fn">predict_proba</span>(new)</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>What <code>predict_proba</code> gives back</h2>
+      <pre class="code">model.<span class="fn">predict_proba</span>(new)      <span class="cmt"># array([[0.084, 0.916]])</span></pre>
+      <div class="proba-anat fragment">
+        <div class="pa-row"><span class="pa-lbl"></span><span class="pa-col">column 0</span><span class="pa-col">column 1</span></div>
+        <div class="pa-row"><span class="pa-lbl">student 1 →</span><span class="pa-cell f">0.084</span><span class="pa-cell p">0.916</span></div>
+        <div class="pa-row"><span class="pa-lbl"></span><span class="pa-col">chance of <b>fail</b> (class 0)</span><span class="pa-col">chance of <b>pass</b> (class 1)</span></div>
+      </div>
+      <ul style="font-size:15px;margin-top:12px;">
+        <li class="fragment">The answer is <b>also a table</b>: one row per student you asked about, one column per class.</li>
+        <li class="fragment">Each row adds up to 1 (8.4% + 91.6% = 100%). Column order follows <code>model.classes_</code> = <code>[0, 1]</code>.</li>
+        <li class="fragment">To grab just "chance of pass": <code>model.predict_proba(new)[:, 1]</code> —
+          read <code>[:, 1]</code> as "<b>every row, column 1</b>".</li>
+        <li class="fragment">Why two columns if one would do? So the same shape works with <b>3 or more classes</b> —
+          you'll see 3 columns for iris flowers in Part VIII.</li>
+      </ul>
+    </section>
+
+    <section class="slide dense">
+      <h2>Many students at once — n rows in, n rows out</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">three = pd.<span class="fn">DataFrame</span>({<span class="str">'hours_studied'</span>: [<span class="num">3.0</span>, <span class="num">5.0</span>, <span class="num">8.0</span>]})
+
+model.<span class="fn">predict_proba</span>(three)
+<span class="cmt"># [[0.955 0.045]</span>
+<span class="cmt">#  [0.487 0.513]</span>
+<span class="cmt">#  [0.009 0.991]]</span>
+
+model.<span class="fn">predict</span>(three)
+<span class="cmt"># [0 1 1]</span></pre>
+          <p class="callout fragment" style="font-size:16px;margin-top:12px;">So <code>model.predict(X_test)</code> gives
+            <b>12 answers</b> — one for each of the 12 test students.</p>
+        </div>
+        <div>
+          <table class="pd-table tight fragment">
+            <tr><th>hours</th><th>P(fail)</th><th>P(pass)</th><th>predict</th></tr>
+            <tr><td>3.0</td><td>0.955</td><td>0.045</td><td class="y0">0 · fail</td></tr>
+            <tr class="hot"><td>5.0</td><td>0.487</td><td>0.513</td><td class="y1">1 · pass</td></tr>
+            <tr><td>8.0</td><td>0.009</td><td>0.991</td><td class="y1">1 · pass</td></tr>
+          </table>
+          <ul style="font-size:14px;margin-top:12px;">
+            <li class="fragment"><code>predict</code> = "is P(pass) at least 50%?" → 1, else 0.</li>
+            <li class="fragment">5 hours: 51% and 99% both become "1". <code>predict</code> <b>throws away</b> how sure the model was.</li>
+            <li class="fragment">Need a ranking ("who is most at risk?") → use <code>predict_proba</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Step 5 — check the guesses against the real answers</h2>
+      <div class="split-2" style="grid-template-columns: 1fr 0.9fr;">
+        <div>
+          <table class="pd-table tight check-table">
+            <tr><th>hours</th><th>really</th><th>guessed</th><th></th></tr>
+            <tr><td>1.3</td><td class="y0">fail</td><td>fail</td><td>✓</td></tr>
+            <tr><td>1.9</td><td class="y0">fail</td><td>fail</td><td>✓</td></tr>
+            <tr><td>2.2</td><td class="y0">fail</td><td>fail</td><td>✓</td></tr>
+            <tr><td>2.7</td><td class="y0">fail</td><td>fail</td><td>✓</td></tr>
+            <tr><td>3.2</td><td class="y0">fail</td><td>fail</td><td>✓</td></tr>
+            <tr class="miss"><td>5.1</td><td class="y0">fail</td><td>pass</td><td>✗</td></tr>
+            <tr><td>6.1</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+            <tr><td>7.5</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+            <tr><td>7.6</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+            <tr><td>7.9</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+            <tr><td>8.8</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+            <tr><td>9.4</td><td class="y1">pass</td><td>pass</td><td>✓</td></tr>
+          </table>
+        </div>
+        <div>
+          <pre class="code">preds = model.<span class="fn">predict</span>(X_test)
+<span class="fn">accuracy_score</span>(y_test, preds)
+<span class="cmt"># 0.917</span></pre>
+          <ul style="font-size:14.5px;margin-top:10px;">
+            <li class="fragment">These are the 12 hidden test students, sorted by hours.</li>
+            <li class="fragment"><b>Accuracy</b> = correct ÷ total = <b>11 ÷ 12 = 0.917</b>.</li>
+            <li class="fragment">Argument order: <b>real answers first</b>, guesses second.</li>
+            <li class="fragment">The one miss: <b>5.1 hours, failed</b> — the model said 55% pass. It was barely leaning.</li>
+          </ul>
+          <p class="callout fragment" style="font-size:16px;margin-top:10px;">Accuracy says <em>how many</em> mistakes.
+            It doesn't say <em>which kind</em>. That's the confusion matrix →</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Confusion matrix — sort the 12 students into 4 boxes</h2>
+      <div class="split-2" style="grid-template-columns: 1.15fr 0.85fr;">
+        <div class="cm-build">
+          <div></div><div class="hd">MODEL GUESSED FAIL</div><div class="hd">MODEL GUESSED PASS</div>
+          <div class="rh">REALLY<br/>FAILED</div>
+          <div class="ok fragment"><span class="chip">1.3</span><span class="chip">1.9</span><span class="chip">2.2</span><span class="chip">2.7</span><span class="chip">3.2</span><b>5</b></div>
+          <div class="err fragment"><span class="chip">5.1</span><b>1</b></div>
+          <div class="rh">REALLY<br/>PASSED</div>
+          <div class="err fragment"><span class="none">nobody</span><b>0</b></div>
+          <div class="ok fragment"><span class="chip">6.1</span><span class="chip">7.5</span><span class="chip">7.6</span><span class="chip">7.9</span><span class="chip">8.8</span><span class="chip">9.4</span><b>6</b></div>
+        </div>
+        <ul style="font-size:14.5px;">
+          <li>Each chip is one test student (their hours).</li>
+          <li><b>Row</b> = what really happened. <b>Column</b> = what the model guessed.</li>
+          <li class="fragment"><b class="tk-green">Green boxes</b> (the diagonal): guess matched reality. 5 + 6 = 11 correct.</li>
+          <li class="fragment"><b class="tk-red">Red boxes</b>: the two ways to be wrong. Here 1 + 0 = 1 mistake.</li>
+          <li class="fragment">Every student lands in <b>exactly one</b> box: 5 + 1 + 0 + 6 = 12.</li>
         </ul>
       </div>
-      <p class="pitfall fragment"><b>Rule:</b> classification $\Rightarrow$ always <code>stratify=y</code>. Regression $\Rightarrow$ never — there's no class ratio to preserve.</p>
     </section>
 
     <section class="slide dense">
-      <h2>Step 3 — fit</h2>
-      <pre class="code"><span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LogisticRegression
-
-model = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)   <span class="cmt"># 1. create</span>
-model.<span class="fn">fit</span>(X_train, y_train)              <span class="cmt"># 2. learn w and b from 48 students</span>
-
-<span class="fn">print</span>(model.coef_)         <span class="cmt"># [[1.5574]]   ← w</span>
-<span class="fn">print</span>(model.intercept_)    <span class="cmt"># [-7.7366]    ← b</span></pre>
-      <ul style="font-size:15px;margin-top:10px;">
-        <li class="fragment"><code>max_iter=1000</code> — the solver is <b>iterative</b> now (Part IV!), and the
-          default cap (100) is often too low. You'll see <code>ConvergenceWarning</code> without this.</li>
-        <li class="fragment">Different from our from-scratch 2.2124 — trained on <b>48 students</b>, not 60,
-          plus sklearn's default regularisation. Both are normal, expected differences.</li>
-      </ul>
+      <h2>The four boxes have names</h2>
+      <div class="name-grid">
+        <div class="ok fragment"><h4>TRUE NEGATIVE · 5</h4><p>Guessed <b>fail</b>, really failed. ✓</p></div>
+        <div class="err fragment"><h4>FALSE POSITIVE · 1</h4><p>Guessed <b>pass</b>, really failed. ✗<br/>a <b>false alarm</b></p></div>
+        <div class="err fragment"><h4>FALSE NEGATIVE · 0</h4><p>Guessed <b>fail</b>, really passed. ✗<br/>a <b>miss</b></p></div>
+        <div class="ok fragment"><h4>TRUE POSITIVE · 6</h4><p>Guessed <b>pass</b>, really passed. ✓</p></div>
+      </div>
+      <div class="decode fragment">
+        <div><b>2nd word</b> = what the model <b>guessed</b>: <i>Positive</i> = class 1 (pass), <i>Negative</i> = class 0 (fail)</div>
+        <div><b>1st word</b> = was that guess <b>right</b>? <i>True</i> = yes, <i>False</i> = no</div>
+      </div>
+      <p class="callout fragment">Example: <b>False Positive</b> = "guessed positive (pass) … and that was false". Decode the
+        name right-to-left and you never need to memorise it.</p>
     </section>
 
     <section class="slide dense">
-      <h2>The model in plain English</h2>
-      <p style="font-size:18px;margin:10px 0;">$$\hat p = \sigma(1.557 \times \text{hours} - 7.737)$$</p>
-      <ul style="font-size:15px;">
-        <li class="fragment"><b>Decision boundary:</b> $-b/w = 7.737 / 1.557 \approx$ <b class="tk-blue">4.97 hours</b>.
-          Study more than ~5 hours, the model calls it a pass.</li>
-        <li class="fragment"><b>Slope 1.557 &gt; 0:</b> more hours push the prediction toward pass. A negative
-          coefficient would mean the opposite.</li>
-        <li class="fragment">Still <b>readable</b>, same as linear regression's coefficients — just read through a sigmoid now.</li>
-      </ul>
-      <p class="pitfall fragment"><b>Careful:</b> "1.557" is not "points per hour" anymore — it's a slope in
-        <em>log-odds</em> space, not probability space. You can still read its <b>sign</b> at a glance; reading
-        its exact size takes converting through the sigmoid.</p>
-    </section>
+      <h2>Reading sklearn's <code>confusion_matrix</code></h2>
+      <div class="split-2">
+        <div>
+          <pre class="code"><span class="fn">confusion_matrix</span>(y_test, preds)
+<span class="cmt"># array([[5, 1],</span>
+<span class="cmt">#        [0, 6]])</span>
 
-    <section class="slide dense">
-      <h2>Step 4 — <code>predict</code> vs <code>predict_proba</code></h2>
-      <pre class="code">model.<span class="fn">predict_proba</span>([[<span class="num">3.0</span>]])  <span class="cmt"># [[0.955, 0.045]]  → predict 0 (confident fail)</span>
-model.<span class="fn">predict_proba</span>([[<span class="num">5.0</span>]])  <span class="cmt"># [[0.487, 0.513]]  → predict 1 (a coin flip!)</span>
-model.<span class="fn">predict_proba</span>([[<span class="num">8.0</span>]])  <span class="cmt"># [[0.009, 0.991]]  → predict 1 (confident pass)</span>
-
-model.<span class="fn">predict</span>([[<span class="num">5.0</span>]])        <span class="cmt"># array([1])  — same info, threshold already applied</span></pre>
-      <ul style="font-size:14px;margin-top:8px;">
-        <li class="fragment"><code>predict_proba</code> returns <code>[P(class 0), P(class 1)]</code> — the
-          probability itself. <code>predict</code> just thresholds column 1 at 0.5.</li>
-        <li class="fragment">5.0 hours sits almost exactly on the boundary (4.97h) — the model is barely 51%
-          sure. That's not a bug, it's an honest "I don't know."</li>
-      </ul>
-      <p class="pitfall fragment"><b>New mistake to watch for:</b> code that calls <code>.predict()</code> when
-        it actually wanted the confidence — e.g. ranking students by risk needs <code>predict_proba</code>,
-        not a flat 0/1.</p>
-    </section>
-
-    <section class="slide dense">
-      <h2>Step 5 — how right are we?</h2>
-      <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score
-
-preds = model.<span class="fn">predict</span>(X_test)
-<span class="fn">accuracy_score</span>(y_test, preds)   <span class="cmt"># 0.917  → 11 / 12 correct</span></pre>
-      <ul style="font-size:15px;margin-top:10px;">
-        <li class="fragment"><b>Accuracy</b> = fraction correct. Easy to read, easy to report.</li>
-        <li class="fragment">"Always guess the majority class" (31 fails / 60 &asymp; 52%) would already score
-          above chance — accuracy alone doesn't say <em>how much</em> the model actually learned.</li>
-      </ul>
-      <p class="pitfall fragment"><b>Trap for later:</b> on an <b>imbalanced</b> dataset (95% one class), a model
-        that always predicts the majority scores 95% accuracy while learning nothing. Precision, recall, and
-        <code>classification_report</code> fix this — out of scope today, but remember the name.</p>
+tn, fp, fn, tp = <span class="fn">confusion_matrix</span>(y_test, preds).<span class="fn">ravel</span>()
+<span class="cmt"># 5   1   0   6</span></pre>
+          <ul style="font-size:14px;margin-top:10px;">
+            <li class="fragment">Same 4 boxes, printed as numbers. Rows and columns are in class order:
+              <b>0 (fail) first</b>, then 1 (pass).</li>
+            <li class="fragment"><code>.ravel()</code> flattens it row by row → <code>tn, fp, fn, tp</code>.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="cm">
+            <div class="hd"></div><div class="hd">GUESSED 0 · FAIL</div><div class="hd">GUESSED 1 · PASS</div>
+            <div class="rh">really 0<br/>fail</div>
+            <div class="ok"><b class="n">5</b>TN</div>
+            <div class="err"><b class="n">1</b>FP</div>
+            <div class="rh">really 1<br/>pass</div>
+            <div class="err"><b class="n">0</b>FN</div>
+            <div class="ok"><b class="n">6</b>TP</div>
+          </div>
+          <table class="pd-table tight fragment" style="margin-top:14px;">
+            <tr><th>add up…</th><th>tells you</th></tr>
+            <tr><td class="l">row 0: 5 + 1</td><td class="l">6 students really failed</td></tr>
+            <tr><td class="l">column 1: 1 + 6</td><td class="l">7 students were guessed pass</td></tr>
+            <tr><td class="l">diagonal: 5 + 6</td><td class="l">11 correct → accuracy 11/12</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="pitfall fragment"><b>Order matters again:</b> <code>confusion_matrix(y_test, preds)</code> — real answers first.
+        Swap them and the table flips: your false alarms and misses trade places.</p>
     </section>
 
     <section class="slide tighter">
-      <h2>The whole program — 15 lines</h2>
+      <h2>The whole program — all 5 steps together</h2>
       <pre class="code"><span class="kw">import</span> pandas <span class="kw">as</span> pd
 <span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
 <span class="kw">from</span> sklearn.linear_model   <span class="kw">import</span> LogisticRegression
-<span class="kw">from</span> sklearn.metrics        <span class="kw">import</span> accuracy_score
+<span class="kw">from</span> sklearn.metrics        <span class="kw">import</span> accuracy_score, confusion_matrix
 
 df = pd.<span class="fn">read_csv</span>(<span class="str">'data/study_hours_pass.csv'</span>)      <span class="cmt"># 1 LOAD</span>
 X  = df[[<span class="str">'hours_studied'</span>]]
@@ -735,18 +1274,19 @@ model.<span class="fn">fit</span>(X_train, y_train)                             
 
 preds = model.<span class="fn">predict</span>(X_test)                              <span class="cmt"># 4 PREDICT</span>
 
-<span class="fn">print</span>(<span class="str">'accuracy'</span>, <span class="fn">accuracy_score</span>(y_test, preds))     <span class="cmt"># 5 EVALUATE → 0.917</span></pre>
-      <p class="callout fragment">One import changed, one keyword added, one metric swapped. That's the entire
-        distance between regression and classification in sklearn.</p>
+<span class="fn">print</span>(<span class="fn">accuracy_score</span>(y_test, preds))                   <span class="cmt"># 5 EVALUATE → 0.917</span>
+<span class="fn">print</span>(<span class="fn">confusion_matrix</span>(y_test, preds))                 <span class="cmt">#            → [[5 1] [0 6]]</span></pre>
+      <p class="callout fragment">Compared with linear regression: one import changed, <code>stratify=y</code> added,
+        and the scorekeepers are now accuracy and the confusion matrix.</p>
     </section>
 
-    <!-- ============ VI. YOUR TURN ============ -->
+    <!-- ============ V. YOUR TURN ============ -->
     <section class="slide divider">
-      <div class="roman">VI</div>
+      <div class="roman">V</div>
       <div>
-        <span class="day-tag">PART SIX · 10 MIN</span>
+        <span class="day-tag">PART FIVE · 15 MIN</span>
         <h1>Your <em>Turn</em></h1>
-        <p class="sub">Open the notebook. Type it yourself.<br/>Same rule as last time.</p>
+        <p class="sub">Open the notebook. Type it yourself.<br/>No copy-paste.</p>
       </div>
     </section>
 
@@ -757,18 +1297,16 @@ preds = model.<span class="fn">predict</span>(X_test)                           
         <b>1.</b> Load the data. Print <code>value_counts()</code> of <code>passed</code>.<br/>
         <b>2.</b> Build <code>X</code> and <code>y</code>. Print both shapes — check for <code>(60, 1)</code> and <code>(60,)</code>.<br/>
         <b>3.</b> Split 80/20 with <code>random_state=0</code> and <code>stratify=y</code>.<br/>
-        <b>4.</b> Fit, then print <code>coef_</code> and <code>intercept_</code>. Compute the decision boundary in hours.<br/>
+        <b>4.</b> Fit, then print <code>coef_</code> and <code>intercept_</code>. Work out the boundary in hours.<br/>
         <b>5.</b> For a student who studied <b>6.5 hours</b>, print <code>predict_proba</code> and <code>predict</code>. Report accuracy.
       </div>
       <div class="prob-think fragment">
-        <b>Bonus, if you finish early:</b> re-run step 3 <em>without</em> <code>stratify=y</code>, five different
-        <code>random_state</code> values. How much does test accuracy move around compared to the stratified
-        version? What does that tell you about a 12-student test set?
+        <b>Bonus, if you finish early:</b> re-run step 3 <em>without</em> <code>stratify=y</code> for five different
+        <code>random_state</code> values. How much does test accuracy jump around?
       </div>
       <div class="prob-twist fragment">
-        <b>Expected answer for step 5:</b> around <b>90% confident pass</b> — but your exact number depends on
-        your split. If <code>predict_proba</code> throws an error, check you passed a 2-D input:
-        <code>[[6.5]]</code>, not <code>[6.5]</code>.
+        <b>Expected answer for step 5:</b> around <b>90% chance of pass</b> — your exact number depends on your split.
+        If <code>predict_proba</code> throws an error, check you passed <code>[[6.5]]</code>, not <code>[6.5]</code>.
       </div>
     </section>
 
@@ -789,7 +1327,7 @@ X = df[[<span class="str">'hours_studied'</span>]]   <span class="cmt"># ✓</sp
         </div>
         <div class="box fragment">
           <h4>3 · <code>predict</code> when you wanted <code>predict_proba</code></h4>
-          <pre class="code"><span class="cmt"># "how confident?" answered with 0/1</span>
+          <pre class="code"><span class="cmt"># "how sure?" answered with 0/1</span>
 model.<span class="fn">predict</span>(X)         <span class="cmt"># ✗ for ranking/risk</span>
 model.<span class="fn">predict_proba</span>(X)   <span class="cmt"># ✓</span></pre>
         </div>
@@ -804,115 +1342,363 @@ model.<span class="fn">predict_proba</span>(X)   <span class="cmt"># ✓</span><
         just quietly less trustworthy.</p>
     </section>
 
-    <!-- ============ VII. REAL DATA ============ -->
+    <!-- ============ VI. REAL DATA ============ -->
     <section class="slide divider">
-      <div class="roman">VII</div>
+      <div class="roman">VI</div>
       <div>
-        <span class="day-tag">PART SEVEN · 10 MIN</span>
+        <span class="day-tag">PART SIX · 20 MIN</span>
         <h1>Real <em>Data</em></h1>
-        <p class="sub">569 tumours. Thirty features.<br/>Same five steps.</p>
+        <p class="sub">569 tumours. Thirty measurements.<br/>Same five steps.</p>
       </div>
     </section>
 
     <section class="slide dense">
-      <h2>Breast Cancer Wisconsin — 569 rows</h2>
+      <h2>Breast Cancer Wisconsin — 569 tumours</h2>
       <pre class="code"><span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_breast_cancer
 
-data = <span class="fn">load_breast_cancer</span>(as_frame=<span class="kw">True</span>)   <span class="cmt"># bundled with sklearn, no download</span>
+data = <span class="fn">load_breast_cancer</span>(as_frame=<span class="kw">True</span>)   <span class="cmt"># built into sklearn, no download</span>
 X, y = data.data, data.target
 <span class="fn">print</span>(X.shape)          <span class="cmt"># (569, 30)</span>
 <span class="fn">print</span>(data.target_names) <span class="cmt"># ['malignant' 'benign']</span></pre>
-      <ul style="font-size:14px;margin-top:8px;">
-        <li class="fragment">One row = one tumour, measured from a biopsy image (radius, texture, concavity, ...).</li>
-        <li class="fragment">Classes: 212 malignant, 357 benign — <b>reasonably balanced</b>, <code>stratify=y</code> still good habit.</li>
+      <ul style="font-size:15px;margin-top:8px;">
+        <li class="fragment">One row = one tumour, measured from a microscope image: size, texture, shape…</li>
+        <li class="fragment"><b>Malignant</b> = cancer, dangerous. <b>Benign</b> = not cancer. 212 malignant, 357 benign.</li>
+        <li class="fragment">More than one feature? No problem: the model gets <b>one slope per feature</b>, adds up
+          all the pushes into one score, then squashes it. Same idea.</li>
       </ul>
       <p class="pitfall fragment"><b>Read the label order:</b> <code>target_names[0] = 'malignant'</code>, so
-        class <b>0 = malignant, 1 = benign</b>. Backwards from what you might guess — always check
-        <code>target_names</code> before trusting a "positive" prediction.</p>
+        class <b>0 = malignant, 1 = benign</b>. Backwards from what you might guess — always check.</p>
     </section>
 
     <section class="slide dense">
-      <h2>Same five steps, real numbers — but a warning</h2>
-      <pre class="code">X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>, stratify=y)
+      <h2>Two features → the boundary becomes a line</h2>
+      <div class="split-2" style="grid-template-columns: 1fr 470px;">
+        <div>
+          <pre class="code">cols = [<span class="str">'mean radius'</span>, <span class="str">'mean texture'</span>]
 
-model = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>).<span class="fn">fit</span>(X_train, y_train)
-<span class="cmt"># ConvergenceWarning: lbfgs failed to converge after 1000 iterations...</span>
-<span class="cmt">#   ...You might also want to scale the data</span>
+m2 = <span class="fn">LogisticRegression</span>()
+m2.<span class="fn">fit</span>(X_train[cols], y_train)
 
-<span class="fn">accuracy_score</span>(y_test, model.<span class="fn">predict</span>(X_test))   <span class="cmt"># 0.965 — good, but the warning is real</span></pre>
-      <p class="callout fragment">30 features on <b>wildly different scales</b> — <code>mean area</code> is in the
-        hundreds, <code>mean smoothness</code> is around 0.1. The solver struggles to converge cleanly.</p>
+m2.coef_        <span class="cmt"># [[-1.062 -0.203]]</span>
+m2.<span class="fn">score</span>(X_test[cols], y_test)   <span class="cmt"># 0.877</span></pre>
+          <ul style="font-size:14.5px;margin-top:8px;">
+            <li class="fragment">One feature → the boundary was a <b>point</b> (5 hours). Two features → it's a
+              <b>straight line</b> across the plot.</li>
+            <li class="fragment">Both slopes are <b>negative</b>: bigger, rougher tumours push towards class 0, malignant.</li>
+            <li class="fragment">Red rings = the <b>14 of 114</b> test tumours on the wrong side. Two measurements aren't
+              enough — the other 28 are there for a reason.</li>
+          </ul>
+        </div>
+        <div>
+          <svg id="f2-svg" class="wgt-svg" width="470" height="380" viewBox="0 0 470 380" aria-label="mean radius vs mean texture with the fitted decision boundary"></svg>
+          <p class="wgt-note" style="margin-top:4px;">114 test tumours · orange = malignant · green = benign</p>
+        </div>
+      </div>
+      <p class="curious fragment"><b>Note:</b> the boundary is always <b>straight</b> (a line, a flat plane…).
+        Logistic regression can't draw a circle around a cluster.</p>
     </section>
 
     <section class="slide dense">
-      <h2>Scaling fixes it</h2>
-      <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
-<span class="kw">from</span> sklearn.pipeline <span class="kw">import</span> make_pipeline
-
-pipe = <span class="fn">make_pipeline</span>(<span class="fn">StandardScaler</span>(), <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>))
-pipe.<span class="fn">fit</span>(X_train, y_train)   <span class="cmt"># converges cleanly, no warning</span>
-
-<span class="fn">accuracy_score</span>(y_test, pipe.<span class="fn">predict</span>(X_test))   <span class="cmt"># 0.982 — up from 0.965</span></pre>
-      <ul style="font-size:14px;margin-top:8px;">
-        <li class="fragment">Gradient descent takes tiny steps toward the small-scale features and huge steps
-          toward the large-scale ones — scaling makes every feature's step comparable.</li>
-        <li class="fragment">Linear regression's closed form didn't care about scale. <b>Iterative solvers do.</b>
-          Another reason logistic regression needs more care than its sibling.</li>
-      </ul>
-      <p class="callout fragment">Rule of thumb building nicely: distance-based and gradient-based models want
-        scaled features. Tree-based models don't. LogisticRegression is squarely in the "wants it" camp.</p>
-    </section>
-
-    <section class="slide dense">
-      <h2>Reading 30 coefficients — carefully</h2>
+      <h2>All 30 features — and why scaling matters</h2>
       <div class="split-2">
         <div>
-          <p style="font-size:13px;color:var(--ink-soft);">unscaled, sorted by raw size — <b class="tk-red">misleading</b>:</p>
-          <pre class="code">mean radius        +2.04
-worst concavity    -1.69
-worst radius       +1.38
-texture error      +1.07</pre>
-          <p style="font-size:13px;color:var(--ink-soft);margin-top:8px;">scaled, sorted by size — <b class="tk-green">comparable</b>:</p>
-          <pre class="code">worst texture       -1.26
-radius error        -1.08
-worst concave pts   -0.95
-worst area          -0.95</pre>
+          <p style="font-size:14.5px;font-weight:800;">Same picture, very different rulers:</p>
+          <div class="hbar"><span>mean area</span><div class="track"><div class="fill alt" style="width:100%;"></div></div><b>~655</b></div>
+          <div class="hbar"><span>mean radius</span><div class="track"><div class="fill alt" style="width:2.2%;"></div></div><b>~14</b></div>
+          <div class="hbar"><span>mean smoothness</span><div class="track"><div class="fill alt" style="width:0.3%;"></div></div><b>~0.1</b></div>
+          <p class="wgt-note">The smoothness bar is there — it's just 6,800 times smaller.</p>
+          <ul style="font-size:14px;margin-top:10px;">
+            <li class="fragment">Without scaling, the downhill walk takes giant steps for "area" and tiny ones for
+              "smoothness". It runs out of steps and warns you: accuracy <b>0.965</b> + <code>ConvergenceWarning</code>.</li>
+            <li class="fragment"><code>StandardScaler</code> puts every feature on the <b>same ruler</b> first.</li>
+          </ul>
         </div>
-        <ul style="font-size:14px;">
-          <li class="fragment"><code>texture error</code> ranks 4th unscaled purely because its raw values are
-            small numbers — not because it's especially predictive.</li>
-          <li class="fragment">After scaling, every coefficient is "per one standard deviation" — now the
-            <b>ranking is honest</b>.</li>
-          <li class="fragment">All top scaled coefficients are <b>negative</b> — bigger/rougher tumour measurements
-            push the prediction away from class 1 (<code>benign</code>), toward malignant. Matches medical intuition.</li>
-        </ul>
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+
+scaler = <span class="fn">StandardScaler</span>()
+X_train_s = scaler.<span class="fn">fit_transform</span>(X_train)  <span class="cmt"># learn the ruler</span>
+X_test_s  = scaler.<span class="fn">transform</span>(X_test)       <span class="cmt"># reuse it</span>
+
+cancer = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)
+cancer.<span class="fn">fit</span>(X_train_s, y_train)
+cancer.<span class="fn">score</span>(X_test_s, y_test)
+<span class="cmt"># 0.982 — and no warning</span></pre>
+        </div>
       </div>
-      <p class="pitfall fragment"><b>Same trap as linear regression's California Housing coefficients:</b>
-        never compare coefficient sizes across unscaled features. Scale first, then read.</p>
+      <p class="pitfall fragment"><b>Learn the ruler from training rows only:</b> <code>fit_transform</code> on
+        <code>X_train</code>, plain <code>transform</code> on <code>X_test</code>. Fitting the scaler on the test rows
+        lets the model peek at the exam.</p>
+    </section>
+
+    <!-- ============ VII. WHICH MISTAKES MATTER ============ -->
+    <section class="slide divider">
+      <div class="roman">VII</div>
+      <div>
+        <span class="day-tag">PART SEVEN · 25 MIN</span>
+        <h1>Which Mistakes <em>Matter?</em></h1>
+        <p class="sub">98% right. But which 2% —<br/>and who pays for them?</p>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>Two kinds of wrong</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">preds = cancer.<span class="fn">predict</span>(X_test_s)
+<span class="fn">confusion_matrix</span>(y_test, preds)
+<span class="cmt"># [[41  1]</span>
+<span class="cmt">#  [ 1 71]]</span></pre>
+          <ul style="font-size:15px;margin-top:10px;">
+            <li class="fragment">Same 4 boxes as before. Class 0 (malignant) comes first, so the <b>top row</b> is
+              the real cancers.</li>
+            <li class="fragment">114 tumours, <b>2 mistakes</b>. Accuracy counts them as equal.</li>
+            <li class="fragment"><b class="tk-blue">False alarm:</b> a healthy patient is told "maybe cancer". Cost: an extra
+              test and a scary week.</li>
+            <li class="fragment"><b class="tk-red">Missed cancer:</b> a sick patient is told "you're fine". Cost: they go home
+              untreated.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="cm">
+            <div class="hd"></div><div class="hd">GUESSED MALIGNANT</div><div class="hd">GUESSED BENIGN</div>
+            <div class="rh">really malignant</div>
+            <div class="ok"><b class="n">41</b>caught</div>
+            <div class="err"><b class="n">1</b>missed cancer</div>
+            <div class="rh">really benign</div>
+            <div class="err"><b class="n">1</b>false alarm</div>
+            <div class="ok"><b class="n">71</b>cleared</div>
+          </div>
+          <p class="cm-cap">rows = truth · columns = guess · same layout as the 12 students</p>
+        </div>
+      </div>
+      <p class="callout fragment">These two errors are <b>not</b> equally bad. We need scores that tell them apart —
+        and a way to <b>trade one for the other</b>.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2>Recall and precision — two different questions</h2>
+      <div class="split-2">
+        <div class="box fragment">
+          <h4>RECALL — "DID WE CATCH THEM ALL?"</h4>
+          <p style="font-size:14px;">Look at the <b>42 tumours that really are cancer</b> (top row). How many did we flag?</p>
+          <div class="dotgrid" id="rec-grid"></div>
+          <p class="big-frac">41 / 42 = 98% <small>(dashed = missed)</small></p>
+        </div>
+        <div class="box fragment">
+          <h4>PRECISION — "CAN WE TRUST A FLAG?"</h4>
+          <p style="font-size:14px;">Look at the <b>42 tumours we flagged</b> (left column). How many really were cancer?</p>
+          <div class="dotgrid" id="pre-grid"></div>
+          <p class="big-frac">41 / 42 = 98% <small>(ringed = false alarm)</small></p>
+        </div>
+      </div>
+      <pre class="code fragment" style="margin-top:12px;"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> recall_score, precision_score
+<span class="fn">recall_score</span>(y_test, preds, pos_label=<span class="num">0</span>)      <span class="cmt"># 0.976   pos_label=0 → "the class I care about is malignant"</span>
+<span class="fn">precision_score</span>(y_test, preds, pos_label=<span class="num">0</span>)   <span class="cmt"># 0.976</span></pre>
+      <p class="pitfall fragment"><b>Cancer screening cares most about recall</b> — missing a sick patient is the
+        worst outcome. A spam filter cares most about precision — binning a real email is the worst outcome.</p>
+    </section>
+
+    <section class="slide dense">
+      <h2><code>classification_report</code> — everything at once</h2>
+      <pre class="code"><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> classification_report
+<span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, preds, target_names=data.target_names))
+
+              precision    recall  f1-score   support
+
+   malignant       0.98      0.98      0.98        42
+      benign       0.99      0.99      0.99        72
+
+    accuracy                           0.98       114</pre>
+      <ul style="font-size:15px;margin-top:8px;">
+        <li class="fragment"><b>One row per class</b> — each takes a turn being "the one we care about".</li>
+        <li class="fragment"><b>f1-score</b> = one number that balances precision and recall.</li>
+        <li class="fragment"><b>support</b> = how many test rows really belong to that class. A perfect score on a
+          support of 3 means very little.</li>
+      </ul>
+    </section>
+
+    <!-- ===== WIDGET 4 ===== -->
+    <section class="slide">
+      <h2>Move the threshold — trade one error for the other</h2>
+      <div class="wgt">
+        <svg id="w4-svg" class="wgt-svg" width="620" height="400" viewBox="0 0 620 400"></svg>
+        <div class="wgt-panel">
+          <h4>FLAG AS CANCER IF CHANCE &ge; THRESHOLD</h4>
+          <div class="wgt-row">
+            <label>threshold</label>
+            <input id="w4-t" type="range" min="0.01" max="0.99" step="0.01" value="0.5">
+            <span class="wgt-val" id="w4-tv">0.50</span>
+          </div>
+          <div class="wgt-cm">
+            <div class="ok"><b id="w4-tp">—</b>caught</div>
+            <div class="err"><b id="w4-fn">—</b>missed cancer</div>
+            <div class="err"><b id="w4-fp">—</b>false alarm</div>
+            <div class="ok"><b id="w4-tn">—</b>cleared</div>
+          </div>
+          <div class="wgt-stat"><span>recall</span><b id="w4-rec">—</b></div>
+          <div class="wgt-stat"><span>precision</span><b id="w4-pre">—</b></div>
+          <div class="wgt-stat"><span>accuracy</span><b id="w4-acc">—</b></div>
+          <p class="wgt-note">Each dot is one test tumour, placed at the model's chance of malignant. Drag the purple
+            line. <b>Goal: zero missed cancers.</b> What does it cost?</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>The threshold, in code</h2>
+      <div class="split-2">
+        <div>
+          <pre class="code">p_mal = cancer.<span class="fn">predict_proba</span>(X_test_s)[:, <span class="num">0</span>]
+<span class="cmt">#  every row, column 0 = chance of malignant</span>
+
+flag = p_mal &gt;= <span class="num">0.09</span>      <span class="cmt"># our own threshold</span></pre>
+          <ul style="font-size:14.5px;margin-top:10px;">
+            <li class="fragment"><code>predict()</code> always uses 50%. For any other threshold, take
+              <code>predict_proba</code> and compare it yourself.</li>
+            <li class="fragment">Catching the last cancer costs <b>13 extra false alarms</b>. For a cancer screen, a good
+              trade. For a spam filter, a terrible one.</li>
+          </ul>
+        </div>
+        <table class="pd-table fragment">
+          <tr><th>threshold</th><th>missed</th><th>false alarms</th><th>accuracy</th></tr>
+          <tr><td>0.50</td><td class="bad">1</td><td>1</td><td class="good">0.982</td></tr>
+          <tr><td>0.30</td><td class="bad">1</td><td>5</td><td>0.947</td></tr>
+          <tr><td>0.10</td><td class="bad">1</td><td>11</td><td>0.895</td></tr>
+          <tr class="hot"><td>0.09</td><td>0</td><td>14</td><td>0.877</td></tr>
+          <tr><td>0.05</td><td class="good">0</td><td>18</td><td>0.842</td></tr>
+        </table>
+      </div>
+      <p class="callout fragment">Choosing the threshold is not a maths question. It's a question about
+        <b>people</b>: which mistake hurts more?</p>
+    </section>
+
+    <!-- ============ VIII. GOING FURTHER ============ -->
+    <section class="slide divider">
+      <div class="roman">VIII</div>
+      <div>
+        <span class="day-tag">PART EIGHT · 15 MIN · BONUS</span>
+        <h1>Going <em>Further</em></h1>
+        <p class="sub">More than two answers.<br/>Then: can you trust your score?</p>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>More than two answers? One score per class</h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size:15px;">Iris flowers: 3 species. The model makes <b>one score per species</b>,
+            then squashes all three together so they add up to 100%.</p>
+          <p style="font-size:14px;font-weight:800;margin-top:14px;">one flower — the three scores:</p>
+          <div class="hbar"><span>setosa</span><div class="track"><div class="fill alt" style="width:71%;"></div></div><b>+7.0</b></div>
+          <div class="hbar"><span>versicolor</span><div class="track"><div class="fill alt" style="width:29%;"></div></div><b>+2.8</b></div>
+          <div class="hbar"><span>virginica</span><div class="track"><div class="fill alt" style="width:0%;"></div></div><b>&minus;9.9</b></div>
+          <p style="font-size:14px;font-weight:800;margin-top:12px;" class="fragment">after squashing → chances:</p>
+          <div class="fragment">
+            <div class="hbar"><span>setosa</span><div class="track"><div class="fill" style="width:98.5%;"></div></div><b>98.5%</b></div>
+            <div class="hbar"><span>versicolor</span><div class="track"><div class="fill" style="width:1.5%;"></div></div><b>1.5%</b></div>
+            <div class="hbar"><span>virginica</span><div class="track"><div class="fill" style="width:0%;"></div></div><b>0.0%</b></div>
+          </div>
+        </div>
+        <div>
+          <pre class="code"><span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_iris
+iris = <span class="fn">load_iris</span>(as_frame=<span class="kw">True</span>)
+<span class="cmt"># ... same split as always ...</span>
+
+clf = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>)
+clf.<span class="fn">fit</span>(X_train, y_train)
+clf.<span class="fn">score</span>(X_test, y_test)    <span class="cmt"># 0.967</span>
+clf.<span class="fn">predict_proba</span>(X_test[:<span class="num">1</span>])
+<span class="cmt"># [[0.985 0.015 0.000]]   3 columns now</span></pre>
+          <p class="callout fragment" style="margin-top:12px;font-size:16px;">In sklearn <b>nothing changes</b>. It sees 3
+            labels in <code>y</code> and handles it. <code>predict_proba</code> gets one column per class, and the
+            confusion matrix becomes 3 × 3.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide dense">
+      <h2>One split is one roll of the dice</h2>
+      <div class="split-2">
+        <div>
+          <p style="font-size:14.5px;">Iris, same model, ten different <code>random_state</code> values:</p>
+          <pre class="code" style="margin-top:6px;">1.000  0.967  1.000  <span class="ret">0.900</span>  1.000
+0.967  0.967  1.000  0.967  0.967</pre>
+          <p style="font-size:14.5px;margin-top:10px;" class="fragment">Was the model 90% or 100%? Neither — it got
+            lucky or unlucky with which 30 flowers landed in the test set.</p>
+          <pre class="code fragment" style="margin-top:10px;"><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score
+
+scores = <span class="fn">cross_val_score</span>(<span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>),
+                         iris.data, iris.target, cv=<span class="num">5</span>)
+<span class="cmt"># [0.967 1.    0.933 0.967 1.   ]  → mean 0.973</span></pre>
+        </div>
+        <div class="fragment">
+          <div class="kfold">
+            <div class="row"><span>round 1</span><i class="t">TEST</i><i></i><i></i><i></i><i></i><b>0.967</b></div>
+            <div class="row"><span>round 2</span><i></i><i class="t">TEST</i><i></i><i></i><i></i><b>1.000</b></div>
+            <div class="row"><span>round 3</span><i></i><i></i><i class="t">TEST</i><i></i><i></i><b>0.933</b></div>
+            <div class="row"><span>round 4</span><i></i><i></i><i></i><i class="t">TEST</i><i></i><b>0.967</b></div>
+            <div class="row"><span>round 5</span><i></i><i></i><i></i><i></i><i class="t">TEST</i><b>1.000</b></div>
+          </div>
+          <ul style="font-size:14px;margin-top:10px;">
+            <li>Cut the data into 5 slices. Each round, one slice is the test.</li>
+            <li>Every row gets tested <b>exactly once</b>. Average the 5 scores.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout fragment">This is <b>cross-validation</b>. Report <b>0.973 &plusmn; 0.025</b>: a score
+        <em>and</em> how much it wobbles.</p>
     </section>
 
     <!-- ============ WRAP ============ -->
     <section class="slide dense">
       <h2>What you learned today</h2>
-      <ul class="checklist">
-        <li class="fragment">Classification: same linear part $z = wx+b$, squashed through $\sigma(z)$ into a probability.</li>
-        <li class="fragment">Decision boundary is just $z=0$, i.e. where $\hat p = 0.5$.</li>
-        <li class="fragment">Loss is <b>cross-entropy</b>, not MSE — convex, and it punishes confident wrong answers hard.</li>
-        <li class="fragment">Gradient: $\frac{1}{n}\sum(p_i-y_i)x_i$ — clean, but <b>no closed form</b>. Gradient descent is the whole story.</li>
-        <li class="fragment">New sklearn habits: <code>stratify=y</code> on the split, <code>predict_proba</code> for confidence,
-          <code>max_iter</code> bumped, <b>scale before fitting</b>.</li>
-        <li class="fragment">Accuracy is a start, not the whole story — precision/recall come next.</li>
+      <ul class="checklist" style="font-size:17px;">
+        <li class="fragment">Classification = answering yes-or-no (or A/B/C) questions.</li>
+        <li class="fragment">Logistic regression: <b>straight line → squash</b> → a chance between 0% and 100%.</li>
+        <li class="fragment">The <b>decision boundary</b> is where the chance is exactly 50%.</li>
+        <li class="fragment">A curve is scored by its <b>penalty</b> (log-loss). Confident and wrong = huge penalty.</li>
+        <li class="fragment">Training = <b>walking downhill</b> on the penalty, one small step at a time.</li>
+        <li class="fragment">sklearn: the same 5 steps, plus <code>stratify=y</code>. New questions go in as a <b>table</b>:
+          <code>[[6.5]]</code>.</li>
+        <li class="fragment"><code>predict_proba</code> = how sure (one row per student). <code>predict</code> = the decision.</li>
+        <li class="fragment">The confusion matrix sorts every answer into <b>TN · FP · FN · TP</b> — and the threshold lets
+          you choose which mistakes to avoid.</li>
       </ul>
+    </section>
+
+    <section class="slide tighter">
+      <h2>The sklearn cheat sheet</h2>
+      <pre class="code"><span class="cmt"># ---- 1 load · 2 split ----------------------------------------------------</span>
+X = df[[<span class="str">'feature_1'</span>, <span class="str">'feature_2'</span>]]          <span class="cmt"># table → double brackets</span>
+y = df[<span class="str">'target'</span>]
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="num">0.2</span>, random_state=<span class="num">42</span>, stratify=y)
+
+<span class="cmt"># ---- (only if features use very different rulers) -------------------------</span>
+scaler = <span class="fn">StandardScaler</span>()
+X_train = scaler.<span class="fn">fit_transform</span>(X_train);  X_test = scaler.<span class="fn">transform</span>(X_test)
+
+<span class="cmt"># ---- 3 fit · 4 predict ----------------------------------------------------</span>
+model = <span class="fn">LogisticRegression</span>(max_iter=<span class="num">1000</span>).<span class="fn">fit</span>(X_train, y_train)
+preds = model.<span class="fn">predict</span>(X_test)                 <span class="cmt"># the decision (50% cut-off)</span>
+proba = model.<span class="fn">predict_proba</span>(X_test)[:, <span class="num">1</span>]    <span class="cmt"># every row, column 1 = chance of class 1</span>
+
+<span class="cmt"># ---- 5 evaluate -----------------------------------------------------------</span>
+<span class="fn">accuracy_score</span>(y_test, preds)                  <span class="cmt"># real answers first!</span>
+tn, fp, fn, tp = <span class="fn">confusion_matrix</span>(y_test, preds).<span class="fn">ravel</span>()
+<span class="fn">print</span>(<span class="fn">classification_report</span>(y_test, preds))</pre>
+      <p class="callout fragment">Swap <code>LogisticRegression</code> for almost any other sklearn classifier and every
+        line still runs.</p>
     </section>
 
     <section class="slide">
       <h2>Where this goes next</h2>
       <ul>
-        <li class="fragment"><b>Multiclass</b> — more than 2 categories. Sigmoid generalises to <b>softmax</b>, one probability per class.</li>
-        <li class="fragment"><b>Regularisation (L1/L2)</b> — the <code>C</code> you saw sklearn quietly apply. Tuning it trades fit against overfitting.</li>
-        <li class="fragment"><b>Decision trees &amp; random forests</b> — no line, no sigmoid, usually stronger on messy tabular data.</li>
-        <li class="fragment"><b>Precision, recall, ROC-AUC</b> — what to report when accuracy alone lies.</li>
-        <li class="fragment"><b>Neural networks</b> — a logistic regression is one neuron. Stack thousands of them, same $\sigma$, same idea.</li>
+        <li class="fragment"><b>Decision trees &amp; random forests</b> — no line, no squash; ask a chain of yes/no questions instead.</li>
+        <li class="fragment"><b>Curved boundaries</b> — feed the model extra features (like hours²) and the same straight-line
+          model can draw curves.</li>
+        <li class="fragment"><b>Neural networks</b> — a logistic regression is <b>one neuron</b>. Stack thousands of them, same squash,
+          same downhill walk.</li>
       </ul>
       <p class="callout fragment">Every one of them is still <code>fit</code>, <code>predict</code>, <code>score</code>.
         The interface never changes — only what happens inside <code>fit</code>.</p>
@@ -923,7 +1709,7 @@ worst area          -0.95</pre>
       <div>
         <span class="day-tag">DONE</span>
         <h1>Go <em>classify</em> something.</h1>
-        <p class="sub">Sibling of <code>colab_exercises/linear_regression.ipynb</code> — coming next.</p>
+        <p class="sub">Lab: <code>colab_exercises/logistic_regression.ipynb</code><br/>Explanations, hints and solutions inside.</p>
       </div>
     </section>
 
@@ -1092,7 +1878,7 @@ worst area          -0.95</pre>
       best.setAttribute('opacity', on ? 1 : 0);
       best.setAttribute('d', curvePath(W_OPT, B_OPT));
       this.classList.toggle('on', on);
-      this.textContent = on ? "Hide sklearn's curve" : "Show sklearn's curve";
+      this.textContent = on ? 'Hide the best curve' : 'Show the best curve';
     });
     document.getElementById('w1-reset').addEventListener('click', () => {
       sw.value = 1; w = 1; b = -3 * w; draw();
@@ -1109,7 +1895,8 @@ worst area          -0.95</pre>
     const YMAX = Math.max(curveLoss(W0), curveLoss(W1)) * 1.05;
 
     const f = frame(svg, { x0: W0, x1: W1, y0: 0, y1: YMAX, xt: 7, yt: 5,
-                           xlab: 'w  (steepness)', ylab: 'loss', yfmt: v => v.toFixed(1) });
+                           xlab: 'steepness', ylab: 'penalty',
+                           xfmt: v => v.toFixed(1), yfmt: v => v.toFixed(1) });
 
     let d = '';
     for (let i = 0; i <= 200; i++) {
@@ -1120,7 +1907,7 @@ worst area          -0.95</pre>
     svg.appendChild(el('line', { class: 'meanline', x1: f.px(W_OPT), y1: f.py(0),
                                  x2: f.px(W_OPT), y2: f.py(YMAX) }));
     const minLab = el('text', { class: 'axis-t', x: f.px(W_OPT) + 6, y: f.py(YMAX) + 14 });
-    minLab.textContent = 'w* = 2.21'; svg.appendChild(minLab);
+    minLab.textContent = 'bottom = 2.21'; svg.appendChild(minLab);
 
     const tan  = el('line', { class: 'tangent' }); svg.appendChild(tan);
     const ball = el('circle', { class: 'ball', r: 8 }); svg.appendChild(ball);
@@ -1149,24 +1936,397 @@ worst area          -0.95</pre>
       tan.setAttribute('opacity', showTan ? 1 : 0);
     }
 
-    sl.addEventListener('input', draw);
+    const stepsEl = document.getElementById('w2-steps');
+    let lr = 0.4, run = 0;   // run: bumping it cancels an animation already in flight
+
+    sl.addEventListener('input', () => { run++; stepsEl.textContent = '0'; draw(); });
     document.getElementById('w2-tan').addEventListener('click', function () {
       showTan = !showTan;
-      this.textContent = showTan ? 'Hide tangent' : 'Show tangent';
+      this.textContent = showTan ? 'Hide slope line' : 'Show slope line';
       draw();
     });
+    const lrBtns = svg.parentNode.querySelectorAll('.w2-lr');
+    lrBtns.forEach(btn => btn.addEventListener('click', () => {
+      lr = +btn.dataset.lr;
+      lrBtns.forEach(o => o.classList.toggle('on', o === btn));
+    }));
     // gradient descent, animated slowly enough to watch
     document.getElementById('w2-step').addEventListener('click', () => {
-      const lr = 0.05;
+      const mine = ++run, eta = lr;
+      const cap = eta > 1 ? 40 : 100;   // 0.05 needs at most 94 steps from anywhere on the axis
       let w = +sl.value, i = 0;
       const tick = () => {
-        w = Math.max(W0, Math.min(W1, w - lr * deriv(w)));
+        if (mine !== run) return;
+        w = Math.max(W0, Math.min(W1, w - eta * deriv(w)));
         sl.value = w; draw();
-        if (++i < 80 && Math.abs(deriv(w)) > 0.03) setTimeout(tick, 40);
+        stepsEl.textContent = ++i;
+        if (Math.abs(deriv(w)) <= 0.03) return;
+        if (i < cap) setTimeout(tick, eta < 0.2 ? 40 : 160);
+        else stepsEl.textContent = cap + '+ · still bouncing';
       };
       tick();
     });
     draw();
+  })();
+
+  // ================= WIDGET 3 — the C knob ================================
+  // Solves sklearn's objective exactly:  0.5*w^2 + C * sum(loss_i)   (b is not penalised)
+  // by damped Newton. 60 points, 2 unknowns — cheap enough to refit on every slider tick.
+  function fitC(C) {
+    const obj = (w, b) => {
+      let s = 0;
+      for (const [x, y] of PTS) {
+        const z = w * x + b;
+        s += Math.log(1 + Math.exp(-Math.abs(z))) + Math.max(z, 0) - y * z;
+      }
+      return 0.5 * w * w + C * s;
+    };
+    let w = 0, b = 0;
+    for (let it = 0; it < 60; it++) {
+      let gw = w, gb = 0, hww = 1, hwb = 0, hbb = 0;
+      for (const [x, y] of PTS) {
+        const p = sigmoid(w * x + b), s = p * (1 - p);
+        gw += C * (p - y) * x;  gb += C * (p - y);
+        hww += C * s * x * x;   hwb += C * s * x;   hbb += C * s;
+      }
+      const det = hww * hbb - hwb * hwb;
+      if (!(det > 0)) break;
+      const dw = (hbb * gw - hwb * gb) / det, db = (hww * gb - hwb * gw) / det;
+      let t = 1;
+      const f0 = obj(w, b);
+      while (t > 1e-6 && !(obj(w - t * dw, b - t * db) <= f0)) t /= 2;
+      w -= t * dw; b -= t * db;
+      if (Math.abs(dw) + Math.abs(db) < 1e-10) break;
+    }
+    return [w, b];
+  }
+
+  (function w3() {
+    const svg = document.getElementById('w3-svg');
+    if (!svg) return;
+    const X0 = 0, X1 = 10;
+    const f = frame(svg, { x0: X0, x1: X1, y0: -0.15, y1: 1.15, xt: 5, yt: 6,
+                           xlab: 'hours studied', ylab: 'P(pass)', yfmt: v => v.toFixed(1) });
+    PTS.forEach(([x, y]) => svg.appendChild(el('circle', { class: pointClass(y), cx: f.px(x), cy: f.py(y), r: 4 })));
+
+    const path = (w, b) => {
+      let d = '';
+      for (let i = 0; i <= 160; i++) {
+        const x = X0 + i * (X1 - X0) / 160;
+        d += (i ? 'L' : 'M') + f.px(x).toFixed(1) + ' ' + f.py(sigmoid(w * x + b)).toFixed(1) + ' ';
+      }
+      return d;
+    };
+    svg.appendChild(el('path', { class: 'sigbest', d: path(W_OPT, B_OPT) }));
+    const curve = el('path', { class: 'sigcurve' }); svg.appendChild(curve);
+    const bLine = el('line', { class: 'boundary' }); svg.appendChild(bLine);
+
+    const sl = document.getElementById('w3-c');
+    const fmtC = C => C >= 100 ? C.toFixed(0) : C >= 10 ? C.toFixed(1) : C >= 1 ? C.toFixed(2) : C.toPrecision(2);
+
+    function draw() {
+      const C = Math.pow(10, +sl.value);
+      const [w, b] = fitC(C);
+      const bd = Math.max(X0, Math.min(X1, -b / w));
+      document.getElementById('w3-cv').textContent = fmtC(C);
+      document.getElementById('w3-w').textContent = w.toFixed(2);
+      document.getElementById('w3-b').textContent = b.toFixed(2);
+      document.getElementById('w3-bd').textContent = bd.toFixed(2) + 'h';
+      const L = logloss(w, b);
+      const lEl = document.getElementById('w3-loss');
+      lEl.textContent = L.toFixed(3);
+      lEl.className = L < LOSS_OPT * 1.15 ? 'badge-good' : (L > LOSS_OPT * 2 ? 'badge-bad' : '');
+      document.getElementById('w3-acc').textContent = (accuracyOf(w, b) * 100).toFixed(1) + '%';
+      curve.setAttribute('d', path(w, b));
+      bLine.setAttribute('x1', f.px(bd)); bLine.setAttribute('y1', f.py(f.y0));
+      bLine.setAttribute('x2', f.px(bd)); bLine.setAttribute('y2', f.py(f.y1));
+    }
+    sl.addEventListener('input', draw);
+    document.getElementById('w3-def').addEventListener('click', () => { sl.value = 0; draw(); });
+    draw();
+  })();
+
+  // ================= two-feature boundary (Part VII) =======================
+  // 114 test tumours: [mean radius, mean texture, class]   class 0 = malignant, 1 = benign
+  const F2 = [[19.55,28.77,0],[11.13,16.62,1],[13.82,24.49,0],[16.5,18.29,1],[21.56,22.39,0],[13.17,18.22,1],[8.88,15.49,1],[19.68,21.68,0],[18.31,20.58,0],[20.6,29.33,0],[12.95,16.02,1],[14.45,20.22,0],[12.34,12.27,1],[18.66,17.12,0],[15.08,25.74,0],[14.87,20.21,1],[14.47,24.99,1],[11.69,24.44,1],[13.5,12.71,1],[11.3,18.19,1],[15.75,20.25,0],[17.35,23.06,0],[9.67,18.1,1],[11.26,19.96,1],[10.82,24.21,1],[16.14,14.86,1],[21.16,23.04,0],[11.89,21.17,1],[10.6,18.95,1],[9.44,18.32,1],[12.89,14.11,1],[11.14,14.07,1],[12.0,28.23,1],[13.94,13.17,1],[18.46,18.52,0],[10.95,21.35,0],[11.7,19.11,1],[11.89,17.36,1],[13.46,18.75,1],[18.82,21.97,0],[10.2,17.48,1],[12.06,12.74,1],[13.59,21.84,1],[15.5,21.08,0],[12.68,23.84,0],[14.42,16.54,1],[9.0,14.4,1],[9.88,17.27,1],[16.17,16.07,1],[17.99,20.66,0],[12.89,15.7,1],[14.74,25.42,1],[11.06,17.12,1],[13.8,15.79,0],[13.0,20.78,1],[12.4,17.68,1],[12.18,14.08,1],[16.78,18.8,0],[17.47,24.68,0],[11.99,24.89,1],[11.8,17.26,1],[9.33,21.94,1],[13.77,13.27,1],[14.03,21.25,1],[18.05,16.15,0],[14.6,23.29,0],[14.96,19.1,1],[13.08,15.71,1],[12.88,18.22,1],[12.65,18.17,1],[11.32,27.08,1],[13.3,21.57,1],[9.74,11.97,1],[17.6,23.33,0],[16.27,20.71,0],[20.48,21.46,0],[14.86,23.21,0],[14.02,15.66,1],[10.71,20.39,1],[14.86,16.94,1],[12.47,18.6,1],[10.49,19.29,1],[18.94,21.31,0],[11.54,14.44,1],[15.12,16.68,0],[13.64,16.34,1],[13.7,17.64,1],[7.76,24.54,1],[12.23,19.56,1],[13.71,18.68,1],[13.66,19.13,1],[12.75,16.7,1],[20.55,20.86,0],[20.16,19.66,0],[19.1,26.29,0],[10.91,12.35,1],[20.57,17.77,0],[11.71,15.45,1],[13.81,23.75,0],[14.26,18.17,1],[19.0,18.91,0],[16.65,21.38,0],[13.73,22.61,0],[12.18,20.52,1],[27.22,21.87,0],[27.42,26.27,0],[13.2,17.43,1],[19.18,22.49,0],[9.27,12.87,1],[20.26,23.03,0],[15.1,16.39,1],[15.32,17.27,0],[12.62,23.97,1],[11.68,16.17,1]];
+  // LogisticRegression() on the 455 training rows, unscaled:  z = W2R*r + W2T*t + B2
+  const W2R = -1.0616162, W2T = -0.20255954, B2 = 19.51208462;
+
+  (function f2plot() {
+    const svg = document.getElementById('f2-svg');
+    if (!svg) return;
+    const f = frame(svg, { x0: 6, x1: 30, y0: 8, y1: 32, xt: 6, yt: 6,
+                           xlab: 'mean radius', ylab: 'mean texture', yfmt: v => v.toFixed(0) });
+    // boundary: z = 0  ->  r = -(W2T*t + B2) / W2R, drawn edge to edge
+    const rAt = t => -(W2T * t + B2) / W2R;
+    svg.appendChild(el('line', { class: 'thr', x1: f.px(rAt(f.y0)), y1: f.py(f.y0),
+                                 x2: f.px(rAt(f.y1)), y2: f.py(f.y1) }));
+    F2.forEach(([r, t, y]) => {
+      const pred = (W2R * r + W2T * t + B2) >= 0 ? 1 : 0;
+      svg.appendChild(el('circle', { class: pointClass(y) + (pred !== y ? ' pt-err' : ''),
+                                     cx: f.px(r), cy: f.py(t), r: 4.5 }));
+    });
+    const a = el('text', { class: 'lbl', x: f.px(6.6), y: f.py(9.6) }); a.textContent = 'predict benign';
+    const b = el('text', { class: 'lbl', x: f.px(29.4), y: f.py(9.6), 'text-anchor': 'end' }); b.textContent = 'predict malignant';
+    svg.appendChild(a); svg.appendChild(b);
+  })();
+
+  // ================= WIDGET 4 — move the threshold ========================
+  // Scaled model on the 114 test tumours: [P(malignant), truly malignant?]
+  const PM = [[1.0,1],[0.0,0],[0.9936,1],[0.4665,0],[1.0,1],[0.0078,0],[0.0,0],[1.0,1],[0.9999,1],[1.0,1],[0.0108,0],[0.9987,1],[0.0013,0],[1.0,1],[0.9997,1],[0.0984,0],[0.6341,0],[0.165,0],[0.0,0],[0.017,0],[0.9983,1],[0.9483,1],[0.0002,0],[0.0009,0],[0.01,0],[0.1325,0],[1.0,1],[0.0095,0],[0.0008,0],[0.0011,0],[0.0081,0],[0.0,0],[0.0165,0],[0.0308,0],[1.0,1],[0.812,1],[0.0015,0],[0.0289,0],[0.3787,0],[1.0,1],[0.0001,0],[0.0002,0],[0.0065,0],[1.0,1],[0.9983,1],[0.2928,0],[0.0,0],[0.0002,0],[0.0691,0],[0.9997,1],[0.0004,0],[0.4534,0],[0.0006,0],[0.0913,1],[0.0662,0],[0.0007,0],[0.0,0],[0.9939,1],[1.0,1],[0.048,0],[0.002,0],[0.0,0],[0.0004,0],[0.0267,0],[1.0,1],[0.8669,1],[0.463,0],[0.0024,0],[0.0473,0],[0.0834,0],[0.0007,0],[0.0076,0],[0.0,0],[0.9999,1],[0.9995,1],[1.0,1],[0.8358,1],[0.0009,0],[0.0003,0],[0.0115,0],[0.1339,0],[0.0001,0],[1.0,1],[0.0001,0],[0.6481,1],[0.0009,0],[0.013,0],[0.0,0],[0.0977,0],[0.1072,0],[0.0654,0],[0.0253,0],[1.0,1],[0.9999,1],[0.9995,1],[0.0,0],[1.0,1],[0.004,0],[1.0,1],[0.008,0],[0.9995,1],[1.0,1],[0.9683,1],[0.0078,0],[1.0,1],[1.0,1],[0.0012,0],[1.0,1],[0.0003,0],[1.0,1],[0.148,0],[0.9994,1],[0.0918,0],[0.0133,0]];
+
+  (function w4() {
+    const svg = document.getElementById('w4-svg');
+    if (!svg) return;
+    const f = frame(svg, { x0: 0, x1: 1, y0: 0, y1: 2, xt: 10, yt: 2,
+                           xlab: 'P(malignant) from predict_proba', ylab: '',
+                           xfmt: v => v.toFixed(1), yfmt: () => '' });
+    const zoneL = el('rect', { class: 'zone-l', y: f.py(2), height: f.py(0) - f.py(2) });
+    const zoneR = el('rect', { class: 'zone-r', y: f.py(2), height: f.py(0) - f.py(2) });
+    svg.insertBefore(zoneR, svg.firstChild); svg.insertBefore(zoneL, svg.firstChild);
+
+    const t1 = el('text', { class: 'lbl', x: f.px(0.3), y: f.py(1.88), 'text-anchor': 'middle' });
+    t1.textContent = 'truly malignant (42)';
+    const t0 = el('text', { class: 'lbl', x: f.px(0.8), y: f.py(0.88), 'text-anchor': 'middle' });
+    t0.textContent = 'truly benign (72)';
+    svg.appendChild(t1); svg.appendChild(t0);
+    svg.appendChild(el('line', { class: 'boundary', x1: f.px(0), y1: f.py(1), x2: f.px(1), y2: f.py(1) }));
+
+    // golden-ratio jitter: spreads the many dots that sit at ~0 and ~1 without any randomness
+    const dots = PM.map(([p, mal], i) => {
+      const jit = (i * 0.61803398875) % 1;
+      const c = el('circle', { cx: f.px(p), cy: f.py((mal ? 1.1 : 0.1) + jit * 0.66), r: 4.5 });
+      svg.appendChild(c);
+      return { c, p, mal };
+    });
+
+    const line = el('line', { class: 'thr', y1: f.py(0), y2: f.py(2) }); svg.appendChild(line);
+    const grip = el('circle', { class: 'handle', r: 9, cy: f.py(1) }); svg.appendChild(grip);
+
+    const sl = document.getElementById('w4-t');
+    const set = (id, v) => { document.getElementById(id).textContent = v; };
+
+    function draw() {
+      const t = +sl.value;
+      let tp = 0, fn = 0, fp = 0, tn = 0;
+      dots.forEach(d => {
+        const flag = d.p >= t;
+        if (d.mal) { flag ? tp++ : fn++; } else { flag ? fp++ : tn++; }
+        d.c.setAttribute('class', (d.mal ? 'pt0' : 'pt1') + (flag !== !!d.mal ? ' pt-err' : ''));
+      });
+      set('w4-tv', t.toFixed(2));
+      set('w4-tp', tp); set('w4-fn', fn); set('w4-fp', fp); set('w4-tn', tn);
+      const rec = document.getElementById('w4-rec');
+      rec.textContent = (tp / (tp + fn)).toFixed(3);
+      rec.className = fn === 0 ? 'badge-good' : '';
+      set('w4-pre', tp + fp ? (tp / (tp + fp)).toFixed(3) : '—');
+      set('w4-acc', ((tp + tn) / PM.length).toFixed(3));
+      const x = f.px(t);
+      line.setAttribute('x1', x); line.setAttribute('x2', x); grip.setAttribute('cx', x);
+      zoneL.setAttribute('x', f.px(0)); zoneL.setAttribute('width', x - f.px(0));
+      zoneR.setAttribute('x', x);       zoneR.setAttribute('width', f.px(1) - x);
+    }
+
+    grip.addEventListener('pointerdown', ev => {
+      ev.preventDefault();
+      grip.setPointerCapture(ev.pointerId);
+      const move = e => {
+        const r = svg.getBoundingClientRect();
+        const svgX = (e.clientX - r.left) / r.width * f.W;
+        const t = (svgX - f.M.l) / (f.W - f.M.l - f.M.r);
+        sl.value = Math.max(0.01, Math.min(0.99, Math.round(t * 100) / 100));
+        draw();
+      };
+      const up = () => {
+        svg.removeEventListener('pointermove', move);
+        svg.removeEventListener('pointerup', up);
+      };
+      svg.addEventListener('pointermove', move);
+      svg.addEventListener('pointerup', up);
+    });
+    sl.addEventListener('input', draw);
+    draw();
+  })();
+
+
+  // ================= a straight line escapes [0, 1] (Part I) ==============
+  // LinearRegression on the 60 rows, passed coded 0/1:  y = 0.157x - 0.288
+  (function linePlot() {
+    const svg = document.getElementById('line-svg');
+    if (!svg) return;
+    const f = frame(svg, { x0: 0, x1: 10, y0: -0.5, y1: 1.5, xt: 5, yt: 4,
+                           xlab: 'hours studied', ylab: 'prediction', yfmt: v => v.toFixed(1) });
+    svg.insertBefore(el('rect', { class: 'bad-zone', x: f.px(0), y: f.py(1.5), width: f.px(10) - f.px(0), height: f.py(1) - f.py(1.5) }), svg.firstChild);
+    svg.insertBefore(el('rect', { class: 'bad-zone', x: f.px(0), y: f.py(0), width: f.px(10) - f.px(0), height: f.py(-0.5) - f.py(0) }), svg.firstChild);
+    PTS.forEach(([x, y]) => svg.appendChild(el('circle', { class: pointClass(y), cx: f.px(x), cy: f.py(y), r: 4 })));
+    const lin = x => 0.157 * x - 0.288;
+    svg.appendChild(el('line', { class: 'linreg', x1: f.px(0), y1: f.py(lin(0)), x2: f.px(10), y2: f.py(lin(10)) }));
+    const lab = (txt, x, y, anchor) => {
+      const t = el('text', { class: 'lbl', x: f.px(x), y: f.py(y), 'text-anchor': anchor, fill: '#d62828' });
+      t.textContent = txt; svg.appendChild(t);
+    };
+    lab('−0.29 ?!', 0.25, -0.42, 'start');
+    lab('1.21 ?!', 9.6, 1.36, 'end');
+  })();
+
+  // ================= the squash machine (Part I) ==========================
+  (function squash() {
+    const svg = document.getElementById('sq-svg');
+    if (!svg) return;
+    const f = frame(svg, { x0: -10, x1: 10, y0: 0, y1: 1, xt: 10, yt: 4,
+                           xlab: 'score  (from the straight line)', ylab: 'chance of pass',
+                           yfmt: v => Math.round(v * 100) + '%' });
+    let d = '';
+    for (let i = 0; i <= 200; i++) {
+      const z = -10 + i * 0.1;
+      d += (i ? 'L' : 'M') + f.px(z).toFixed(1) + ' ' + f.py(sigmoid(z)).toFixed(1) + ' ';
+    }
+    svg.appendChild(el('path', { class: 'sigcurve', d: d }));
+    const gx = el('line', { class: 'sq-guide' }); svg.appendChild(gx);
+    const gy = el('line', { class: 'sq-guide' }); svg.appendChild(gy);
+    const dot = el('circle', { class: 'handle', r: 9 }); svg.appendChild(dot);
+
+    const sl = document.getElementById('sq-z');
+    let override = null;   // the ±1000 buttons: beyond the slider's range
+    function verdict(p) {
+      if (p < 0.05) return 'almost surely FAIL';
+      if (p < 0.35) return 'leaning fail';
+      if (p <= 0.65) return 'unsure — coin flip';
+      if (p <= 0.95) return 'leaning pass';
+      return 'almost surely PASS';
+    }
+    function draw() {
+      const z = override !== null ? override : +sl.value;
+      const p = sigmoid(z);
+      const zc = Math.max(-10, Math.min(10, z));
+      document.getElementById('sq-zv').textContent = override !== null ? (z > 0 ? '+' : '') + z : z.toFixed(1);
+      const pct = p * 100;
+      document.getElementById('sq-p').textContent =
+        (pct > 99.9 && pct < 100) ? '99.99…%' : (pct < 0.1 && pct > 0) ? '0.00…1%' : pct.toFixed(1) + '%';
+      document.getElementById('sq-bar').style.width = pct + '%';
+      document.getElementById('sq-verdict').textContent = verdict(p);
+      dot.setAttribute('cx', f.px(zc)); dot.setAttribute('cy', f.py(p));
+      gx.setAttribute('x1', f.px(zc)); gx.setAttribute('x2', f.px(zc));
+      gx.setAttribute('y1', f.py(0));  gx.setAttribute('y2', f.py(p));
+      gy.setAttribute('x1', f.px(-10)); gy.setAttribute('x2', f.px(zc));
+      gy.setAttribute('y1', f.py(p));   gy.setAttribute('y2', f.py(p));
+    }
+    sl.addEventListener('input', () => { override = null; draw(); });
+    svg.parentNode.querySelectorAll('[data-z]').forEach(btn => btn.addEventListener('click', () => {
+      override = +btn.dataset.z;
+      sl.value = override > 0 ? 10 : -10;
+      draw();
+    }));
+    draw();
+  })();
+
+  // ================= the penalty meter (Part III) =========================
+  (function penalty() {
+    const svg = document.getElementById('pen-svg');
+    if (!svg) return;
+    const YMAX = 5;
+    const f = frame(svg, { x0: 0, x1: 1, y0: 0, y1: YMAX, xt: 10, yt: 5,
+                           xlab: 'model says: chance of pass', ylab: 'penalty',
+                           xfmt: v => Math.round(v * 100) + '%', yfmt: v => v.toFixed(0) });
+    const curve = el('path', { class: 'pen-curve' }); svg.appendChild(curve);
+    const ball = el('circle', { class: 'ball', r: 9 }); svg.appendChild(ball);
+    const note = el('text', { class: 'lbl', 'text-anchor': 'middle' }); svg.appendChild(note);
+
+    const sl = document.getElementById('pen-p');
+    let y = 1;
+    const pen = p => -Math.log(y ? p : 1 - p);
+    function draw() {
+      const p = +sl.value, L = pen(p);
+      let d = '';
+      for (let i = 1; i <= 99; i++) {
+        const q = i / 100;
+        d += (i > 1 ? 'L' : 'M') + f.px(q).toFixed(1) + ' ' + f.py(Math.min(YMAX, pen(q))).toFixed(1) + ' ';
+      }
+      curve.setAttribute('d', d);
+      ball.setAttribute('cx', f.px(p)); ball.setAttribute('cy', f.py(Math.min(YMAX, L)));
+      note.setAttribute('x', f.px(y ? 0.55 : 0.45)); note.setAttribute('y', f.py(4.4));
+      note.textContent = y ? 'student PASSED: low guesses are punished' : 'student FAILED: high guesses are punished';
+      document.getElementById('pen-pv').textContent = Math.round(p * 100) + '%';
+      document.getElementById('pen-val').textContent = L.toFixed(2);
+      document.getElementById('pen-bar').style.width = Math.min(100, L / YMAX * 100) + '%';
+      const right = y ? p >= 0.5 : p < 0.5, sure = Math.abs(p - 0.5) >= 0.3;
+      document.getElementById('pen-verdict').textContent =
+        right ? (sure ? 'confident & right → tiny penalty' : 'right, but unsure → small penalty')
+              : (sure ? 'confident & WRONG → HUGE penalty' : 'wrong, but unsure → medium penalty');
+    }
+    const btns = svg.parentNode.querySelectorAll('.pen-y');
+    btns.forEach(btn => btn.addEventListener('click', () => {
+      y = +btn.dataset.y;
+      btns.forEach(o => o.classList.toggle('on', o === btn));
+      draw();
+    }));
+    sl.addEventListener('input', draw);
+    draw();
+  })();
+
+  // ================= what is one extra hour worth? (Part IV) ==============
+  // the sklearn model fitted on the 48 training students: slope 1.5574, shift -7.7366
+  (function oneHour() {
+    const svg = document.getElementById('oh-svg');
+    if (!svg) return;
+    const W = 1.5574, B = -7.7366;
+    const P = h => sigmoid(W * h + B);
+    const f = frame(svg, { x0: 0, x1: 10, y0: 0, y1: 1, xt: 10, yt: 4,
+                           xlab: 'hours studied', ylab: 'chance of pass',
+                           yfmt: v => Math.round(v * 100) + '%' });
+    let d = '';
+    for (let i = 0; i <= 200; i++) {
+      const h = i * 0.05;
+      d += (i ? 'L' : 'M') + f.px(h).toFixed(1) + ' ' + f.py(P(h)).toFixed(1) + ' ';
+    }
+    svg.appendChild(el('path', { class: 'sigcurve', d: d }));
+    const step = el('line', { class: 'sq-guide' }); svg.appendChild(step);
+    const jump = el('line', { class: 'jump' }); svg.appendChild(jump);
+    const a = el('circle', { class: 'dot-a', r: 8 }); svg.appendChild(a);
+    const b = el('circle', { class: 'dot-b', r: 8 }); svg.appendChild(b);
+    const lab = el('text', { class: 'lbl' }); svg.appendChild(lab);
+
+    const sl = document.getElementById('oh-h');
+    function draw() {
+      const h = +sl.value, p0 = P(h), p1 = P(h + 1), gain = (p1 - p0) * 100;
+      document.getElementById('oh-hv').textContent = h.toFixed(1);
+      document.getElementById('oh-p0').textContent = (p0 * 100).toFixed(1) + '%';
+      document.getElementById('oh-p1').textContent = (p1 * 100).toFixed(1) + '%';
+      document.getElementById('oh-gain').textContent = '+' + gain.toFixed(1) + ' points';
+      document.getElementById('oh-bar').style.width = gain + '%';
+      document.getElementById('oh-verdict').textContent =
+        gain >= 20 ? 'near the boundary: a BIG difference'
+        : gain >= 5 ? 'it helps — a bit'
+        : p0 > 0.5 ? 'already passing: barely changes anything'
+        : 'still far from passing: barely changes anything';
+      a.setAttribute('cx', f.px(h));     a.setAttribute('cy', f.py(p0));
+      b.setAttribute('cx', f.px(h + 1)); b.setAttribute('cy', f.py(p1));
+      step.setAttribute('x1', f.px(h)); step.setAttribute('x2', f.px(h + 1));
+      step.setAttribute('y1', f.py(p0)); step.setAttribute('y2', f.py(p0));
+      jump.setAttribute('x1', f.px(h + 1)); jump.setAttribute('x2', f.px(h + 1));
+      jump.setAttribute('y1', f.py(p0));    jump.setAttribute('y2', f.py(p1));
+      lab.setAttribute('x', f.px(h + 1) + (h > 7.5 ? -12 : 12));
+      lab.setAttribute('text-anchor', h > 7.5 ? 'end' : 'start');
+      lab.setAttribute('y', f.py((p0 + p1) / 2) + 4);
+      lab.textContent = '+' + gain.toFixed(1);
+    }
+    sl.addEventListener('input', draw);
+    draw();
+  })();
+
+  // ================= recall / precision dot grids (Part VII) ==============
+  (function dotGrids() {
+    const fill = (id, n, specialClass) => {
+      const g = document.getElementById(id);
+      if (!g) return;
+      for (let i = 0; i < n; i++) {
+        const dot = document.createElement('i');
+        if (i === n - 1) dot.className = specialClass;
+        g.appendChild(dot);
+      }
+    };
+    fill('rec-grid', 42, 'miss');   // 42 truly malignant: 41 caught, 1 missed
+    fill('pre-grid', 42, 'fa');     // 42 flagged malignant: 41 real, 1 false alarm
   })();
 })();
 </script>
